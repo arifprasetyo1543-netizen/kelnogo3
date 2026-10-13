@@ -1,7 +1,7 @@
 /**
  * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
  * SD NEGERI 3 NOGORAJI
- * Versi Stabil Lengkap - Bebas Error & Multi-Fitur
+
  */
 
 // =========================================================================
