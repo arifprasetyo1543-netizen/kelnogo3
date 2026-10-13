@@ -1,7 +1,7 @@
 /**
  * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
  * SD NEGERI 3 NOGORAJI
-
+ * Versi Stabil Lengkap - Bebas Error & Multi-Fitur
  */
 
 // =========================================================================
@@ -96,7 +96,7 @@ const AppState = {
     baris1: "PEMERINTAH KABUPATEN KEBUMEN",
     baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
     namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
-    alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
+    alamat: "Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
     kontak: "NPSN: 20304713 | Pos-el: nogoraji3@gmail.com",
     logoUrl: "https://drive.google.com/file/d/1v6eLl1Q09K3w-TbchJrTAJh3yVjIcheP/view?usp=sharing"
   }),
@@ -108,7 +108,7 @@ const AppState = {
   ]),
 
   arsip: AppStorage.get("listArsipSDN3", [
-    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "Surat Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_1", tanggal: "12/10/2026", nomor: "400.3.5/01/SDN.068/X/2026", judul: "Surat Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
     { id: "sample_2", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
   ]),
 
