@@ -863,3 +863,81 @@ body {
     line-height: 1.4 !important;
   }
 }
+
+/* ================= TOMBOL GARIS 3 & TOGGLE SIDEBAR ================= */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-toggle-sidebar {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-toggle-sidebar:hover {
+  background: var(--secondary);
+}
+
+/* Transisi Sidebar saat ditutup (Desktop) */
+.sidebar {
+  transition: transform 0.3s ease, margin-left 0.3s ease;
+}
+
+.sidebar.collapsed {
+  margin-left: -270px; /* Menyembunyikan sidebar di desktop */
+}
+
+/* Responsive Mobile & Tablet */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 9999;
+    transform: translateX(-100%); /* Sembunyi ke kiri di HP */
+    margin-left: 0 !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0); /* Muncul saat tombol garis 3 diklik */
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 9998;
+  }
+
+  .panel-split {
+    grid-template-columns: 1fr; /* Form dan Kertas bertumpuk rapi di HP */
+  }
+
+  .top-header {
+    padding: 0 14px;
+  }
+}
+
+/* Tombol khusus mode HP */
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: inline-flex;
+  }
+}
