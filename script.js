@@ -98,7 +98,7 @@ const AppState = {
     namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
     alamat: "Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
     kontak: "NPSN: 20304713 | Pos-el: nogoraji3@gmail.com",
-    logoUrl: "https://drive.google.com/file/d/1v6eLl1Q09K3w-TbchJrTAJh3yVjIcheP/view?usp=sharing"
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/7/71/Lambang_Kabupaten_Kebumen.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=original"
   }),
 
   pegawai: AppStorage.get("listPegawaiSDN3", [
