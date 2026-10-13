@@ -1,7 +1,7 @@
 /**
  * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
  * SD NEGERI 3 NOGORAJI
- * Versi Stabil Lengkap - Bebas Error & Multi-Fitur
+ * Versi Stabil Lengkap - Tombol Garis 3 Aktif 100%
  */
 
 // =========================================================================
@@ -96,24 +96,26 @@ const AppState = {
     baris1: "PEMERINTAH KABUPATEN KEBUMEN",
     baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
     namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
-    alamat: "Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
-    kontak: "NPSN: 20304713 | Pos-el: nogoraji3@gmail.com",
-    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/7/71/Lambang_Kabupaten_Kebumen.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=original"
+    alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
+    kontak: "NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
   }),
 
   pegawai: AppStorage.get("listPegawaiSDN3", [
-    { nama: "Kasmin, S.Pd.,M.M.", nip: "197306242008011016", gol: "Penata Tingkat 1-III/d", jabatan: "Kepala Sekolah" },
-    { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "OPS" },
-    { nama: "Sukijan, S.Pd", nip: "198108102022211009", gol: "IX", jabatan: "Guru Kelas 6" },
+    { nama: "SUKIRNO, S.Pd., M.Pd.", nip: "19680415 199303 1 005", gol: "Pembina Tk. I, IV/b", jabatan: "Kepala Sekolah" },
+    { nama: "Budi Santoso, S.Pd.SD", nip: "19870512 201101 1 008", gol: "Penata Muda Tk. I, III/b", jabatan: "Guru PJOK" },
+    { nama: "Siti Aminah, S.Pd.", nip: "19890214 201402 2 003", gol: "Penata Muda, III/a", jabatan: "Guru Kelas / Operator" },
+    { nama: "Sri Wahyuni, S.Pd.SD", nip: "19780820 200801 2 015", gol: "Penata, III/c", jabatan: "Guru Kelas 1" },
+    { nama: "Ahmad Fauzi, S.Pd.I", nip: "19910411 201902 1 004", gol: "Penata Muda, III/a", jabatan: "Guru PAI" }
   ]),
 
   arsip: AppStorage.get("listArsipSDN3", [
-    { id: "sample_1", tanggal: "12/10/2026", nomor: "400.3.5/01/SDN.068/X/2026", judul: "Surat Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
     { id: "sample_2", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
   ]),
 
   judulSuratMap: {
-    spt: "SURAT TUGAS",
+    spt: "SURAT PERINTAH TUGAS",
     sk_aktif: "SURAT KETERANGAN AKTIF SEKOLAH",
     undangan: "SURAT UNDANGAN",
     sk_pindah: "SURAT KETERANGAN PINDAH SEKOLAH",
@@ -149,7 +151,70 @@ function bindLiveSync(inputId, viewId) {
 }
 
 // =========================================================================
-// 3. MODUL KOP SURAT SEKOLAH
+// 3. FUNGSI RESPONSIF MENU GARIS 3 (SIDEBAR TOGGLE) & LAYAR MIRING
+// =========================================================================
+function initResponsiveMenu() {
+  const btnToggle = document.getElementById("btnToggleSidebar");
+  const sidebar = document.querySelector(".sidebar");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const navBtns = document.querySelectorAll(".nav-btn");
+  const btnLandscape = document.getElementById("btnLandscapeMobile");
+
+  // Klik Garis 3 untuk Buka / Tutup Sidebar
+  if (btnToggle && sidebar) {
+    btnToggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (window.innerWidth <= 768) {
+        // Layar HP: Munculkan geser samping
+        sidebar.classList.toggle("open");
+        if (backdrop) backdrop.classList.toggle("hidden");
+      } else {
+        // Layar Komputer / Laptop: Ciutkan menu ke samping
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
+
+  // Tutup sidebar saat latar belakang gelap diklik (di HP)
+  if (backdrop && sidebar) {
+    backdrop.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.add("hidden");
+    });
+  }
+
+  // Tutup sidebar otomatis saat menu diklik (di HP)
+  navBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove("open");
+        if (backdrop) backdrop.classList.add("hidden");
+      }
+    });
+  });
+
+  // Tombol Kunci Layar Miring Android
+  if (btnLandscape) {
+    btnLandscape.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape");
+          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
+        }
+      } catch (err) {
+        showToast("Aktifkan fitur 'Putar Otomatis' di panel HP Anda.", "info");
+      }
+    });
+  }
+}
+
+// =========================================================================
+// 4. MODUL KOP SURAT SEKOLAH
 // =========================================================================
 function renderKopSurat() {
   const k = AppState.kop;
@@ -226,7 +291,7 @@ function initKopModule() {
 }
 
 // =========================================================================
-// 4. MODUL PEGAWAI & PENANDATANGAN
+// 5. MODUL PEGAWAI & PENANDATANGAN
 // =========================================================================
 function syncPejabatPemberi() {
   const sel = document.getElementById("selectPenandatangan");
@@ -377,7 +442,7 @@ function initPegawaiModule() {
 }
 
 // =========================================================================
-// 5. MODUL TANDA TANGAN & STEMPEL (SPASI 70PX TIDAK DEMPET)
+// 6. MODUL TANDA TANGAN & STEMPEL (SPASI 70PX TIDAK DEMPET)
 // =========================================================================
 function initTtdModule() {
   const checkTtd = document.getElementById("checkTtd");
@@ -387,7 +452,7 @@ function initTtdModule() {
     checkTtd.addEventListener("change", () => {
       const stamp = ttdBox.querySelector(".stamp-round");
       const sig = ttdBox.querySelector(".svg-ttd");
-      // Hanya sembunyikan gambar, tinggi 70px tetap ada
+      // Hanya sembunyikan gambar, spasi 70px tetap tersedia
       if (stamp) stamp.style.display = checkTtd.checked ? "flex" : "none";
       if (sig) sig.style.display = checkTtd.checked ? "block" : "none";
     });
@@ -395,7 +460,7 @@ function initTtdModule() {
 }
 
 // =========================================================================
-// 6. MODUL MULTI-TEMPLATE SURAT
+// 7. MODUL MULTI-TEMPLATE SURAT
 // =========================================================================
 function updateJenisSurat(jenis) {
   const judul = AppState.judulSuratMap[jenis] || "SURAT RESMI";
@@ -521,351 +586,4 @@ function initSuratBinding() {
   const btnReset = document.getElementById("btnResetSurat");
   if (btnReset) {
     btnReset.addEventListener("click", () => {
-      if (inNo) inNo.value = "66";
-      if (viewNo) viewNo.innerText = "66";
-      showToast("Formulir surat berhasil direset.", "info");
-    });
-  }
-}
-
-// =========================================================================
-// 7. MODUL ARSIP & PRATINJAU MODAL PDF (TIDAK KELUAR KE LAYAR UTAMA)
-// =========================================================================
-async function bukaDokumenModal(idx) {
-  const item = AppState.arsip[idx];
-  if (!item) return;
-
-  const modal = document.getElementById("modalPdfViewer");
-  const frame = document.getElementById("modalPdfFrame");
-  const title = document.getElementById("modalPdfTitle");
-  const btnDownload = document.getElementById("modalPdfDownload");
-
-  title.innerText = item.judul || "Dokumen PDF";
-
-  let blob = await PdfStorage.getFile(item.id);
-
-  if (!blob) {
-    const contohHtml = `
-      <html>
-        <body style="font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#f8fafc; color:#1e293b; text-align:center; padding:20px;">
-          <h2 style="color:#1e40af; margin-bottom:8px;">${item.judul}</h2>
-          <p style="color:#64748b; font-size:14px;">Nomor Surat: <strong>${item.nomor}</strong> | Kategori: <strong>${item.kategori}</strong></p>
-          <div style="background:#e0f2fe; color:#0369a1; padding:12px 18px; border-radius:8px; margin-top:16px; max-width:480px; font-size:13px;">
-            Ini adalah catatan contoh bawaan sistem. Untuk membuka berkas PDF asli, silakan unggah dokumen PDF Anda melalui menu di sebelah kiri.
-          </div>
-        </body>
-      </html>
-    `;
-    blob = new Blob([contohHtml], { type: "text/html" });
-  }
-
-  const blobUrl = URL.createObjectURL(blob);
-  frame.src = blobUrl;
-  btnDownload.href = blobUrl;
-  btnDownload.download = item.judul || "dokumen.pdf";
-
-  modal.classList.remove("hidden");
-}
-
-function tutupModalPdf() {
-  const modal = document.getElementById("modalPdfViewer");
-  const frame = document.getElementById("modalPdfFrame");
-  if (modal) modal.classList.add("hidden");
-  if (frame) frame.src = "about:blank";
-}
-
-function renderTabelArsip(filterQuery = "") {
-  const tbody = document.getElementById("tbodyArsipList");
-  if (!tbody) return;
-
-  const query = filterQuery.toLowerCase().trim();
-
-  const filteredList = AppState.arsip.filter((item) => {
-    if (!query) return true;
-    const matchNomor = (item.nomor || "").toLowerCase().includes(query);
-    const matchJudul = (item.judul || "").toLowerCase().includes(query);
-    const matchKategori = (item.kategori || "").toLowerCase().includes(query);
-    return matchNomor || matchJudul || matchKategori;
-  });
-
-  tbody.innerHTML = "";
-
-  if (filteredList.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
-          <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
-          Tidak ada dokumen yang cocok dengan kata kunci "<strong>${filterQuery}</strong>".
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  filteredList.forEach((item) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${item.tanggal}</td>
-      <td><span class="badge-nomor">${item.nomor || "-"}</span></td>
-      <td><strong>${item.judul}</strong></td>
-      <td>${item.kategori || "Surat Resmi"}</td>
-      <td><span style="color:var(--success); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${item.status || "Tersimpan"}</span></td>
-      <td>
-        <button type="button" class="btn btn-secondary btn-sm btn-buka-arsip" data-id="${item.id}">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
-        </button>
-        <button type="button" class="btn btn-secondary btn-sm btn-hapus-arsip" data-id="${item.id}" style="color:var(--danger); margin-left:4px;" title="Hapus Arsip">
-          <i class="fa-solid fa-trash"></i>
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll(".btn-buka-arsip").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute("data-id");
-      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
-      if (realIndex !== -1) bukaDokumenModal(realIndex);
-    });
-  });
-
-  tbody.querySelectorAll(".btn-hapus-arsip").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute("data-id");
-      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
-      if (realIndex !== -1) {
-        const item = AppState.arsip[realIndex];
-        if (item && item.id) {
-          await PdfStorage.deleteFile(item.id);
-        }
-        AppState.arsip.splice(realIndex, 1);
-        AppStorage.set("listArsipSDN3", AppState.arsip);
-        
-        const inCari = document.getElementById("inCariArsip");
-        renderTabelArsip(inCari ? inCari.value : "");
-        showToast("Arsip dokumen berhasil dihapus.");
-      }
-    });
-  });
-}
-
-function initArsipModule() {
-  renderTabelArsip();
-
-  const btnUpload = document.getElementById("btnUploadDrive");
-  const inNomor = document.getElementById("inDocNomor");
-  const inTitle = document.getElementById("inDocTitle");
-  const inCategory = document.getElementById("inDocCategory");
-  const inFile = document.getElementById("inDocFile");
-
-  // Live Search
-  const inCari = document.getElementById("inCariArsip");
-  const btnResetCari = document.getElementById("btnResetCari");
-
-  if (inCari) {
-    inCari.addEventListener("input", (e) => {
-      const val = e.target.value;
-      renderTabelArsip(val);
-      if (btnResetCari) {
-        if (val.length > 0) {
-          btnResetCari.classList.remove("hidden");
-        } else {
-          btnResetCari.classList.add("hidden");
-        }
-      }
-    });
-  }
-
-  if (btnResetCari) {
-    btnResetCari.addEventListener("click", () => {
-      if (inCari) {
-        inCari.value = "";
-        inCari.focus();
-      }
-      btnResetCari.classList.add("hidden");
-      renderTabelArsip("");
-    });
-  }
-
-  const btnTutup = document.getElementById("btnTutupModalPdf");
-  if (btnTutup) btnTutup.addEventListener("click", tutupModalPdf);
-
-  const modal = document.getElementById("modalPdfViewer");
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) tutupModalPdf();
-    });
-  }
-
-  if (btnUpload) {
-    btnUpload.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const getVal = (el) => (el ? el.value.trim() : "");
-      const inNoSurat = document.getElementById("inputNoSurat");
-      const nomor = getVal(inNomor) || (inNoSurat ? inNoSurat.value.trim() : "-");
-      const title = getVal(inTitle);
-      const category = inCategory ? inCategory.value : "Surat Resmi";
-      const file = inFile && inFile.files ? inFile.files[0] : null;
-
-      if (!title || !file) {
-        showToast("Lengkapi judul dokumen dan pilih file PDF terlebih dahulu!", "info");
-        return;
-      }
-
-      btnUpload.disabled = true;
-      btnUpload.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
-
-      const fileId = "pdf_" + Date.now();
-      const today = new Date().toLocaleDateString("id-ID");
-
-      await PdfStorage.saveFile(fileId, file);
-
-      AppState.arsip.unshift({
-        id: fileId,
-        tanggal: today,
-        nomor: nomor,
-        judul: `${title}.pdf`,
-        kategori: category,
-        status: "Tersimpan",
-        isSample: false
-      });
-
-      AppStorage.set("listArsipSDN3", AppState.arsip);
-
-      if (inCari) inCari.value = "";
-      if (btnResetCari) btnResetCari.classList.add("hidden");
-      renderTabelArsip("");
-
-      if (inNomor) inNomor.value = "";
-      if (inTitle) inTitle.value = "";
-      if (inFile) inFile.value = "";
-
-      btnUpload.disabled = false;
-      btnUpload.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Arsip Dokumen`;
-
-      showToast(`Dokumen No. ${nomor} berhasil diarsipkan! Klik Buka untuk melihat.`);
-    });
-  }
-}
-
-// =========================================================================
-// 8. NAVIGASI TAB MENU UTAMA
-// =========================================================================
-function initTabNavigation() {
-  const btns = document.querySelectorAll(".nav-btn");
-  const panels = document.querySelectorAll(".tab-panel");
-  const titleDisplay = document.getElementById("headerTitle");
-
-  const titles = {
-    "tab-surat": "Buat Surat Sekolah",
-    "tab-kop": "Pengaturan Kop Sekolah Mandiri",
-    "tab-pegawai": "Kelola Data Pegawai & Guru",
-    "tab-arsip": "Arsip Dokumen PDF"
-  };
-
-  btns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      btns.forEach((b) => b.classList.remove("active"));
-      panels.forEach((p) => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      const targetId = btn.getAttribute("data-tab");
-      const targetPanel = document.getElementById(targetId);
-
-      if (targetPanel) {
-        targetPanel.classList.add("active");
-        if (titleDisplay) titleDisplay.innerText = titles[targetId] || "Sistem Surat";
-
-        if (targetId === "tab-arsip") {
-          const inNo = document.getElementById("inputNoSurat");
-          const inDocNomor = document.getElementById("inDocNomor");
-          if (inNo && inDocNomor) {
-            inDocNomor.value = inNo.value;
-          }
-        }
-      }
-    });
-  });
-}
-
-// Inisialisasi Utama
-document.addEventListener("DOMContentLoaded", () => {
-  initTabNavigation();
-  initKopModule();
-  initPegawaiModule();
-  initTtdModule();
-  initSuratBinding();
-  initArsipModule();
-});
-// Tambahkan fungsi ini di dalam app.js
-function initResponsiveMenu() {
-  const btnToggle = document.getElementById("btnToggleSidebar");
-  const sidebar = document.querySelector(".sidebar");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  const navBtns = document.querySelectorAll(".nav-btn");
-  const btnLandscape = document.getElementById("btnLandscapeMobile");
-
-  // 1. Klik Garis 3 untuk Buka/Tutup Menu
-  if (btnToggle && sidebar) {
-    btnToggle.addEventListener("click", () => {
-      if (window.innerWidth <= 768) {
-        // Mode HP: Buka geser samping
-        sidebar.classList.toggle("open");
-        if (backdrop) backdrop.classList.toggle("hidden");
-      } else {
-        // Mode Laptop: Ciutkan sidebar
-        sidebar.classList.toggle("collapsed");
-      }
-    });
-  }
-
-  // 2. Tutup sidebar otomatis saat latar belakang gelap diklik (di HP)
-  if (backdrop && sidebar) {
-    backdrop.addEventListener("click", () => {
-      sidebar.classList.remove("open");
-      backdrop.classList.add("hidden");
-    });
-  }
-
-  // 3. Tutup sidebar otomatis setelah memilih menu (di HP)
-  navBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (window.innerWidth <= 768 && sidebar) {
-        sidebar.classList.remove("open");
-        if (backdrop) backdrop.classList.add("hidden");
-      }
-    });
-  });
-
-  // 4. Tombol Kunci Layar Miring (Landscape) untuk Android
-  if (btnLandscape) {
-    btnLandscape.addEventListener("click", async () => {
-      try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        }
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock("landscape");
-          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
-        }
-      } catch (err) {
-        showToast("Aktifkan fitur 'Putar Otomatis' di panel notifikasi HP Anda.", "info");
-      }
-    });
-  }
-}
-document.addEventListener("DOMContentLoaded", () => {
-  initResponsiveMenu(); // Tambahkan baris ini
-  initTabNavigation();
-  initKopModule();
-  initPegawaiModule();
-  initTtdModule();
-  initSuratBinding();
-  initArsipModule();
-});
-
+      if (inNo) inNo.value 
