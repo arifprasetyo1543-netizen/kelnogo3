@@ -50,18 +50,36 @@
         <span>Sistem Persuratan Siap</span>
       </div>
     </aside>
+          <!-- Penutup sidebar yang lama -->
+
+    <!-- TARUH DI SINI: Backdrop layar gelap saat menu terbuka di HP -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop hidden no-print"></div>
+
+    <div class="main-wrapper">
+      
 
     <!-- KONTEN UTAMA -->
     <div class="main-wrapper">
       
       <!-- HEADER ATAS -->
-      <header class="top-header no-print">
-        <div class="breadcrumb">
-          <span>Aplikasi Persuratan</span>
-          <i class="fa-solid fa-chevron-right"></i>
-          <strong id="headerTitle">Buat Surat Sekolah</strong>
+            <header class="top-header no-print">
+        
+        <!-- TARUH DI SINI: Bungkus tombol garis 3 bersama breadcrumb -->
+        <div class="header-left">
+          <button type="button" id="btnToggleSidebar" class="btn-toggle-sidebar" title="Buka/Tutup Menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          
+          <div class="breadcrumb">
+            <span>Aplikasi Persuratan</span>
+            <i class="fa-solid fa-chevron-right"></i>
+            <strong id="headerTitle">Buat Surat Sekolah</strong>
+          </div>
         </div>
+
         <div class="header-tools">
+          <!-- Tombol-tombol di sebelah kanan -->
+
           <button type="button" id="btnResetSurat" class="btn btn-secondary">
             <i class="fa-solid fa-rotate-left"></i> Reset Form
           </button>
