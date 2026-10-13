@@ -802,3 +802,60 @@ document.addEventListener("DOMContentLoaded", () => {
   initSuratBinding();
   initArsipModule();
 });
+// Tambahkan fungsi ini di dalam app.js
+function initResponsiveMenu() {
+  const btnToggle = document.getElementById("btnToggleSidebar");
+  const sidebar = document.querySelector(".sidebar");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const navBtns = document.querySelectorAll(".nav-btn");
+  const btnLandscape = document.getElementById("btnLandscapeMobile");
+
+  // 1. Klik Garis 3 untuk Buka/Tutup Menu
+  if (btnToggle && sidebar) {
+    btnToggle.addEventListener("click", () => {
+      if (window.innerWidth <= 768) {
+        // Mode HP: Buka geser samping
+        sidebar.classList.toggle("open");
+        if (backdrop) backdrop.classList.toggle("hidden");
+      } else {
+        // Mode Laptop: Ciutkan sidebar
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
+
+  // 2. Tutup sidebar otomatis saat latar belakang gelap diklik (di HP)
+  if (backdrop && sidebar) {
+    backdrop.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.add("hidden");
+    });
+  }
+
+  // 3. Tutup sidebar otomatis setelah memilih menu (di HP)
+  navBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove("open");
+        if (backdrop) backdrop.classList.add("hidden");
+      }
+    });
+  });
+
+  // 4. Tombol Kunci Layar Miring (Landscape) untuk Android
+  if (btnLandscape) {
+    btnLandscape.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape");
+          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
+        }
+      } catch (err) {
+        showToast("Aktifkan fitur 'Putar Otomatis' di panel notifikasi HP Anda.", "info");
+      }
+    });
+  }
+}
