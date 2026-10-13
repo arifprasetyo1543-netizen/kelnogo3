@@ -859,3 +859,13 @@ function initResponsiveMenu() {
     });
   }
 }
+document.addEventListener("DOMContentLoaded", () => {
+  initResponsiveMenu(); // Tambahkan baris ini
+  initTabNavigation();
+  initKopModule();
+  initPegawaiModule();
+  initTtdModule();
+  initSuratBinding();
+  initArsipModule();
+});
+
