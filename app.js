@@ -1,22 +1,24 @@
 /**
- * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL - SD NEGERI 3 NOGORAJI
- * Versi Stabil - Terintegrasi Akun Pengguna & Cloud Database Firebase
+ * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
+ * SD NEGERI 3 NOGORAJI
+ * Versi Lengkap & Stabil - Data Bapak Kasmin & Arif Terpasang
  */
 
 // =========================================================================
 // 1. KONFIGURASI GOOGLE FIREBASE CLOUD
 // =========================================================================
-// Ganti nilai di bawah ini dengan config project Firebase milik Anda
+// Jika Anda memiliki akun Firebase, Anda cukup menempelkan kuncinya di sini.
+// Jika belum, aplikasi tetap berjalan normal 100% dalam mode offline aman.
 const firebaseConfig = {
-  apiKey: "ISI_DENGAN_API_KEY_ANDA",
-  authDomain: "ISI_DENGAN_AUTH_DOMAIN_ANDA",
-  projectId: "ISI_DENGAN_PROJECT_ID_ANDA",
-  storageBucket: "ISI_DENGAN_STORAGE_BUCKET_ANDA",
-  messagingSenderId: "ISI_DENGAN_MESSAGING_SENDER_ID_ANDA",
-  appId: "ISI_DENGAN_APP_ID_ANDA"
+  apiKey: "AIzaSyAdg6j0-1x9JKexTnD3fFG4UPGryCW8rDg",
+  authDomain: "surat-sdn3nogoraju.firebaseapp.com",
+  projectId: "surat-sdn3nogoraju",
+  storageBucket: "surat-sdn3nogoraju.firebasestorage.app",
+  messagingSenderId: "761011637070",
+  appId: "1:761011637070:web:1124b2ecc42ca534e86c1f",
+  measurementId: "G-ZZT7EQCERG"
 };
 
-// Inisialisasi Firebase jika config telah diisi
 let auth = null;
 let db = null;
 let isFirebaseActive = false;
@@ -29,11 +31,11 @@ try {
     isFirebaseActive = true;
   }
 } catch (e) {
-  console.warn("Firebase belum diinisialisasi atau offline:", e);
+  console.warn("Firebase offline / belum diisi config.");
 }
 
 // =========================================================================
-// 2. SISTEM PENYIMPANAN LOCAL FALLBACK (INDEXEDDB & STORAGE)
+// 2. SISTEM PENYIMPANAN AMAN (INDEXEDDB & STORAGE)
 // =========================================================================
 const PdfStorage = {
   dbName: "SDN3_ArsipPDF_DB",
@@ -117,7 +119,7 @@ const AppStorage = {
 };
 
 // =========================================================================
-// 3. STATE APLIKASI
+// 3. STATE APLIKASI (DATA BAPAK KASMIN & ARIF TERPASANG)
 // =========================================================================
 const AppState = {
   currentUser: null,
@@ -131,17 +133,16 @@ const AppState = {
     logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
   }),
 
+  // Data Pegawai Bawaan Langsung Pak Kasmin & Pak Arif
   pegawai: AppStorage.get("listPegawaiSDN3", [
-    { nama: "SUKIRNO, S.Pd., M.Pd.", nip: "19680415 199303 1 005", gol: "Pembina Tk. I, IV/b", jabatan: "Kepala Sekolah" },
-    { nama: "Budi Santoso, S.Pd.SD", nip: "19870512 201101 1 008", gol: "Penata Muda Tk. I, III/b", jabatan: "Guru PJOK" },
-    { nama: "Siti Aminah, S.Pd.", nip: "19890214 201402 2 003", gol: "Penata Muda, III/a", jabatan: "Guru Kelas / Operator" },
-    { nama: "Sri Wahyuni, S.Pd.SD", nip: "19780820 200801 2 015", gol: "Penata, III/c", jabatan: "Guru Kelas 1" },
-    { nama: "Ahmad Fauzi, S.Pd.I", nip: "19910411 201902 1 004", gol: "Penata Muda, III/a", jabatan: "Guru PAI" }
+    { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
+    { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
   ]),
 
   arsip: AppStorage.get("listArsipSDN3", [
-    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
-    { id: "sample_2", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
+    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "22.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_2", tanggal: "12/10/2026", nomor: "66", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_3", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
   ]),
 
   judulSuratMap: {
@@ -154,7 +155,7 @@ const AppState = {
 };
 
 // =========================================================================
-// 4. SINKRONISASI OTOMATIS DATA KE CLOUD FIREBASE
+// 4. SINKRONISASI OTOMATIS DATA KE CLOUD
 // =========================================================================
 async function syncDataToCloud() {
   if (!isFirebaseActive || !AppState.currentUser || !db) return;
@@ -165,13 +166,13 @@ async function syncDataToCloud() {
       kop: AppState.kop,
       pegawai: AppState.pegawai,
       arsip: AppState.arsip,
-      terakhirDisinkronkan: firebase.firestore.FieldValue.serverTimestamp()
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 
     const statusTxt = document.getElementById("cloudStatusText");
     if (statusTxt) statusTxt.innerText = "Tersinkron ke Cloud";
   } catch (err) {
-    console.warn("Gagal sinkron ke Cloud Firestore:", err);
+    console.warn("Gagal sinkron cloud:", err);
   }
 }
 
@@ -186,24 +187,21 @@ async function loadDataFromCloud(user) {
       if (data.pegawai) AppState.pegawai = data.pegawai;
       if (data.arsip) AppState.arsip = data.arsip;
 
-      // Simpan juga ke cache lokal
       AppStorage.set("kopSekolahSDN3", AppState.kop);
       AppStorage.set("listPegawaiSDN3", AppState.pegawai);
       AppStorage.set("listArsipSDN3", AppState.arsip);
 
-      // Render ulang tampilan layar
       renderKopSurat();
       refreshDropdownPegawai();
       renderTabelPegawai();
       renderTabelArsip();
 
-      showToast(`Data sekolah akun ${user.displayName || user.email} berhasil dimuat dari Cloud!`);
+      showToast(`Data sekolah akun Anda berhasil dimuat dari Cloud!`);
     } else {
-      // Jika akun baru, unggah data awal ke cloud
       await syncDataToCloud();
     }
   } catch (err) {
-    console.warn("Gagal membaca data dari cloud:", err);
+    console.warn("Gagal membaca cloud:", err);
   }
 }
 
@@ -235,7 +233,7 @@ function bindLiveSync(inputId, viewId) {
 }
 
 // =========================================================================
-// 5. MODUL AUTENTIKASI PENGGUNA (LOGIN, DAFTAR, GOOGLE AUTH)
+// 5. MODUL AUTENTIKASI PENGGUNA (LOGIN / REGISTER / GOOGLE)
 // =========================================================================
 function initAuthModule() {
   const modal = document.getElementById("modalAuth");
@@ -254,7 +252,7 @@ function initAuthModule() {
 
   const openAuth = () => {
     if (!isFirebaseActive) {
-      showToast("Harap masukkan 'firebaseConfig' di file app.js terlebih dahulu untuk mengaktifkan akun cloud.", "info");
+      showToast("Firebase belum diisi konfigurasi di app.js. Mode penyimpanan offline tetap aktif.", "info");
       return;
     }
     modal.classList.remove("hidden");
@@ -275,7 +273,6 @@ function initAuthModule() {
     });
   }
 
-  // Ganti Tab Mode: Masuk vs Daftar
   if (tabLogin && tabRegister) {
     tabLogin.addEventListener("click", () => {
       isRegisterMode = false;
@@ -296,7 +293,6 @@ function initAuthModule() {
     });
   }
 
-  // 1. Submit Form Email & Password
   if (formAuth) {
     formAuth.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -309,34 +305,29 @@ function initAuthModule() {
 
       try {
         if (isRegisterMode) {
-          // Daftar Akun Baru
           const cred = await auth.createUserWithEmailAndPassword(email, password);
-          if (name) {
-            await cred.user.updateProfile({ displayName: name });
-          }
-          showToast("Akun baru berhasil didaftarkan dan login otomatis!");
+          if (name) await cred.user.updateProfile({ displayName: name });
+          showToast("Akun baru berhasil didaftarkan!");
         } else {
-          // Masuk Akun
           await auth.signInWithEmailAndPassword(email, password);
           showToast("Berhasil masuk ke akun Anda!");
         }
         closeAuth();
       } catch (err) {
         errorMsg.classList.remove("hidden");
-        errorMsg.innerText = err.message || "Terjadi kesalahan saat masuk.";
+        errorMsg.innerText = err.message || "Terjadi kesalahan saat autentikasi.";
       } finally {
         textSubmit.innerHTML = isRegisterMode ? "Buat Akun Baru" : "Masuk Sekarang";
       }
     });
   }
 
-  // 2. Login dengan Akun Google
   if (btnGoogle) {
     btnGoogle.addEventListener("click", async () => {
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
         await auth.signInWithPopup(provider);
-        showToast("Berhasil masuk dengan akun Google!");
+        showToast("Berhasil masuk dengan Akun Google!");
         closeAuth();
       } catch (err) {
         errorMsg.classList.remove("hidden");
@@ -345,7 +336,6 @@ function initAuthModule() {
     });
   }
 
-  // 3. Keluar Akun (Logout)
   if (btnLogout) {
     btnLogout.addEventListener("click", async () => {
       await auth.signOut();
@@ -353,7 +343,6 @@ function initAuthModule() {
     });
   }
 
-  // 4. Pantau Status Login Pengguna (Auth State Listener)
   if (isFirebaseActive && auth) {
     auth.onAuthStateChanged(async (user) => {
       const btnAuthTrigger = document.getElementById("btnBukaAuth");
@@ -370,7 +359,6 @@ function initAuthModule() {
         if (avatar) avatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=1e40af&color=fff`;
         if (cloudStatus) cloudStatus.innerText = "Tersambung ke Cloud";
 
-        // Ambil data sekolah akun ini dari internet
         await loadDataFromCloud(user);
       } else {
         AppState.currentUser = null;
@@ -431,7 +419,7 @@ function initKopModule() {
           setVal("cfgKopLogoUrl", "Logo lokal terpilih");
           renderKopSurat();
           syncDataToCloud();
-          showToast("Logo berhasil dimuat!");
+          showToast("Logo berhasil dimuat dari perangkat!");
         };
         reader.readAsDataURL(file);
       }
@@ -455,7 +443,7 @@ function initKopModule() {
 
       AppStorage.set("kopSekolahSDN3", AppState.kop);
       renderKopSurat();
-      syncDataToCloud(); // Simpan otomatis ke cloud
+      syncDataToCloud();
       showToast("Kop surat berhasil diperbarui dan disimpan!");
     });
   }
@@ -598,7 +586,7 @@ function initPegawaiModule() {
       AppStorage.set("listPegawaiSDN3", AppState.pegawai);
       refreshDropdownPegawai();
       renderTabelPegawai();
-      syncDataToCloud(); // Simpan otomatis ke cloud
+      syncDataToCloud();
 
       const clearVal = (id) => {
         const el = document.getElementById(id);
@@ -615,7 +603,7 @@ function initPegawaiModule() {
 }
 
 // =========================================================================
-// 8. MODUL TANDA TANGAN & STEMPEL
+// 8. MODUL TANDA TANGAN & STEMPEL (SPASI 70PX TERJAGA AMAN)
 // =========================================================================
 function initTtdModule() {
   const checkTtd = document.getElementById("checkTtd");
@@ -625,6 +613,7 @@ function initTtdModule() {
     checkTtd.addEventListener("change", () => {
       const stamp = ttdBox.querySelector(".stamp-round");
       const sig = ttdBox.querySelector(".svg-ttd");
+      // Hanya menyembunyikan gambar, tinggi kontainer 70px tetap utuh
       if (stamp) stamp.style.display = checkTtd.checked ? "flex" : "none";
       if (sig) sig.style.display = checkTtd.checked ? "block" : "none";
     });
@@ -714,6 +703,7 @@ function initSuratBinding() {
     });
   }
 
+  // Live Binding Formulir ke Kertas A4
   bindLiveSync("inSptUntuk", "viewSptUntuk");
   bindLiveSync("inSptTglBerangkat", "viewSptTglBerangkat");
   bindLiveSync("inSptTglKembali", "viewSptTglKembali");
@@ -787,7 +777,7 @@ async function bukaDokumenModal(idx) {
           <h2 style="color:#1e40af; margin-bottom:8px;">${item.judul}</h2>
           <p style="color:#64748b; font-size:14px;">Nomor Surat: <strong>${item.nomor}</strong> | Kategori: <strong>${item.kategori}</strong></p>
           <div style="background:#e0f2fe; color:#0369a1; padding:12px 18px; border-radius:8px; margin-top:16px; max-width:480px; font-size:13px;">
-            Ini adalah berkas riwayat bawaan. Untuk membuka berkas PDF asli, unggah file PDF Anda melalui formulir di samping.
+            Ini adalah riwayat dokumen bawaan. Untuk melihat file PDF asli, silakan unggah berkas PDF baru melalui formulir di samping.
           </div>
         </body>
       </html>
@@ -965,7 +955,7 @@ function initArsipModule() {
       });
 
       AppStorage.set("listArsipSDN3", AppState.arsip);
-      syncDataToCloud(); // Simpan otomatis ke cloud
+      syncDataToCloud();
 
       if (inCari) inCari.value = "";
       if (btnResetCari) btnResetCari.classList.add("hidden");
@@ -978,7 +968,7 @@ function initArsipModule() {
       btnUpload.disabled = false;
       btnUpload.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Arsip Dokumen`;
 
-      showToast(`Dokumen No. ${nomor} berhasil diarsipkan!`);
+      showToast(`Dokumen No. ${nomor} berhasil diarsipkan! Klik Buka untuk membaca.`);
     });
   }
 }
@@ -1075,7 +1065,7 @@ function initTabNavigation() {
   });
 }
 
-// Inisialisasi Utama
+// Inisialisasi Utama Saat Halaman Siap
 document.addEventListener("DOMContentLoaded", () => {
   initResponsiveMenu();
   initTabNavigation();
@@ -1084,5 +1074,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initTtdModule();
   initSuratBinding();
   initArsipModule();
-  initAuthModule(); // Jalankan sistem akun pengguna
+  initAuthModule();
 });
