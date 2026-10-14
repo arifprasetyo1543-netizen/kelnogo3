@@ -10,13 +10,12 @@
 // Jika Anda memiliki akun Firebase, Anda cukup menempelkan kuncinya di sini.
 // Jika belum, aplikasi tetap berjalan normal 100% dalam mode offline aman.
 const firebaseConfig = {
-  apiKey: "AIzaSyAdg6j0-1x9JKexTnD3fFG4UPGryCW8rDg",
-  authDomain: "surat-sdn3nogoraju.firebaseapp.com",
-  projectId: "surat-sdn3nogoraju",
-  storageBucket: "surat-sdn3nogoraju.firebasestorage.app",
-  messagingSenderId: "761011637070",
-  appId: "1:761011637070:web:1124b2ecc42ca534e86c1f",
-  measurementId: "G-ZZT7EQCERG"
+  apiKey: "ISI_DENGAN_API_KEY_ANDA",
+  authDomain: "ISI_DENGAN_AUTH_DOMAIN_ANDA",
+  projectId: "ISI_DENGAN_PROJECT_ID_ANDA",
+  storageBucket: "ISI_DENGAN_STORAGE_BUCKET_ANDA",
+  messagingSenderId: "ISI_DENGAN_MESSAGING_SENDER_ID_ANDA",
+  appId: "ISI_DENGAN_APP_ID_ANDA"
 };
 
 let auth = null;
