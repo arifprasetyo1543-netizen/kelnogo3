@@ -136,12 +136,18 @@ const AppState = {
   // Data Pegawai Bawaan Langsung Pak Kasmin & Pak Arif
   pegawai: AppStorage.get("listPegawaiSDN3", [
     { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
-    { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
+    { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" },
+    { nama: "Sri Haryani, S.Pd.SD", nip: "196701131992112001", gol: "IV/B", jabatan: "Guru Kelas I" },
+    { nama: "Sarinah, S.Pd.SD", nip: "197107282008012014", gol: "III/C", jabatan: "Guru Kelas IV" },
+    { nama: "Susyanti, S.Pd.SD", nip: "198411252021212002", gol: "IX", jabatan: "Guru Kelas V" },
+    { nama: "Eka Wiji Lestari, S.Pd.SD", nip: "198708092023212014", gol: "IX", jabatan: "Guru Kelas III" },
+    { nama: "Khamimatun, S.Pd", nip: "199001152023212013", gol: "IX", jabatan: "Guru Agama" },
+    { nama: "Sunarti, S.Pd", nip: "-", gol: "-", jabatan: "Guru Kelas II" }
   ]),
 
   arsip: AppStorage.get("listArsipSDN3", [
-    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "22.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
-    { id: "sample_2", tanggal: "12/10/2026", nomor: "66", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_1", tanggal: "12/10/2026", nomor: "400.3.5.", judul: "22.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_2", tanggal: "12/10/2026", nomor: "400.3.5/066/SDN.068/X/2026", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
     { id: "sample_3", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
   ]),
 
