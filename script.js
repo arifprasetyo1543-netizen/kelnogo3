@@ -1,11 +1,39 @@
 /**
- * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
- * SD NEGERI 3 NOGORAJI
- * Versi Stabil Lengkap - Tombol Garis 3 Aktif 100%
+ * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL - SD NEGERI 3 NOGORAJI
+ * Versi Stabil - Terintegrasi Akun Pengguna & Cloud Database Firebase
  */
 
 // =========================================================================
-// 1. SISTEM PENYIMPANAN FILE PDF DENGAN INDEXEDDB (ANTI MEMORI PENUH)
+// 1. KONFIGURASI GOOGLE FIREBASE CLOUD
+// =========================================================================
+// Ganti nilai di bawah ini dengan config project Firebase milik Anda
+const firebaseConfig = {
+  apiKey: "ISI_DENGAN_API_KEY_ANDA",
+  authDomain: "ISI_DENGAN_AUTH_DOMAIN_ANDA",
+  projectId: "ISI_DENGAN_PROJECT_ID_ANDA",
+  storageBucket: "ISI_DENGAN_STORAGE_BUCKET_ANDA",
+  messagingSenderId: "ISI_DENGAN_MESSAGING_SENDER_ID_ANDA",
+  appId: "ISI_DENGAN_APP_ID_ANDA"
+};
+
+// Inisialisasi Firebase jika config telah diisi
+let auth = null;
+let db = null;
+let isFirebaseActive = false;
+
+try {
+  if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("ISI_DENGAN")) {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    isFirebaseActive = true;
+  }
+} catch (e) {
+  console.warn("Firebase belum diinisialisasi atau offline:", e);
+}
+
+// =========================================================================
+// 2. SISTEM PENYIMPANAN LOCAL FALLBACK (INDEXEDDB & STORAGE)
 // =========================================================================
 const PdfStorage = {
   dbName: "SDN3_ArsipPDF_DB",
@@ -16,9 +44,9 @@ const PdfStorage = {
     return new Promise((resolve) => {
       const req = indexedDB.open(this.dbName, 1);
       req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName, { keyPath: "id" });
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains(this.storeName)) {
+          d.createObjectStore(this.storeName, { keyPath: "id" });
         }
       };
       req.onsuccess = (e) => {
@@ -89,9 +117,11 @@ const AppStorage = {
 };
 
 // =========================================================================
-// 2. STATE APLIKASI
+// 3. STATE APLIKASI
 // =========================================================================
 const AppState = {
+  currentUser: null,
+
   kop: AppStorage.get("kopSekolahSDN3", {
     baris1: "PEMERINTAH KABUPATEN KEBUMEN",
     baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
@@ -123,6 +153,60 @@ const AppState = {
   }
 };
 
+// =========================================================================
+// 4. SINKRONISASI OTOMATIS DATA KE CLOUD FIREBASE
+// =========================================================================
+async function syncDataToCloud() {
+  if (!isFirebaseActive || !AppState.currentUser || !db) return;
+
+  try {
+    const userDocRef = db.collection("sekolah_data").doc(AppState.currentUser.uid);
+    await userDocRef.set({
+      kop: AppState.kop,
+      pegawai: AppState.pegawai,
+      arsip: AppState.arsip,
+      terakhirDisinkronkan: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    const statusTxt = document.getElementById("cloudStatusText");
+    if (statusTxt) statusTxt.innerText = "Tersinkron ke Cloud";
+  } catch (err) {
+    console.warn("Gagal sinkron ke Cloud Firestore:", err);
+  }
+}
+
+async function loadDataFromCloud(user) {
+  if (!isFirebaseActive || !user || !db) return;
+
+  try {
+    const doc = await db.collection("sekolah_data").doc(user.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.kop) AppState.kop = data.kop;
+      if (data.pegawai) AppState.pegawai = data.pegawai;
+      if (data.arsip) AppState.arsip = data.arsip;
+
+      // Simpan juga ke cache lokal
+      AppStorage.set("kopSekolahSDN3", AppState.kop);
+      AppStorage.set("listPegawaiSDN3", AppState.pegawai);
+      AppStorage.set("listArsipSDN3", AppState.arsip);
+
+      // Render ulang tampilan layar
+      renderKopSurat();
+      refreshDropdownPegawai();
+      renderTabelPegawai();
+      renderTabelArsip();
+
+      showToast(`Data sekolah akun ${user.displayName || user.email} berhasil dimuat dari Cloud!`);
+    } else {
+      // Jika akun baru, unggah data awal ke cloud
+      await syncDataToCloud();
+    }
+  } catch (err) {
+    console.warn("Gagal membaca data dari cloud:", err);
+  }
+}
+
 // Notifikasi Toast
 function showToast(pesan, jenis = "success") {
   const container = document.getElementById("toastContainer");
@@ -151,70 +235,155 @@ function bindLiveSync(inputId, viewId) {
 }
 
 // =========================================================================
-// 3. FUNGSI RESPONSIF MENU GARIS 3 (SIDEBAR TOGGLE) & LAYAR MIRING
+// 5. MODUL AUTENTIKASI PENGGUNA (LOGIN, DAFTAR, GOOGLE AUTH)
 // =========================================================================
-function initResponsiveMenu() {
-  const btnToggle = document.getElementById("btnToggleSidebar");
-  const sidebar = document.querySelector(".sidebar");
-  const backdrop = document.getElementById("sidebarBackdrop");
-  const navBtns = document.querySelectorAll(".nav-btn");
-  const btnLandscape = document.getElementById("btnLandscapeMobile");
+function initAuthModule() {
+  const modal = document.getElementById("modalAuth");
+  const btnBuka = document.getElementById("btnBukaAuth");
+  const btnTutup = document.getElementById("btnTutupAuthModal");
+  const tabLogin = document.getElementById("tabAuthLogin");
+  const tabRegister = document.getElementById("tabAuthRegister");
+  const formAuth = document.getElementById("formAuthEmail");
+  const groupName = document.getElementById("groupRegisterName");
+  const textSubmit = document.getElementById("textBtnSubmitAuth");
+  const errorMsg = document.getElementById("authErrorMessage");
+  const btnGoogle = document.getElementById("btnGoogleAuth");
+  const btnLogout = document.getElementById("btnLogout");
 
-  // Klik Garis 3 untuk Buka / Tutup Sidebar
-  if (btnToggle && sidebar) {
-    btnToggle.addEventListener("click", (e) => {
+  let isRegisterMode = false;
+
+  const openAuth = () => {
+    if (!isFirebaseActive) {
+      showToast("Harap masukkan 'firebaseConfig' di file app.js terlebih dahulu untuk mengaktifkan akun cloud.", "info");
+      return;
+    }
+    modal.classList.remove("hidden");
+    errorMsg.classList.add("hidden");
+  };
+
+  const closeAuth = () => {
+    modal.classList.add("hidden");
+    formAuth.reset();
+    errorMsg.classList.add("hidden");
+  };
+
+  if (btnBuka) btnBuka.addEventListener("click", openAuth);
+  if (btnTutup) btnTutup.addEventListener("click", closeAuth);
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeAuth();
+    });
+  }
+
+  // Ganti Tab Mode: Masuk vs Daftar
+  if (tabLogin && tabRegister) {
+    tabLogin.addEventListener("click", () => {
+      isRegisterMode = false;
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      groupName.style.display = "none";
+      textSubmit.innerText = "Masuk Sekarang";
+      errorMsg.classList.add("hidden");
+    });
+
+    tabRegister.addEventListener("click", () => {
+      isRegisterMode = true;
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      groupName.style.display = "block";
+      textSubmit.innerText = "Buat Akun Baru";
+      errorMsg.classList.add("hidden");
+    });
+  }
+
+  // 1. Submit Form Email & Password
+  if (formAuth) {
+    formAuth.addEventListener("submit", async (e) => {
       e.preventDefault();
-      e.stopPropagation();
+      const email = document.getElementById("authInputEmail").value.trim();
+      const password = document.getElementById("authInputPassword").value;
+      const name = document.getElementById("authInputName").value.trim();
 
-      if (window.innerWidth <= 768) {
-        // Layar HP: Munculkan geser samping
-        sidebar.classList.toggle("open");
-        if (backdrop) backdrop.classList.toggle("hidden");
-      } else {
-        // Layar Komputer / Laptop: Ciutkan menu ke samping
-        sidebar.classList.toggle("collapsed");
-      }
-    });
-  }
+      errorMsg.classList.add("hidden");
+      textSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
 
-  // Tutup sidebar saat latar belakang gelap diklik (di HP)
-  if (backdrop && sidebar) {
-    backdrop.addEventListener("click", () => {
-      sidebar.classList.remove("open");
-      backdrop.classList.add("hidden");
-    });
-  }
-
-  // Tutup sidebar otomatis saat menu diklik (di HP)
-  navBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (window.innerWidth <= 768 && sidebar) {
-        sidebar.classList.remove("open");
-        if (backdrop) backdrop.classList.add("hidden");
-      }
-    });
-  });
-
-  // Tombol Kunci Layar Miring Android
-  if (btnLandscape) {
-    btnLandscape.addEventListener("click", async () => {
       try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
+        if (isRegisterMode) {
+          // Daftar Akun Baru
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          if (name) {
+            await cred.user.updateProfile({ displayName: name });
+          }
+          showToast("Akun baru berhasil didaftarkan dan login otomatis!");
+        } else {
+          // Masuk Akun
+          await auth.signInWithEmailAndPassword(email, password);
+          showToast("Berhasil masuk ke akun Anda!");
         }
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock("landscape");
-          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
-        }
+        closeAuth();
       } catch (err) {
-        showToast("Aktifkan fitur 'Putar Otomatis' di panel HP Anda.", "info");
+        errorMsg.classList.remove("hidden");
+        errorMsg.innerText = err.message || "Terjadi kesalahan saat masuk.";
+      } finally {
+        textSubmit.innerHTML = isRegisterMode ? "Buat Akun Baru" : "Masuk Sekarang";
+      }
+    });
+  }
+
+  // 2. Login dengan Akun Google
+  if (btnGoogle) {
+    btnGoogle.addEventListener("click", async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        showToast("Berhasil masuk dengan akun Google!");
+        closeAuth();
+      } catch (err) {
+        errorMsg.classList.remove("hidden");
+        errorMsg.innerText = err.message || "Gagal masuk menggunakan Google.";
+      }
+    });
+  }
+
+  // 3. Keluar Akun (Logout)
+  if (btnLogout) {
+    btnLogout.addEventListener("click", async () => {
+      await auth.signOut();
+      showToast("Anda telah keluar dari akun.", "info");
+    });
+  }
+
+  // 4. Pantau Status Login Pengguna (Auth State Listener)
+  if (isFirebaseActive && auth) {
+    auth.onAuthStateChanged(async (user) => {
+      const btnAuthTrigger = document.getElementById("btnBukaAuth");
+      const chip = document.getElementById("userInfoChip");
+      const userName = document.getElementById("userDisplayName");
+      const avatar = document.getElementById("userAvatar");
+      const cloudStatus = document.getElementById("cloudStatusText");
+
+      if (user) {
+        AppState.currentUser = user;
+        if (btnAuthTrigger) btnAuthTrigger.classList.add("hidden");
+        if (chip) chip.classList.remove("hidden");
+        if (userName) userName.innerText = user.displayName || user.email.split("@")[0];
+        if (avatar) avatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=1e40af&color=fff`;
+        if (cloudStatus) cloudStatus.innerText = "Tersambung ke Cloud";
+
+        // Ambil data sekolah akun ini dari internet
+        await loadDataFromCloud(user);
+      } else {
+        AppState.currentUser = null;
+        if (btnAuthTrigger) btnAuthTrigger.classList.remove("hidden");
+        if (chip) chip.classList.add("hidden");
+        if (cloudStatus) cloudStatus.innerText = "Mode Offline (Lokal)";
       }
     });
   }
 }
 
 // =========================================================================
-// 4. MODUL KOP SURAT SEKOLAH
+// 6. MODUL KOP SURAT SEKOLAH
 // =========================================================================
 function renderKopSurat() {
   const k = AppState.kop;
@@ -261,6 +430,7 @@ function initKopModule() {
           AppState.kop.logoUrl = evt.target.result;
           setVal("cfgKopLogoUrl", "Logo lokal terpilih");
           renderKopSurat();
+          syncDataToCloud();
           showToast("Logo berhasil dimuat!");
         };
         reader.readAsDataURL(file);
@@ -285,13 +455,14 @@ function initKopModule() {
 
       AppStorage.set("kopSekolahSDN3", AppState.kop);
       renderKopSurat();
+      syncDataToCloud(); // Simpan otomatis ke cloud
       showToast("Kop surat berhasil diperbarui dan disimpan!");
     });
   }
 }
 
 // =========================================================================
-// 5. MODUL PEGAWAI & PENANDATANGAN
+// 7. MODUL PEGAWAI & PENANDATANGAN
 // =========================================================================
 function syncPejabatPemberi() {
   const sel = document.getElementById("selectPenandatangan");
@@ -388,6 +559,7 @@ function renderTabelPegawai() {
       AppStorage.set("listPegawaiSDN3", AppState.pegawai);
       refreshDropdownPegawai();
       renderTabelPegawai();
+      syncDataToCloud();
       showToast(`Data pegawai ${nama} berhasil dihapus.`);
     });
   });
@@ -426,6 +598,7 @@ function initPegawaiModule() {
       AppStorage.set("listPegawaiSDN3", AppState.pegawai);
       refreshDropdownPegawai();
       renderTabelPegawai();
+      syncDataToCloud(); // Simpan otomatis ke cloud
 
       const clearVal = (id) => {
         const el = document.getElementById(id);
@@ -442,7 +615,7 @@ function initPegawaiModule() {
 }
 
 // =========================================================================
-// 6. MODUL TANDA TANGAN & STEMPEL (SPASI 70PX TIDAK DEMPET)
+// 8. MODUL TANDA TANGAN & STEMPEL
 // =========================================================================
 function initTtdModule() {
   const checkTtd = document.getElementById("checkTtd");
@@ -452,7 +625,6 @@ function initTtdModule() {
     checkTtd.addEventListener("change", () => {
       const stamp = ttdBox.querySelector(".stamp-round");
       const sig = ttdBox.querySelector(".svg-ttd");
-      // Hanya sembunyikan gambar, spasi 70px tetap tersedia
       if (stamp) stamp.style.display = checkTtd.checked ? "flex" : "none";
       if (sig) sig.style.display = checkTtd.checked ? "block" : "none";
     });
@@ -460,7 +632,7 @@ function initTtdModule() {
 }
 
 // =========================================================================
-// 7. MODUL MULTI-TEMPLATE SURAT
+// 9. MODUL MULTI-TEMPLATE SURAT
 // =========================================================================
 function updateJenisSurat(jenis) {
   const judul = AppState.judulSuratMap[jenis] || "SURAT RESMI";
@@ -542,7 +714,6 @@ function initSuratBinding() {
     });
   }
 
-  // Live Binding Formulir
   bindLiveSync("inSptUntuk", "viewSptUntuk");
   bindLiveSync("inSptTglBerangkat", "viewSptTglBerangkat");
   bindLiveSync("inSptTglKembali", "viewSptTglKembali");
@@ -586,4 +757,332 @@ function initSuratBinding() {
   const btnReset = document.getElementById("btnResetSurat");
   if (btnReset) {
     btnReset.addEventListener("click", () => {
-      if (inNo) inNo.value 
+      if (inNo) inNo.value = "66";
+      if (viewNo) viewNo.innerText = "66";
+      showToast("Formulir surat berhasil direset.", "info");
+    });
+  }
+}
+
+// =========================================================================
+// 10. MODUL ARSIP & PRATINJAU MODAL PDF
+// =========================================================================
+async function bukaDokumenModal(idx) {
+  const item = AppState.arsip[idx];
+  if (!item) return;
+
+  const modal = document.getElementById("modalPdfViewer");
+  const frame = document.getElementById("modalPdfFrame");
+  const title = document.getElementById("modalPdfTitle");
+  const btnDownload = document.getElementById("modalPdfDownload");
+
+  title.innerText = item.judul || "Dokumen PDF";
+
+  let blob = await PdfStorage.getFile(item.id);
+
+  if (!blob) {
+    const contohHtml = `
+      <html>
+        <body style="font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#f8fafc; color:#1e293b; text-align:center; padding:20px;">
+          <h2 style="color:#1e40af; margin-bottom:8px;">${item.judul}</h2>
+          <p style="color:#64748b; font-size:14px;">Nomor Surat: <strong>${item.nomor}</strong> | Kategori: <strong>${item.kategori}</strong></p>
+          <div style="background:#e0f2fe; color:#0369a1; padding:12px 18px; border-radius:8px; margin-top:16px; max-width:480px; font-size:13px;">
+            Ini adalah berkas riwayat bawaan. Untuk membuka berkas PDF asli, unggah file PDF Anda melalui formulir di samping.
+          </div>
+        </body>
+      </html>
+    `;
+    blob = new Blob([contohHtml], { type: "text/html" });
+  }
+
+  const blobUrl = URL.createObjectURL(blob);
+  frame.src = blobUrl;
+  btnDownload.href = blobUrl;
+  btnDownload.download = item.judul || "dokumen.pdf";
+
+  modal.classList.remove("hidden");
+}
+
+function tutupModalPdf() {
+  const modal = document.getElementById("modalPdfViewer");
+  const frame = document.getElementById("modalPdfFrame");
+  if (modal) modal.classList.add("hidden");
+  if (frame) frame.src = "about:blank";
+}
+
+function renderTabelArsip(filterQuery = "") {
+  const tbody = document.getElementById("tbodyArsipList");
+  if (!tbody) return;
+
+  const query = filterQuery.toLowerCase().trim();
+
+  const filteredList = AppState.arsip.filter((item) => {
+    if (!query) return true;
+    const matchNomor = (item.nomor || "").toLowerCase().includes(query);
+    const matchJudul = (item.judul || "").toLowerCase().includes(query);
+    const matchKategori = (item.kategori || "").toLowerCase().includes(query);
+    return matchNomor || matchJudul || matchKategori;
+  });
+
+  tbody.innerHTML = "";
+
+  if (filteredList.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
+          <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
+          Tidak ada dokumen yang cocok dengan kata kunci "<strong>${filterQuery}</strong>".
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  filteredList.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.tanggal}</td>
+      <td><span class="badge-nomor">${item.nomor || "-"}</span></td>
+      <td><strong>${item.judul}</strong></td>
+      <td>${item.kategori || "Surat Resmi"}</td>
+      <td><span style="color:var(--success); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${item.status || "Tersimpan"}</span></td>
+      <td>
+        <button type="button" class="btn btn-secondary btn-sm btn-buka-arsip" data-id="${item.id}">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm btn-hapus-arsip" data-id="${item.id}" style="color:var(--danger); margin-left:4px;" title="Hapus Arsip">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".btn-buka-arsip").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute("data-id");
+      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
+      if (realIndex !== -1) bukaDokumenModal(realIndex);
+    });
+  });
+
+  tbody.querySelectorAll(".btn-hapus-arsip").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute("data-id");
+      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
+      if (realIndex !== -1) {
+        const item = AppState.arsip[realIndex];
+        if (item && item.id) {
+          await PdfStorage.deleteFile(item.id);
+        }
+        AppState.arsip.splice(realIndex, 1);
+        AppStorage.set("listArsipSDN3", AppState.arsip);
+        
+        const inCari = document.getElementById("inCariArsip");
+        renderTabelArsip(inCari ? inCari.value : "");
+        syncDataToCloud();
+        showToast("Arsip dokumen berhasil dihapus.");
+      }
+    });
+  });
+}
+
+function initArsipModule() {
+  renderTabelArsip();
+
+  const btnUpload = document.getElementById("btnUploadDrive");
+  const inNomor = document.getElementById("inDocNomor");
+  const inTitle = document.getElementById("inDocTitle");
+  const inCategory = document.getElementById("inDocCategory");
+  const inFile = document.getElementById("inDocFile");
+
+  const inCari = document.getElementById("inCariArsip");
+  const btnResetCari = document.getElementById("btnResetCari");
+
+  if (inCari) {
+    inCari.addEventListener("input", (e) => {
+      renderTabelArsip(e.target.value);
+      if (btnResetCari) {
+        btnResetCari.classList.toggle("hidden", e.target.value.length === 0);
+      }
+    });
+  }
+
+  if (btnResetCari) {
+    btnResetCari.addEventListener("click", () => {
+      if (inCari) {
+        inCari.value = "";
+        inCari.focus();
+      }
+      btnResetCari.classList.add("hidden");
+      renderTabelArsip("");
+    });
+  }
+
+  const btnTutup = document.getElementById("btnTutupModalPdf");
+  if (btnTutup) btnTutup.addEventListener("click", tutupModalPdf);
+
+  const modal = document.getElementById("modalPdfViewer");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) tutupModalPdf();
+    });
+  }
+
+  if (btnUpload) {
+    btnUpload.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const getVal = (el) => (el ? el.value.trim() : "");
+      const inNoSurat = document.getElementById("inputNoSurat");
+      const nomor = getVal(inNomor) || (inNoSurat ? inNoSurat.value.trim() : "-");
+      const title = getVal(inTitle);
+      const category = inCategory ? inCategory.value : "Surat Resmi";
+      const file = inFile && inFile.files ? inFile.files[0] : null;
+
+      if (!title || !file) {
+        showToast("Lengkapi judul dokumen dan pilih file PDF terlebih dahulu!", "info");
+        return;
+      }
+
+      btnUpload.disabled = true;
+      btnUpload.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+
+      const fileId = "pdf_" + Date.now();
+      const today = new Date().toLocaleDateString("id-ID");
+
+      await PdfStorage.saveFile(fileId, file);
+
+      AppState.arsip.unshift({
+        id: fileId,
+        tanggal: today,
+        nomor: nomor,
+        judul: `${title}.pdf`,
+        kategori: category,
+        status: "Tersimpan",
+        isSample: false
+      });
+
+      AppStorage.set("listArsipSDN3", AppState.arsip);
+      syncDataToCloud(); // Simpan otomatis ke cloud
+
+      if (inCari) inCari.value = "";
+      if (btnResetCari) btnResetCari.classList.add("hidden");
+      renderTabelArsip("");
+
+      if (inNomor) inNomor.value = "";
+      if (inTitle) inTitle.value = "";
+      if (inFile) inFile.value = "";
+
+      btnUpload.disabled = false;
+      btnUpload.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Arsip Dokumen`;
+
+      showToast(`Dokumen No. ${nomor} berhasil diarsipkan!`);
+    });
+  }
+}
+
+// =========================================================================
+// 11. NAVIGASI TAB MENU & RESPONSIVE TOGGLE
+// =========================================================================
+function initResponsiveMenu() {
+  const btnToggle = document.getElementById("btnToggleSidebar");
+  const sidebar = document.querySelector(".sidebar");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const navBtns = document.querySelectorAll(".nav-btn");
+  const btnLandscape = document.getElementById("btnLandscapeMobile");
+
+  if (btnToggle && sidebar) {
+    btnToggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (window.innerWidth <= 768) {
+        sidebar.classList.toggle("open");
+        if (backdrop) backdrop.classList.toggle("hidden");
+      } else {
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
+
+  if (backdrop && sidebar) {
+    backdrop.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.add("hidden");
+    });
+  }
+
+  navBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove("open");
+        if (backdrop) backdrop.classList.add("hidden");
+      }
+    });
+  });
+
+  if (btnLandscape) {
+    btnLandscape.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape");
+          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
+        }
+      } catch (err) {
+        showToast("Aktifkan fitur 'Putar Otomatis' di panel HP Anda.", "info");
+      }
+    });
+  }
+}
+
+function initTabNavigation() {
+  const btns = document.querySelectorAll(".nav-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+  const titleDisplay = document.getElementById("headerTitle");
+
+  const titles = {
+    "tab-surat": "Buat Surat Sekolah",
+    "tab-kop": "Pengaturan Kop Sekolah Mandiri",
+    "tab-pegawai": "Kelola Data Pegawai & Guru",
+    "tab-arsip": "Arsip Dokumen PDF"
+  };
+
+  btns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btns.forEach((b) => b.classList.remove("active"));
+      panels.forEach((p) => p.classList.remove("active"));
+
+      btn.classList.add("active");
+      const targetId = btn.getAttribute("data-tab");
+      const targetPanel = document.getElementById(targetId);
+
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+        if (titleDisplay) titleDisplay.innerText = titles[targetId] || "Sistem Surat";
+
+        if (targetId === "tab-arsip") {
+          const inNo = document.getElementById("inputNoSurat");
+          const inDocNomor = document.getElementById("inDocNomor");
+          if (inNo && inDocNomor) {
+            inDocNomor.value = inNo.value;
+          }
+        }
+      }
+    });
+  });
+}
+
+// Inisialisasi Utama
+document.addEventListener("DOMContentLoaded", () => {
+  initResponsiveMenu();
+  initTabNavigation();
+  initKopModule();
+  initPegawaiModule();
+  initTtdModule();
+  initSuratBinding();
+  initArsipModule();
+  initAuthModule(); // Jalankan sistem akun pengguna
+});
