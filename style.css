@@ -1,13 +1,15 @@
 :root {
-  --primary: #1e40af;
-  --primary-hover: #1e3a8a;
+  --primary: #15803d;          /* Hijau Sekolah Formal */
+  --primary-hover: #14532d;    /* Hijau Tua Saat Kursor Menempel */
+  --primary-light: #f0fdf4;    /* Hijau Pastel Lembut */
+  --primary-border: #bbf7d0;   /* Garis Batas Hijau Halus */
   --secondary: #f1f5f9;
   --secondary-hover: #e2e8f0;
-  --success: #059669;
+  --success: #16a34a;
   --danger: #dc2626;
-  --bg-app: #f8fafc;
-  --bg-sidebar: #090d16;
-  --surface: #ffffff;
+  --bg-app: #f4f8f5;           /* Latar Belakang Putih Segar */
+  --bg-sidebar: #063721;       /* Sidebar Hijau Hutan Elegan */
+  --surface: #ffffff;          /* Putih Bersih */
   --border: #e2e8f0;
   --text-main: #0f172a;
   --text-muted: #64748b;
@@ -40,7 +42,7 @@ body {
   overflow: hidden;
 }
 
-/* SIDEBAR & ANIMASI TOGGLE */
+/* ================= SIDEBAR NAVIGASI (HIJAU KEDINASAN) ================= */
 .sidebar {
   width: 270px;
   background: var(--bg-sidebar);
@@ -48,12 +50,11 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 16px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
   transition: transform 0.3s ease, margin-left 0.3s ease;
 }
 
-/* Sidebar Ciut di Laptop */
 .sidebar.collapsed {
   margin-left: -270px;
 }
@@ -63,20 +64,20 @@ body {
   align-items: center;
   gap: 12px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .brand-icon {
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #22c55e, #15803d);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-size: 19px;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.4);
 }
 
 .brand-text h2 {
@@ -87,13 +88,13 @@ body {
 
 .brand-text p {
   font-size: 11px;
-  color: #94a3b8;
+  color: #86efac;
 }
 
 .nav-menu {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   margin-top: 24px;
   flex: 1;
 }
@@ -104,7 +105,7 @@ body {
   gap: 12px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  color: #94a3b8;
+  color: #cbd5e1;
   background: transparent;
   border: none;
   font-size: 13.5px;
@@ -122,14 +123,14 @@ body {
 }
 
 .nav-btn:hover {
-  color: #f1f5f9;
-  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-btn.active {
   color: #ffffff;
-  background: linear-gradient(90deg, #1d4ed8, #2563eb);
-  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
+  background: linear-gradient(90deg, #15803d, #16a34a);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
 }
 
 .sidebar-status {
@@ -137,21 +138,22 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #cbd5e1;
+  color: #d1fae5;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pulse-dot {
   width: 8px;
   height: 8px;
-  background: #10b981;
+  background: #4ade80;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.3);
 }
 
-/* MAIN VIEWPORT */
+/* ================= MAIN VIEWPORT & HEADER ================= */
 .main-wrapper {
   flex: 1;
   display: flex;
@@ -162,7 +164,7 @@ body {
 .top-header {
   height: 64px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1.5px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -176,12 +178,11 @@ body {
   gap: 14px;
 }
 
-/* TOMBOL GARIS 3 */
 .btn-toggle-sidebar {
   background: transparent;
   border: none;
   font-size: 20px;
-  color: var(--text-main);
+  color: var(--primary);
   cursor: pointer;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
@@ -192,7 +193,7 @@ body {
 }
 
 .btn-toggle-sidebar:hover {
-  background: var(--secondary);
+  background: var(--primary-light);
 }
 
 .breadcrumb {
@@ -204,7 +205,7 @@ body {
 }
 
 .breadcrumb strong {
-  color: var(--text-main);
+  color: var(--primary);
   font-weight: 700;
 }
 
@@ -228,7 +229,7 @@ body {
   display: block;
 }
 
-/* TOMBOL & CARD */
+/* ================= TOMBOL-TOMBOL ================= */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -244,13 +245,31 @@ body {
   user-select: none;
 }
 
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-secondary { background: #fff; border-color: var(--border); color: var(--text-main); }
-.btn-secondary:hover { background: var(--secondary); }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(21, 128, 61, 0.2);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: var(--text-main);
+}
+
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
 .btn-block { width: 100%; }
 .btn-sm { padding: 5px 9px; font-size: 12px; }
 
+/* ================= PANEL & FORMULIR ================= */
 .panel-split {
   display: grid;
   grid-template-columns: 430px 1fr;
@@ -261,7 +280,7 @@ body {
 .panel-card {
   background: var(--surface);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: 1.5px solid #e2e8f0;
   box-shadow: var(--shadow-sm);
   padding: 22px;
 }
@@ -271,6 +290,7 @@ body {
 .card-header h3 {
   font-size: 16px;
   font-weight: 700;
+  color: #14532d;
   margin-bottom: 4px;
 }
 
@@ -281,8 +301,8 @@ body {
 }
 
 .highlighted-group {
-  background: #eff6ff;
-  border: 1.5px solid #bfdbfe;
+  background: var(--primary-light);
+  border: 1.5px solid var(--primary-border);
   padding: 12px;
   border-radius: var(--radius-sm);
 }
@@ -291,6 +311,7 @@ body {
   font-weight: 700;
   color: var(--primary);
   background: #ffffff;
+  border-color: var(--primary-border);
 }
 
 .section-title {
@@ -299,7 +320,7 @@ body {
   color: var(--primary);
   margin: 18px 0 10px 0;
   padding-bottom: 5px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1.5px solid #dcfce7;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -326,11 +347,12 @@ body {
   color: var(--text-main);
   outline: none;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .form-input:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
 }
 
 .input-inline {
@@ -351,6 +373,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  color: #1f2937;
 }
 
 .checkbox-label input {
@@ -368,9 +391,9 @@ body {
 .mt-2 { margin-top: 8px; }
 .hidden { display: none !important; }
 
-/* PRATINJAU KERTAS A4 & GULIR HORIZONTAL */
+/* ================= PRATINJAU KERTAS A4 & GULIR ================= */
 .preview-stage {
-  background: #475569;
+  background: #37473e;         /* Abu-abu Lumut Teduh agar Kertas A4 Menonjol */
   border-radius: var(--radius-md);
   padding: 28px 16px;
   display: flex;
@@ -396,7 +419,7 @@ body {
   margin: 0 auto;
 }
 
-/* ================= KOP SURAT (100% PRESISI DI TENGAH LEMBAR A4) ================= */
+/* ================= KOP SURAT (PRESISI 100% DI TENGAH) ================= */
 .letter-kop {
   position: relative;
   text-align: center;
@@ -525,7 +548,7 @@ body {
   margin-top: 14px;
 }
 
-/* TANDA TANGAN & RUANG KOSONG 70PX */
+/* ================= TANDA TANGAN & RUANG KOSONG 70PX ================= */
 .signature-section {
   display: flex;
   justify-content: flex-end;
@@ -545,7 +568,7 @@ body {
 
 .visual-stamp-ttd {
   position: relative;
-  height: 70px;
+  height: 70px; /* Ruang tanda tangan basah tidak akan dempet */
   margin: 6px 0;
 }
 
@@ -596,11 +619,11 @@ body {
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* TABEL ARSIP, PEGAWAI & PENCARIAN */
+/* ================= TABEL ARSIP, PEGAWAI & SEARCH ================= */
 .table-card {
   background: var(--surface);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+  border: 1.5px solid #e2e8f0;
   box-shadow: var(--shadow-sm);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -612,18 +635,18 @@ body {
   gap: 10px;
   padding: 12px 16px;
   background: #f8fafc;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1.5px solid #e2e8f0;
 }
 
 .table-search-bar i.fa-magnifying-glass {
-  color: #94a3b8;
+  color: var(--primary);
   font-size: 14px;
 }
 
 .search-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid #cbd5e1;
   border-radius: var(--radius-sm);
   font-size: 13px;
   color: var(--text-main);
@@ -634,7 +657,7 @@ body {
 
 .search-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
 }
 
 .btn-clear-search {
@@ -661,12 +684,12 @@ body {
 }
 
 .data-table th {
-  background: #f8fafc;
+  background: #f1f8f3;       /* Header Tabel Bernuansa Hijau Halus */
   padding: 12px 16px;
   font-size: 12.5px;
   font-weight: 700;
-  color: #475569;
-  border-bottom: 1px solid var(--border);
+  color: #166534;
+  border-bottom: 1.5px solid #dcfce7;
 }
 
 .data-table td {
@@ -678,21 +701,22 @@ body {
 .data-table tr:last-child td { border-bottom: none; }
 
 .badge-nomor {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #dcfce7;       /* Lencana Nomor Hijau Segar */
+  color: #166534;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.3px;
   display: inline-block;
+  border: 1px solid #bbf7d0;
 }
 
-/* JENDELA POPUP MODAL PENAMPIL PDF */
+/* ================= JENDELA POPUP PENAMPIL PDF ================= */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(6, 40, 24, 0.78); /* Latar Belakang Gelap Bernuansa Hijau Hutan */
   backdrop-filter: blur(4px);
   z-index: 999999;
   display: flex;
@@ -709,7 +733,7 @@ body {
   height: 88vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
   overflow: hidden;
   animation: modalZoomIn 0.2s ease-out;
 }
@@ -738,7 +762,7 @@ body {
 .modal-title-wrap h3 {
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #14532d;
   margin: 0;
 }
 
@@ -772,7 +796,7 @@ body {
   flex: 1;
   width: 100%;
   height: 100%;
-  background: #334155;
+  background: #2b3930;
   overflow: hidden;
 }
 
@@ -783,37 +807,136 @@ body {
   background: #ffffff;
 }
 
-/* GAYA MODAL LOGIN & AKUN */
+/* ================= AKUN & LOGIN MODAL ================= */
 .user-profile-area { display: flex; align-items: center; }
+
 .user-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #f1f5f9;
+  background: #f0fdf4;
   padding: 4px 10px 4px 6px;
   border-radius: 30px;
-  border: 1px solid var(--border);
+  border: 1.5px solid #bbf7d0;
 }
-.user-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-.user-name { font-size: 13px; font-weight: 700; color: var(--text-main); max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.btn-logout { background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 4px; display: flex; align-items: center; }
-.auth-modal-card { max-width: 440px; height: auto; border-radius: var(--radius-md); }
-.auth-modal-body { padding: 22px; background: #ffffff; }
-.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: var(--radius-sm); margin-bottom: 18px; }
-.auth-tab-btn { background: transparent; border: none; padding: 8px 12px; font-size: 13px; font-weight: 600; color: #64748b; border-radius: 6px; cursor: pointer; }
-.auth-tab-btn.active { background: #ffffff; color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.btn-google-auth {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
-  background: #ffffff; border: 1.5px solid #cbd5e1; padding: 10px 14px; border-radius: var(--radius-sm);
-  font-size: 13.5px; font-weight: 600; color: #1e293b; cursor: pointer;
-}
-.google-icon { width: 18px; height: 18px; }
-.auth-divider { display: flex; align-items: center; text-align: center; margin: 18px 0; color: #94a3b8; font-size: 11.5px; }
-.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
-.auth-divider span { padding: 0 10px; }
-.auth-error-msg { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 12.5px; margin-bottom: 10px; }
 
-/* SCROLLBAR RAMPING */
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #166534;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-logout {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.auth-modal-card {
+  max-width: 440px;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.auth-modal-body {
+  padding: 22px;
+  background: #ffffff;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: #f1f8f3;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+}
+
+.auth-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-tab-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-google-auth {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-google-auth:hover {
+  background: #f8fafc;
+  border-color: var(--primary);
+}
+
+.google-icon { width: 18px; height: 18px; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 18px 0;
+  color: #94a3b8;
+  font-size: 11.5px;
+}
+
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.auth-divider span { padding: 0 10px; }
+
+.auth-error-msg {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  margin-bottom: 10px;
+}
+
+/* ================= SCROLLBAR MODERN HIJAU ================= */
 .preview-stage::-webkit-scrollbar,
 .table-card::-webkit-scrollbar {
   height: 8px;
@@ -827,24 +950,22 @@ body {
 
 .preview-stage::-webkit-scrollbar-thumb,
 .table-card::-webkit-scrollbar-thumb {
-  background: #94a3b8;
+  background: #86efac;
   border-radius: 4px;
 }
 
 .preview-stage::-webkit-scrollbar-thumb:hover,
 .table-card::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #4ade80;
 }
 
-/* RESPONSIVE LAYAR HP & ANDROID */
-.mobile-only {
-  display: none;
-}
+/* ================= RESPONSIVE ANDROID / HP ================= */
+.mobile-only { display: none; }
 
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(6, 40, 24, 0.65);
   backdrop-filter: blur(2px);
   z-index: 9998;
 }
@@ -859,25 +980,13 @@ body {
     transform: translateX(-100%);
     margin-left: 0 !important;
   }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .mobile-only {
-    display: inline-flex;
-  }
-
-  .panel-split {
-    grid-template-columns: 1fr;
-  }
-
-  .top-header {
-    padding: 0 14px;
-  }
+  .sidebar.open { transform: translateX(0); }
+  .mobile-only { display: inline-flex; }
+  .panel-split { grid-template-columns: 1fr; }
+  .top-header { padding: 0 14px; }
 }
 
-/* TOAST */
+/* ================= NOTIFIKASI TOAST ================= */
 .toast-container {
   position: fixed;
   bottom: 24px;
@@ -904,10 +1013,10 @@ body {
   transition: opacity 0.3s, transform 0.3s;
 }
 
-.toast-item.success { background: #065f46; }
-.toast-item.info { background: #1e3a8a; }
+.toast-item.success { background: #166534; }
+.toast-item.info { background: #0e7490; }
 
-/* ================= CETAK PAS A4 - BERSIH TANPA KONTEN LAIN ================= */
+/* ================= ATURAN CETAK (HANYA KERTAS A4) ================= */
 @page {
   size: A4 portrait;
   margin: 12mm 15mm;
