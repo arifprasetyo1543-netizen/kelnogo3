@@ -9,14 +9,27 @@
 // =========================================================================
 // Jika Anda memiliki akun Firebase, Anda cukup menempelkan kuncinya di sini.
 // Jika belum, aplikasi tetap berjalan normal 100% dalam mode offline aman.
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "ISI_DENGAN_API_KEY_ANDA",
-  authDomain: "ISI_DENGAN_AUTH_DOMAIN_ANDA",
-  projectId: "ISI_DENGAN_PROJECT_ID_ANDA",
-  storageBucket: "ISI_DENGAN_STORAGE_BUCKET_ANDA",
-  messagingSenderId: "ISI_DENGAN_MESSAGING_SENDER_ID_ANDA",
-  appId: "ISI_DENGAN_APP_ID_ANDA"
+  apiKey: "AIzaSyAdg6j0-1x9JKexTnD3fFG4UPGryCW8rDg",
+  authDomain: "surat-sdn3nogoraju.firebaseapp.com",
+  projectId: "surat-sdn3nogoraju",
+  storageBucket: "surat-sdn3nogoraju.firebasestorage.app",
+  messagingSenderId: "761011637070",
+  appId: "1:761011637070:web:1124b2ecc42ca534e86c1f",
+  measurementId: "G-ZZT7EQCERG"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 let auth = null;
 let db = null;
