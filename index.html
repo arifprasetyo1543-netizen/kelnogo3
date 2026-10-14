@@ -118,7 +118,7 @@
               <div class="form-group highlighted-group">
                 <label><i class="fa-solid fa-list-check"></i> Pilih Jenis Surat</label>
                 <select id="selectJenisSurat" class="form-input form-select-lg">
-                  <option value="spt">1. Surat Perintah Tugas (SPT)</option>
+                  <option value="spt">1. Surat Tugas</option>
                   <option value="sk_aktif">2. Surat Keterangan Aktif Siswa (PIP/Bank)</option>
                   <option value="undangan">3. Surat Undangan Resmi / Wali Murid & Komite</option>
                   <option value="sk_pindah">4. Surat Keterangan Pindah Sekolah (Mutasi)</option>
@@ -130,7 +130,7 @@
               <div class="form-group">
                 <label>Nomor Surat</label>
                 <div class="input-inline">
-                  <input type="text" id="inputNoSurat" class="form-input" value="">
+                  <input type="text" id="inputNoSurat" class="form-input" value="400.3.5.../01/SDN.068/X/2026" placeholder="Contoh: 421.2/066/SDN3-NGR/X/2026">
                   <button type="button" id="btnTambahNomor" class="btn btn-secondary" title="Tambah Urutan Nomor">
                     <i class="fa-solid fa-plus"></i>
                   </button>
@@ -328,7 +328,7 @@
 
                 <!-- JUDUL SURAT -->
                 <div class="letter-title">
-                  <h3 id="viewJudulSurat">SURAT PERINTAH TUGAS</h3>
+                  <h3 id="viewJudulSurat">SURAT TUGAS</h3>
                   <p>Nomor : <span id="viewNoSurat">400.3.5.../01/SDN.068/X/2026</span></p>
                 </div>
 
@@ -349,7 +349,7 @@
                     <tr>
                       <td class="col-lbl">Pangkat / Gol</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiGol">PENATA AHLI MUDA-III/D</td>
+                      <td class="col-val" id="viewSptPemberiGol">Penata Tingkat 1-III/D</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Jabatan</td>
@@ -706,7 +706,7 @@
 
               <div class="form-group">
                 <label>Nomor Surat</label>
-                <input type="text" id="inDocNomor" class="form-input" placeholder="Contoh: 421.2/066/SDN3-NGR/X/2026">
+                <input type="text" id="inDocNomor" class="form-input" placeholder="400.3.5.../01/SDN.068/X/2026" readonly>
                 <small class="helper-text">Otomatis terisi dari jenis dan nomor surat yang sedang aktif dibuat.</small>
               </div>
 
