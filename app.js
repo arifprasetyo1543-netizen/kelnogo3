@@ -1,861 +1,1077 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Tata Naskah & Pengarsipan Surat Digital - SDN 3 Nogoraji</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+/**
+ * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
+ * SD NEGERI 3 NOGORAJI
+ * Versi Lengkap & Stabil - Data Bapak Kasmin & Arif Terpasang
+ */
 
-  <!-- Wadah Notifikasi Toast -->
-  <div id="toastContainer" class="toast-container"></div>
+// =========================================================================
+// 1. KONFIGURASI GOOGLE FIREBASE CLOUD
+// =========================================================================
+// Jika Anda memiliki akun Firebase, Anda cukup menempelkan kuncinya di sini.
+// Jika belum, aplikasi tetap berjalan normal 100% dalam mode offline aman.
+const firebaseConfig = {
+  apiKey: "ISI_DENGAN_API_KEY_ANDA",
+  authDomain: "ISI_DENGAN_AUTH_DOMAIN_ANDA",
+  projectId: "ISI_DENGAN_PROJECT_ID_ANDA",
+  storageBucket: "ISI_DENGAN_STORAGE_BUCKET_ANDA",
+  messagingSenderId: "ISI_DENGAN_MESSAGING_SENDER_ID_ANDA",
+  appId: "ISI_DENGAN_APP_ID_ANDA"
+};
 
-  <div class="app-layout">
-    
-    <!-- SIDEBAR NAVIGASI -->
-    <aside class="sidebar no-print">
-      <div class="brand">
-        <div class="brand-icon">
-          <i class="fa-solid fa-envelope-open-text"></i>
-        </div>
-        <div class="brand-text">
-          <h2 id="sideSchoolName">SDN 3 Nogoraji</h2>
-          <p>Tata Naskah & Persuratan</p>
-        </div>
-      </div>
+let auth = null;
+let db = null;
+let isFirebaseActive = false;
 
-      <nav class="nav-menu">
-        <button type="button" class="nav-btn active" data-tab="tab-surat">
-          <i class="fa-solid fa-file-signature"></i> Buat Surat Sekolah
+try {
+  if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("ISI_DENGAN")) {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    isFirebaseActive = true;
+  }
+} catch (e) {
+  console.warn("Firebase offline / belum diisi config.");
+}
+
+// =========================================================================
+// 2. SISTEM PENYIMPANAN AMAN (INDEXEDDB & STORAGE)
+// =========================================================================
+const PdfStorage = {
+  dbName: "SDN3_ArsipPDF_DB",
+  storeName: "pdf_blobs",
+  db: null,
+
+  async init() {
+    return new Promise((resolve) => {
+      const req = indexedDB.open(this.dbName, 1);
+      req.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains(this.storeName)) {
+          d.createObjectStore(this.storeName, { keyPath: "id" });
+        }
+      };
+      req.onsuccess = (e) => {
+        this.db = e.target.result;
+        resolve(this.db);
+      };
+      req.onerror = () => resolve(null);
+    });
+  },
+
+  async saveFile(id, fileBlob) {
+    if (!this.db) await this.init();
+    if (!this.db) return false;
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db.transaction(this.storeName, "readwrite");
+        tx.objectStore(this.storeName).put({ id: String(id), blob: fileBlob });
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  },
+
+  async getFile(id) {
+    if (!this.db) await this.init();
+    if (!this.db) return null;
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db.transaction(this.storeName, "readonly");
+        const req = tx.objectStore(this.storeName).get(String(id));
+        req.onsuccess = (e) => resolve(e.target.result ? e.target.result.blob : null);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  },
+
+  async deleteFile(id) {
+    if (!this.db) await this.init();
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction(this.storeName, "readwrite");
+      tx.objectStore(this.storeName).delete(String(id));
+    } catch (e) {}
+  }
+};
+
+const AppStorage = {
+  memoryCache: {},
+  get(key, fallback = null) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? JSON.parse(val) : fallback;
+    } catch (e) {
+      return this.memoryCache[key] !== undefined ? this.memoryCache[key] : fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      this.memoryCache[key] = value;
+    }
+  }
+};
+
+// =========================================================================
+// 3. STATE APLIKASI (DATA BAPAK KASMIN & ARIF TERPASANG)
+// =========================================================================
+const AppState = {
+  currentUser: null,
+
+  kop: AppStorage.get("kopSekolahSDN3", {
+    baris1: "PEMERINTAH KABUPATEN KEBUMEN",
+    baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
+    namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
+    alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
+    kontak: "NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
+  }),
+
+  // Data Pegawai Bawaan Langsung Pak Kasmin & Pak Arif
+  pegawai: AppStorage.get("listPegawaiSDN3", [
+    { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
+    { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
+  ]),
+
+  arsip: AppStorage.get("listArsipSDN3", [
+    { id: "sample_1", tanggal: "12/10/2026", nomor: "66", judul: "22.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_2", tanggal: "12/10/2026", nomor: "66", judul: "Surat Perintah Tugas Pelatihan Kurikulum 2026.pdf", kategori: "Surat Tugas", status: "Tersimpan", isSample: true },
+    { id: "sample_3", tanggal: "12/10/2026", nomor: "421.1/045/2026", judul: "Surat Keterangan Aktif Siswa M. Rizky.pdf", kategori: "Surat Keterangan", status: "Tersimpan", isSample: true }
+  ]),
+
+  judulSuratMap: {
+    spt: "SURAT PERINTAH TUGAS",
+    sk_aktif: "SURAT KETERANGAN AKTIF SEKOLAH",
+    undangan: "SURAT UNDANGAN",
+    sk_pindah: "SURAT KETERANGAN PINDAH SEKOLAH",
+    sk_kelakuan: "SURAT REKOMENDASI / KELAKUAN BAIK"
+  }
+};
+
+// =========================================================================
+// 4. SINKRONISASI OTOMATIS DATA KE CLOUD
+// =========================================================================
+async function syncDataToCloud() {
+  if (!isFirebaseActive || !AppState.currentUser || !db) return;
+
+  try {
+    const userDocRef = db.collection("sekolah_data").doc(AppState.currentUser.uid);
+    await userDocRef.set({
+      kop: AppState.kop,
+      pegawai: AppState.pegawai,
+      arsip: AppState.arsip,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    const statusTxt = document.getElementById("cloudStatusText");
+    if (statusTxt) statusTxt.innerText = "Tersinkron ke Cloud";
+  } catch (err) {
+    console.warn("Gagal sinkron cloud:", err);
+  }
+}
+
+async function loadDataFromCloud(user) {
+  if (!isFirebaseActive || !user || !db) return;
+
+  try {
+    const doc = await db.collection("sekolah_data").doc(user.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.kop) AppState.kop = data.kop;
+      if (data.pegawai) AppState.pegawai = data.pegawai;
+      if (data.arsip) AppState.arsip = data.arsip;
+
+      AppStorage.set("kopSekolahSDN3", AppState.kop);
+      AppStorage.set("listPegawaiSDN3", AppState.pegawai);
+      AppStorage.set("listArsipSDN3", AppState.arsip);
+
+      renderKopSurat();
+      refreshDropdownPegawai();
+      renderTabelPegawai();
+      renderTabelArsip();
+
+      showToast(`Data sekolah akun Anda berhasil dimuat dari Cloud!`);
+    } else {
+      await syncDataToCloud();
+    }
+  } catch (err) {
+    console.warn("Gagal membaca cloud:", err);
+  }
+}
+
+// Notifikasi Toast
+function showToast(pesan, jenis = "success") {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+
+  const item = document.createElement("div");
+  item.className = `toast-item ${jenis}`;
+  item.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${pesan}</span>`;
+  container.appendChild(item);
+
+  setTimeout(() => {
+    item.style.opacity = "0";
+    item.style.transform = "translateY(10px)";
+    setTimeout(() => item.remove(), 300);
+  }, 3500);
+}
+
+function bindLiveSync(inputId, viewId) {
+  const inputEl = document.getElementById(inputId);
+  const viewEl = document.getElementById(viewId);
+  if (inputEl && viewEl) {
+    inputEl.addEventListener("input", () => {
+      viewEl.innerText = inputEl.value;
+    });
+  }
+}
+
+// =========================================================================
+// 5. MODUL AUTENTIKASI PENGGUNA (LOGIN / REGISTER / GOOGLE)
+// =========================================================================
+function initAuthModule() {
+  const modal = document.getElementById("modalAuth");
+  const btnBuka = document.getElementById("btnBukaAuth");
+  const btnTutup = document.getElementById("btnTutupAuthModal");
+  const tabLogin = document.getElementById("tabAuthLogin");
+  const tabRegister = document.getElementById("tabAuthRegister");
+  const formAuth = document.getElementById("formAuthEmail");
+  const groupName = document.getElementById("groupRegisterName");
+  const textSubmit = document.getElementById("textBtnSubmitAuth");
+  const errorMsg = document.getElementById("authErrorMessage");
+  const btnGoogle = document.getElementById("btnGoogleAuth");
+  const btnLogout = document.getElementById("btnLogout");
+
+  let isRegisterMode = false;
+
+  const openAuth = () => {
+    if (!isFirebaseActive) {
+      showToast("Firebase belum diisi konfigurasi di app.js. Mode penyimpanan offline tetap aktif.", "info");
+      return;
+    }
+    modal.classList.remove("hidden");
+    errorMsg.classList.add("hidden");
+  };
+
+  const closeAuth = () => {
+    modal.classList.add("hidden");
+    formAuth.reset();
+    errorMsg.classList.add("hidden");
+  };
+
+  if (btnBuka) btnBuka.addEventListener("click", openAuth);
+  if (btnTutup) btnTutup.addEventListener("click", closeAuth);
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeAuth();
+    });
+  }
+
+  if (tabLogin && tabRegister) {
+    tabLogin.addEventListener("click", () => {
+      isRegisterMode = false;
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      groupName.style.display = "none";
+      textSubmit.innerText = "Masuk Sekarang";
+      errorMsg.classList.add("hidden");
+    });
+
+    tabRegister.addEventListener("click", () => {
+      isRegisterMode = true;
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      groupName.style.display = "block";
+      textSubmit.innerText = "Buat Akun Baru";
+      errorMsg.classList.add("hidden");
+    });
+  }
+
+  if (formAuth) {
+    formAuth.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("authInputEmail").value.trim();
+      const password = document.getElementById("authInputPassword").value;
+      const name = document.getElementById("authInputName").value.trim();
+
+      errorMsg.classList.add("hidden");
+      textSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
+
+      try {
+        if (isRegisterMode) {
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          if (name) await cred.user.updateProfile({ displayName: name });
+          showToast("Akun baru berhasil didaftarkan!");
+        } else {
+          await auth.signInWithEmailAndPassword(email, password);
+          showToast("Berhasil masuk ke akun Anda!");
+        }
+        closeAuth();
+      } catch (err) {
+        errorMsg.classList.remove("hidden");
+        errorMsg.innerText = err.message || "Terjadi kesalahan saat autentikasi.";
+      } finally {
+        textSubmit.innerHTML = isRegisterMode ? "Buat Akun Baru" : "Masuk Sekarang";
+      }
+    });
+  }
+
+  if (btnGoogle) {
+    btnGoogle.addEventListener("click", async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        showToast("Berhasil masuk dengan Akun Google!");
+        closeAuth();
+      } catch (err) {
+        errorMsg.classList.remove("hidden");
+        errorMsg.innerText = err.message || "Gagal masuk menggunakan Google.";
+      }
+    });
+  }
+
+  if (btnLogout) {
+    btnLogout.addEventListener("click", async () => {
+      await auth.signOut();
+      showToast("Anda telah keluar dari akun.", "info");
+    });
+  }
+
+  if (isFirebaseActive && auth) {
+    auth.onAuthStateChanged(async (user) => {
+      const btnAuthTrigger = document.getElementById("btnBukaAuth");
+      const chip = document.getElementById("userInfoChip");
+      const userName = document.getElementById("userDisplayName");
+      const avatar = document.getElementById("userAvatar");
+      const cloudStatus = document.getElementById("cloudStatusText");
+
+      if (user) {
+        AppState.currentUser = user;
+        if (btnAuthTrigger) btnAuthTrigger.classList.add("hidden");
+        if (chip) chip.classList.remove("hidden");
+        if (userName) userName.innerText = user.displayName || user.email.split("@")[0];
+        if (avatar) avatar.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email)}&background=1e40af&color=fff`;
+        if (cloudStatus) cloudStatus.innerText = "Tersambung ke Cloud";
+
+        await loadDataFromCloud(user);
+      } else {
+        AppState.currentUser = null;
+        if (btnAuthTrigger) btnAuthTrigger.classList.remove("hidden");
+        if (chip) chip.classList.add("hidden");
+        if (cloudStatus) cloudStatus.innerText = "Mode Offline (Lokal)";
+      }
+    });
+  }
+}
+
+// =========================================================================
+// 6. MODUL KOP SURAT SEKOLAH
+// =========================================================================
+function renderKopSurat() {
+  const k = AppState.kop;
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+
+  setTxt("viewKopBaris1", k.baris1);
+  setTxt("viewKopBaris2", k.baris2);
+  setTxt("viewKopNamaSekolah", k.namaSekolah);
+  setTxt("viewKopAlamat", k.alamat);
+  setTxt("viewKopKontak", k.kontak);
+
+  const logoImg = document.getElementById("viewKopLogo");
+  if (logoImg) logoImg.src = k.logoUrl;
+
+  setTxt("sideSchoolName", k.namaSekolah);
+  setTxt("stampTextSekolah", `★ ${k.namaSekolah} ★`);
+}
+
+function initKopModule() {
+  renderKopSurat();
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  };
+
+  setVal("cfgKopBaris1", AppState.kop.baris1);
+  setVal("cfgKopBaris2", AppState.kop.baris2);
+  setVal("cfgKopNamaSekolah", AppState.kop.namaSekolah);
+  setVal("cfgKopAlamat", AppState.kop.alamat);
+  setVal("cfgKopKontak", AppState.kop.kontak);
+  setVal("cfgKopLogoUrl", AppState.kop.logoUrl);
+
+  const fileLogoInput = document.getElementById("cfgKopLogoFile");
+  if (fileLogoInput) {
+    fileLogoInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          AppState.kop.logoUrl = evt.target.result;
+          setVal("cfgKopLogoUrl", "Logo lokal terpilih");
+          renderKopSurat();
+          syncDataToCloud();
+          showToast("Logo berhasil dimuat dari perangkat!");
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  const btnSimpan = document.getElementById("btnSimpanKop");
+  if (btnSimpan) {
+    btnSimpan.addEventListener("click", () => {
+      const getVal = (id) => (document.getElementById(id) ? document.getElementById(id).value.trim() : "");
+      AppState.kop.baris1 = getVal("cfgKopBaris1");
+      AppState.kop.baris2 = getVal("cfgKopBaris2");
+      AppState.kop.namaSekolah = getVal("cfgKopNamaSekolah");
+      AppState.kop.alamat = getVal("cfgKopAlamat");
+      AppState.kop.kontak = getVal("cfgKopKontak");
+
+      const textUrl = getVal("cfgKopLogoUrl");
+      if (textUrl && textUrl !== "Logo lokal terpilih") {
+        AppState.kop.logoUrl = textUrl;
+      }
+
+      AppStorage.set("kopSekolahSDN3", AppState.kop);
+      renderKopSurat();
+      syncDataToCloud();
+      showToast("Kop surat berhasil diperbarui dan disimpan!");
+    });
+  }
+}
+
+// =========================================================================
+// 7. MODUL PEGAWAI & PENANDATANGAN
+// =========================================================================
+function syncPejabatPemberi() {
+  const sel = document.getElementById("selectPenandatangan");
+  if (!sel || AppState.pegawai.length === 0) return;
+
+  const p = AppState.pegawai[sel.value] || AppState.pegawai[0];
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+
+  setTxt("viewSptPemberiNama", p.nama);
+  setTxt("viewSptPemberiNip", p.nip);
+  setTxt("viewSptPemberiGol", p.gol);
+  setTxt("viewSptPemberiJabatan", p.jabatan);
+
+  setTxt("viewNamaTtd", p.nama);
+  setTxt("viewNipTtd", `NIP. ${p.nip}`);
+  setTxt("viewJabatanTtd", `${p.jabatan},`);
+}
+
+function syncPegawaiPenerima() {
+  const sel = document.getElementById("selectPenerimaTugas");
+  if (!sel || AppState.pegawai.length === 0) return;
+
+  const p = AppState.pegawai[sel.value] || AppState.pegawai[0];
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+
+  setTxt("viewSptPenerimaNama", p.nama);
+  setTxt("viewSptPenerimaNip", p.nip);
+  setTxt("viewSptPenerimaGol", p.gol);
+  setTxt("viewSptPenerimaJabatan", p.jabatan);
+}
+
+function refreshDropdownPegawai() {
+  const selPemberi = document.getElementById("selectPenandatangan");
+  const selPenerima = document.getElementById("selectPenerimaTugas");
+
+  const buildOpts = (selEl) => {
+    if (!selEl) return;
+    selEl.innerHTML = "";
+    AppState.pegawai.forEach((p, idx) => {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = `${p.nama} (${p.jabatan})`;
+      selEl.appendChild(opt);
+    });
+  };
+
+  buildOpts(selPemberi);
+  buildOpts(selPenerima);
+
+  if (selPemberi && AppState.pegawai.length > 0) selPemberi.selectedIndex = 0;
+  if (selPenerima && AppState.pegawai.length > 1) selPenerima.selectedIndex = 1;
+
+  syncPejabatPemberi();
+  syncPegawaiPenerima();
+}
+
+function renderTabelPegawai() {
+  const tbody = document.getElementById("tbodyPegawaiList");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+  AppState.pegawai.forEach((p, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td><strong>${p.nama}</strong></td>
+      <td>${p.nip || "-"}</td>
+      <td>${p.gol || "-"}</td>
+      <td>${p.jabatan || "-"}</td>
+      <td>
+        <button type="button" class="btn btn-secondary btn-sm btn-delete-pegawai" data-idx="${idx}" style="color:var(--danger);">
+          <i class="fa-solid fa-trash"></i>
         </button>
-        <button type="button" class="nav-btn" data-tab="tab-kop">
-          <i class="fa-solid fa-heading"></i> Pengaturan Kop Sekolah
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".btn-delete-pegawai").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (AppState.pegawai.length <= 1) {
+        showToast("Minimal harus ada 1 data pegawai di dalam sistem.", "info");
+        return;
+      }
+      const idx = parseInt(btn.getAttribute("data-idx"), 10);
+      const nama = AppState.pegawai[idx].nama;
+      AppState.pegawai.splice(idx, 1);
+      AppStorage.set("listPegawaiSDN3", AppState.pegawai);
+      refreshDropdownPegawai();
+      renderTabelPegawai();
+      syncDataToCloud();
+      showToast(`Data pegawai ${nama} berhasil dihapus.`);
+    });
+  });
+}
+
+function initPegawaiModule() {
+  refreshDropdownPegawai();
+  renderTabelPegawai();
+
+  const selPemberi = document.getElementById("selectPenandatangan");
+  const selPenerima = document.getElementById("selectPenerimaTugas");
+  if (selPemberi) selPemberi.addEventListener("change", syncPejabatPemberi);
+  if (selPenerima) selPenerima.addEventListener("change", syncPegawaiPenerima);
+
+  const btnSimpan = document.getElementById("btnSimpanPegawai");
+  if (btnSimpan) {
+    btnSimpan.addEventListener("click", () => {
+      const getVal = (id) => (document.getElementById(id) ? document.getElementById(id).value.trim() : "");
+      const nama = getVal("newPegNama");
+      const nip = getVal("newPegNip");
+      const gol = getVal("newPegGol");
+      const jabatan = getVal("newPegJabatan");
+
+      if (!nama) {
+        showToast("Nama lengkap pegawai wajib diisi!", "info");
+        return;
+      }
+
+      AppState.pegawai.push({
+        nama,
+        nip: nip || "-",
+        gol: gol || "-",
+        jabatan: jabatan || "-"
+      });
+
+      AppStorage.set("listPegawaiSDN3", AppState.pegawai);
+      refreshDropdownPegawai();
+      renderTabelPegawai();
+      syncDataToCloud();
+
+      const clearVal = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      };
+      clearVal("newPegNama");
+      clearVal("newPegNip");
+      clearVal("newPegGol");
+      clearVal("newPegJabatan");
+
+      showToast(`Pegawai ${nama} berhasil ditambahkan!`);
+    });
+  }
+}
+
+// =========================================================================
+// 8. MODUL TANDA TANGAN & STEMPEL (SPASI 70PX TERJAGA AMAN)
+// =========================================================================
+function initTtdModule() {
+  const checkTtd = document.getElementById("checkTtd");
+  const ttdBox = document.getElementById("ttdBoxVisual");
+
+  if (checkTtd && ttdBox) {
+    checkTtd.addEventListener("change", () => {
+      const stamp = ttdBox.querySelector(".stamp-round");
+      const sig = ttdBox.querySelector(".svg-ttd");
+      // Hanya menyembunyikan gambar, tinggi kontainer 70px tetap utuh
+      if (stamp) stamp.style.display = checkTtd.checked ? "flex" : "none";
+      if (sig) sig.style.display = checkTtd.checked ? "block" : "none";
+    });
+  }
+}
+
+// =========================================================================
+// 9. MODUL MULTI-TEMPLATE SURAT
+// =========================================================================
+function updateJenisSurat(jenis) {
+  const judul = AppState.judulSuratMap[jenis] || "SURAT RESMI";
+  const viewJudul = document.getElementById("viewJudulSurat");
+  if (viewJudul) viewJudul.innerText = judul;
+
+  const formMap = {
+    spt: "formSectionSPT",
+    sk_aktif: "formSectionSkAktif",
+    undangan: "formSectionUndangan",
+    sk_pindah: "formSectionSkPindah",
+    sk_kelakuan: "formSectionSkKelakuan"
+  };
+
+  Object.values(formMap).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+
+  const activeForm = document.getElementById(formMap[jenis]);
+  if (activeForm) activeForm.classList.remove("hidden");
+
+  const previewMap = {
+    spt: "previewBodySPT",
+    sk_aktif: "previewBodySkAktif",
+    undangan: "previewBodyUndangan",
+    sk_pindah: "previewBodySkPindah",
+    sk_kelakuan: "previewBodySkKelakuan"
+  };
+
+  Object.values(previewMap).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+
+  const activePreview = document.getElementById(previewMap[jenis]);
+  if (activePreview) activePreview.classList.remove("hidden");
+
+  const inNo = document.getElementById("inputNoSurat");
+  const inDocNomor = document.getElementById("inDocNomor");
+  if (inNo && inDocNomor) {
+    inDocNomor.value = inNo.value;
+  }
+}
+
+function initSuratBinding() {
+  const selJenis = document.getElementById("selectJenisSurat");
+  if (selJenis) {
+    selJenis.addEventListener("change", (e) => {
+      updateJenisSurat(e.target.value);
+      showToast(`Format surat dialihkan ke: ${AppState.judulSuratMap[e.target.value]}`);
+    });
+  }
+
+  const inNo = document.getElementById("inputNoSurat");
+  const viewNo = document.getElementById("viewNoSurat");
+  const btnTambahNo = document.getElementById("btnTambahNomor");
+
+  if (inNo && viewNo) {
+    inNo.addEventListener("input", () => {
+      viewNo.innerText = inNo.value;
+      const inDocNomor = document.getElementById("inDocNomor");
+      if (inDocNomor) inDocNomor.value = inNo.value;
+    });
+  }
+
+  if (btnTambahNo && inNo && viewNo) {
+    btnTambahNo.addEventListener("click", () => {
+      let cur = parseInt(inNo.value, 10);
+      if (isNaN(cur)) cur = 66;
+      cur++;
+      inNo.value = cur;
+      viewNo.innerText = cur;
+
+      const inDocNomor = document.getElementById("inDocNomor");
+      if (inDocNomor) inDocNomor.value = cur;
+
+      showToast(`Nomor surat dinaikkan menjadi: ${cur}`);
+    });
+  }
+
+  // Live Binding Formulir ke Kertas A4
+  bindLiveSync("inSptUntuk", "viewSptUntuk");
+  bindLiveSync("inSptTglBerangkat", "viewSptTglBerangkat");
+  bindLiveSync("inSptTglKembali", "viewSptTglKembali");
+  bindLiveSync("inSptTujuan", "viewSptTujuan");
+
+  bindLiveSync("inAktifNama", "viewAktifNama");
+  bindLiveSync("inAktifNisn", "viewAktifNisn");
+  bindLiveSync("inAktifTtl", "viewAktifTtl");
+  bindLiveSync("inAktifKelas", "viewAktifKelas");
+  bindLiveSync("inAktifOrtu", "viewAktifOrtu");
+  bindLiveSync("inAktifKeperluan", "viewAktifKeperluan");
+
+  bindLiveSync("inUndanganPerihal", "viewUndanganPerihal");
+  bindLiveSync("inUndanganKepada", "viewUndanganKepada");
+  bindLiveSync("inUndanganHariTgl", "viewUndanganHariTgl");
+  bindLiveSync("inUndanganWaktu", "viewUndanganWaktu");
+  bindLiveSync("inUndanganTempat", "viewUndanganTempat");
+  bindLiveSync("inUndanganAcara", "viewUndanganAcara");
+
+  bindLiveSync("inPindahNama", "viewPindahNama");
+  bindLiveSync("inPindahNisn", "viewPindahNisn");
+  bindLiveSync("inPindahKelas", "viewPindahKelas");
+  bindLiveSync("inPindahTujuanSekolah", "viewPindahTujuanSekolah");
+  bindLiveSync("inPindahAlasan", "viewPindahAlasan");
+
+  bindLiveSync("inKelakuanNama", "viewKelakuanNama");
+  bindLiveSync("inKelakuanNisn", "viewKelakuanNisn");
+  bindLiveSync("inKelakuanKelas", "viewKelakuanKelas");
+  bindLiveSync("inKelakuanKet", "viewKelakuanKet");
+
+  bindLiveSync("inDikeluarkanDi", "viewDikeluarkanDi");
+  bindLiveSync("inPadaTanggal", "viewPadaTanggal");
+
+  const btnPrint = document.getElementById("btnPrintSurat");
+  if (btnPrint) {
+    btnPrint.addEventListener("click", () => {
+      window.print();
+    });
+  }
+
+  const btnReset = document.getElementById("btnResetSurat");
+  if (btnReset) {
+    btnReset.addEventListener("click", () => {
+      if (inNo) inNo.value = "66";
+      if (viewNo) viewNo.innerText = "66";
+      showToast("Formulir surat berhasil direset.", "info");
+    });
+  }
+}
+
+// =========================================================================
+// 10. MODUL ARSIP & PRATINJAU MODAL PDF
+// =========================================================================
+async function bukaDokumenModal(idx) {
+  const item = AppState.arsip[idx];
+  if (!item) return;
+
+  const modal = document.getElementById("modalPdfViewer");
+  const frame = document.getElementById("modalPdfFrame");
+  const title = document.getElementById("modalPdfTitle");
+  const btnDownload = document.getElementById("modalPdfDownload");
+
+  title.innerText = item.judul || "Dokumen PDF";
+
+  let blob = await PdfStorage.getFile(item.id);
+
+  if (!blob) {
+    const contohHtml = `
+      <html>
+        <body style="font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; background:#f8fafc; color:#1e293b; text-align:center; padding:20px;">
+          <h2 style="color:#1e40af; margin-bottom:8px;">${item.judul}</h2>
+          <p style="color:#64748b; font-size:14px;">Nomor Surat: <strong>${item.nomor}</strong> | Kategori: <strong>${item.kategori}</strong></p>
+          <div style="background:#e0f2fe; color:#0369a1; padding:12px 18px; border-radius:8px; margin-top:16px; max-width:480px; font-size:13px;">
+            Ini adalah riwayat dokumen bawaan. Untuk melihat file PDF asli, silakan unggah berkas PDF baru melalui formulir di samping.
+          </div>
+        </body>
+      </html>
+    `;
+    blob = new Blob([contohHtml], { type: "text/html" });
+  }
+
+  const blobUrl = URL.createObjectURL(blob);
+  frame.src = blobUrl;
+  btnDownload.href = blobUrl;
+  btnDownload.download = item.judul || "dokumen.pdf";
+
+  modal.classList.remove("hidden");
+}
+
+function tutupModalPdf() {
+  const modal = document.getElementById("modalPdfViewer");
+  const frame = document.getElementById("modalPdfFrame");
+  if (modal) modal.classList.add("hidden");
+  if (frame) frame.src = "about:blank";
+}
+
+function renderTabelArsip(filterQuery = "") {
+  const tbody = document.getElementById("tbodyArsipList");
+  if (!tbody) return;
+
+  const query = filterQuery.toLowerCase().trim();
+
+  const filteredList = AppState.arsip.filter((item) => {
+    if (!query) return true;
+    const matchNomor = (item.nomor || "").toLowerCase().includes(query);
+    const matchJudul = (item.judul || "").toLowerCase().includes(query);
+    const matchKategori = (item.kategori || "").toLowerCase().includes(query);
+    return matchNomor || matchJudul || matchKategori;
+  });
+
+  tbody.innerHTML = "";
+
+  if (filteredList.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
+          <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
+          Tidak ada dokumen yang cocok dengan kata kunci "<strong>${filterQuery}</strong>".
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  filteredList.forEach((item) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.tanggal}</td>
+      <td><span class="badge-nomor">${item.nomor || "-"}</span></td>
+      <td><strong>${item.judul}</strong></td>
+      <td>${item.kategori || "Surat Resmi"}</td>
+      <td><span style="color:var(--success); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${item.status || "Tersimpan"}</span></td>
+      <td>
+        <button type="button" class="btn btn-secondary btn-sm btn-buka-arsip" data-id="${item.id}">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
         </button>
-        <button type="button" class="nav-btn" data-tab="tab-pegawai">
-          <i class="fa-solid fa-users"></i> Kelola Data Pegawai
+        <button type="button" class="btn btn-secondary btn-sm btn-hapus-arsip" data-id="${item.id}" style="color:var(--danger); margin-left:4px;" title="Hapus Arsip">
+          <i class="fa-solid fa-trash"></i>
         </button>
-        <button type="button" class="nav-btn" data-tab="tab-arsip">
-          <i class="fa-solid fa-folder-tree"></i> Arsip Dokumen PDF
-        </button>
-      </nav>
-
-      <!-- Status Sinkronisasi Akun Cloud -->
-      <div class="sidebar-status" id="sidebarCloudStatus">
-        <div class="pulse-dot"></div>
-        <span id="cloudStatusText">Mode Offline (Lokal)</span>
-      </div>
-    </aside>
-
-    <!-- BACKDROP LAYAR HP -->
-    <div id="sidebarBackdrop" class="sidebar-backdrop hidden no-print"></div>
-
-    <!-- KONTEN UTAMA -->
-    <div class="main-wrapper">
-      
-      <!-- HEADER ATAS -->
-      <header class="top-header no-print">
-        <div class="header-left">
-          <!-- Tombol Garis 3 (Buka/Tutup Sidebar) -->
-          <button type="button" id="btnToggleSidebar" class="btn-toggle-sidebar" title="Buka/Tutup Menu">
-            <i class="fa-solid fa-bars"></i>
-          </button>
-          
-          <div class="breadcrumb">
-            <span>Aplikasi Persuratan</span>
-            <i class="fa-solid fa-chevron-right"></i>
-            <strong id="headerTitle">Buat Surat Sekolah</strong>
-          </div>
-        </div>
-
-        <div class="header-tools">
-          <!-- AREA AKUN PENGGUNA -->
-          <div id="userProfileArea" class="user-profile-area">
-            <button type="button" id="btnBukaAuth" class="btn btn-secondary">
-              <i class="fa-solid fa-user-lock"></i> <span>Masuk / Akun</span>
-            </button>
-            <div id="userInfoChip" class="user-chip hidden">
-              <img id="userAvatar" src="https://ui-avatars.com/api/?name=Kasmin&background=1e40af&color=fff" alt="Avatar" class="user-avatar">
-              <span id="userDisplayName" class="user-name">Pengguna</span>
-              <button type="button" id="btnLogout" class="btn-logout" title="Keluar Akun">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Tombol Khusus Android -->
-          <button type="button" id="btnLandscapeMobile" class="btn btn-secondary mobile-only" title="Kunci Layar Miring">
-            <i class="fa-solid fa-mobile-screen-button fa-rotate-90"></i> Layar Miring
-          </button>
-          <button type="button" id="btnResetSurat" class="btn btn-secondary">
-            <i class="fa-solid fa-rotate-left"></i> Reset Form
-          </button>
-          <button type="button" id="btnPrintSurat" class="btn btn-primary">
-            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
-          </button>
-        </div>
-      </header>
-
-      <main class="content-viewport">
-
-        <!-- ================= TAB 1: PEMBUATAN MACAM-MACAM SURAT ================= -->
-        <section id="tab-surat" class="tab-panel active">
-          <div class="panel-split">
-            
-            <!-- FORM PARAMETER SURAT -->
-            <div class="panel-card no-print">
-              <div class="card-header">
-                <h3>Parameter Pembuatan Surat</h3>
-                <p>Pilih template surat yang ingin dibuat. Formulir dan format kertas A4 akan menyesuaikan seketika.</p>
-              </div>
-
-              <!-- PILIHAN MACAM-MACAM SURAT -->
-              <div class="form-group highlighted-group">
-                <label><i class="fa-solid fa-list-check"></i> Pilih Jenis Surat</label>
-                <select id="selectJenisSurat" class="form-input form-select-lg">
-                  <option value="spt">1. Surat Perintah Tugas (SPT)</option>
-                  <option value="sk_aktif">2. Surat Keterangan Aktif Siswa (PIP/Bank)</option>
-                  <option value="undangan">3. Surat Undangan Resmi / Wali Murid & Komite</option>
-                  <option value="sk_pindah">4. Surat Keterangan Pindah Sekolah (Mutasi)</option>
-                  <option value="sk_kelakuan">5. Surat Keterangan Kelakuan Baik / Rekomendasi</option>
-                </select>
-              </div>
-
-              <!-- NOMOR SURAT -->
-              <div class="form-group">
-                <label>Nomor Surat</label>
-                <div class="input-inline">
-                  <input type="text" id="inputNoSurat" class="form-input" value="">
-                  <button type="button" id="btnTambahNomor" class="btn btn-secondary" title="Tambah Urutan Nomor">
-                    <i class="fa-solid fa-plus"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- PEJABAT PENANDATANGAN -->
-              <div class="form-group">
-                <label>Pejabat Penandatangan (Kepala Sekolah)</label>
-                <select id="selectPenandatangan" class="form-input"></select>
-              </div>
-
-              <!-- 1. FORM KHUSUS SPT -->
-              <div id="formSectionSPT" class="letter-form-section">
-                <h4 class="section-title"><i class="fa-solid fa-user-check"></i> Pegawai Yang Ditugaskan</h4>
-                <div class="form-group">
-                  <label>Pilih Pegawai Penerima Tugas</label>
-                  <select id="selectPenerimaTugas" class="form-input"></select>
-                </div>
-
-                <h4 class="section-title"><i class="fa-solid fa-clipboard-list"></i> Rincian Penugasan</h4>
-                <div class="form-group">
-                  <label>UNTUK (Keperluan Tugas)</label>
-                  <textarea id="inSptUntuk" class="form-input" rows="3"></textarea>
-                </div>
-
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>TANGGAL BERANGKAT</label>
-                    <input type="text" id="inSptTglBerangkat" class="form-input" value="19 Oktober 2026">
-                  </div>
-                  <div class="form-group">
-                    <label>TANGGAL KEMBALI</label>
-                    <input type="text" id="inSptTglKembali" class="form-input" value="20 Oktober 2026">
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label>TUJUAN</label>
-                  <input type="text" id="inSptTujuan" class="form-input" value="Gedung Korwil Bidik Kecamatan">
-                </div>
-              </div>
-
-              <!-- 2. FORM KHUSUS SK AKTIF SISWA -->
-              <div id="formSectionSkAktif" class="letter-form-section hidden">
-                <h4 class="section-title"><i class="fa-solid fa-child"></i> Identitas Siswa</h4>
-                <div class="form-group">
-                  <label>Nama Lengkap Siswa</label>
-                  <input type="text" id="inAktifNama" class="form-input" value="Muhammad Rizky Pratama">
-                </div>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>NISN / NIS</label>
-                    <input type="text" id="inAktifNisn" class="form-input" value="0145892341 / 202401">
-                  </div>
-                  <div class="form-group">
-                    <label>Kelas</label>
-                    <input type="text" id="inAktifKelas" class="form-input" value="IV (Empat)">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Tempat, Tanggal Lahir</label>
-                  <input type="text" id="inAktifTtl" class="form-input" value="Kebumen, 14 Mei 2014">
-                </div>
-                <div class="form-group">
-                  <label>Nama Orang Tua / Wali</label>
-                  <input type="text" id="inAktifOrtu" class="form-input" value="Slamet Riyadi">
-                </div>
-                <div class="form-group">
-                  <label>Keperluan Pembuatan Surat</label>
-                  <input type="text" id="inAktifKeperluan" class="form-input" value="Pencairan Dana Program Indonesia Pintar (PIP) Tahun 2026">
-                </div>
-              </div>
-
-              <!-- 3. FORM KHUSUS UNDANGAN -->
-              <div id="formSectionUndangan" class="letter-form-section hidden">
-                <h4 class="section-title"><i class="fa-solid fa-envelope"></i> Rincian Undangan</h4>
-                <div class="form-group">
-                  <label>Kepada Yth. (Penerima Undangan)</label>
-                  <input type="text" id="inUndanganKepada" class="form-input" value="Bapak/Ibu Orang Tua / Wali Murid Kelas I - VI">
-                </div>
-                <div class="form-group">
-                  <label>Perihal Undangan</label>
-                  <input type="text" id="inUndanganPerihal" class="form-input" value="Undangan Rapat Pleno Komite & Sosialisasi Program Sekolah">
-                </div>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>Hari, Tanggal</label>
-                    <input type="text" id="inUndanganHariTgl" class="form-input" value="Sabtu, 24 Oktober 2026">
-                  </div>
-                  <div class="form-group">
-                    <label>Waktu / Jam</label>
-                    <input type="text" id="inUndanganWaktu" class="form-input" value="08.30 WIB - Selesai">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Tempat Acara</label>
-                  <input type="text" id="inUndanganTempat" class="form-input" value="Aula Pertemuan SD Negeri 3 Nogoraji">
-                </div>
-                <div class="form-group">
-                  <label>Agenda Acara</label>
-                  <input type="text" id="inUndanganAcara" class="form-input" value="Musyawarah Penyusunan Rencana Kerja Sekolah dan Penguatan Komite">
-                </div>
-              </div>
-
-              <!-- 4. FORM KHUSUS MUTASI PINDAH -->
-              <div id="formSectionSkPindah" class="letter-form-section hidden">
-                <h4 class="section-title"><i class="fa-solid fa-right-from-bracket"></i> Rincian Mutasi Siswa</h4>
-                <div class="form-group">
-                  <label>Nama Siswa</label>
-                  <input type="text" id="inPindahNama" class="form-input" value="Anisa Rahmawati">
-                </div>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>NISN</label>
-                    <input type="text" id="inPindahNisn" class="form-input" value="0156723412">
-                  </div>
-                  <div class="form-group">
-                    <label>Tingkat / Kelas</label>
-                    <input type="text" id="inPindahKelas" class="form-input" value="III (Tiga)">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Sekolah Tujuan Pindah</label>
-                  <input type="text" id="inPindahTujuanSekolah" class="form-input" value="SD Negeri 1 Gombong">
-                </div>
-                <div class="form-group">
-                  <label>Alasan Pindah</label>
-                  <input type="text" id="inPindahAlasan" class="form-input" value="Mengikuti domisili dan kepindahan tugas orang tua">
-                </div>
-              </div>
-
-              <!-- 5. FORM KHUSUS REKOMENDASI -->
-              <div id="formSectionSkKelakuan" class="letter-form-section hidden">
-                <h4 class="section-title"><i class="fa-solid fa-award"></i> Siswa Berkelakuan Baik</h4>
-                <div class="form-group">
-                  <label>Nama Siswa</label>
-                  <input type="text" id="inKelakuanNama" class="form-input" value="Bagas Dwi Saputra">
-                </div>
-                <div class="form-grid-2">
-                  <div class="form-group">
-                    <label>NISN</label>
-                    <input type="text" id="inKelakuanNisn" class="form-input" value="0134981123">
-                  </div>
-                  <div class="form-group">
-                    <label>Kelas</label>
-                    <input type="text" id="inKelakuanKelas" class="form-input" value="VI (Enam)">
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label>Keterangan Rekomendasi</label>
-                  <input type="text" id="inKelakuanKet" class="form-input" value="Memiliki dedikasi tinggi, berprestasi, dan tidak pernah melanggar tata tertib sekolah">
-                </div>
-              </div>
-
-              <!-- TEMPAT & TANGGAL PENETAPAN -->
-              <h4 class="section-title"><i class="fa-solid fa-location-dot"></i> Tempat & Tanggal Dikeluarkan</h4>
-              <div class="form-grid-2">
-                <div class="form-group">
-                  <label>Dikeluarkan di</label>
-                  <input type="text" id="inDikeluarkanDi" class="form-input" value="Nogoraji">
-                </div>
-                <div class="form-group">
-                  <label>Pada Tanggal</label>
-                  <input type="text" id="inPadaTanggal" class="form-input" value="12 Oktober 2026">
-                </div>
-              </div>
-
-              <div class="form-group mt-2">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="checkTtd" checked>
-                  <span>Sertakan Stempel Basah & Tanda Tangan Resmi</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- PRATINJAU KERTAS CETAK A4 -->
-            <div class="preview-stage">
-              <div id="paperA4" class="paper-a4">
-                
-                <!-- KOP SEKOLAH 100% SIMETRIS DI TENGAH -->
-                <div class="letter-kop" id="kopContainer">
-                  <div class="kop-emblem">
-                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah">
-                  </div>
-                  <div class="kop-headings">
-                    <h4 id="viewKopBaris1">PEMERINTAH KABUPATEN KEBUMEN</h4>
-                    <h4 id="viewKopBaris2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</h4>
-                    <h3 id="viewKopNamaSekolah">SEKOLAH DASAR NEGERI 3 NOGORAJI</h3>
-                    <p class="address" id="viewKopAlamat">Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474</p>
-                    <p class="contact" id="viewKopKontak">NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com</p>
-                  </div>
-                </div>
-                <div class="kop-divider"></div>
-
-                <!-- JUDUL SURAT -->
-                <div class="letter-title">
-                  <h3 id="viewJudulSurat">SURAT TUGAS</h3>
-                  <p>Nomor : <span id="viewNoSurat">400.3.5.../01/SDN.068/X/2026</span></p>
-                </div>
-
-                <!-- 1. PREVIEW TEMPLATE SPT -->
-                <div id="previewBodySPT">
-                  <p class="lead-text">Yang bertanda tangan di bawah ini :</p>
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Nama</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNama">Kasmin, S.Pd., M.M.</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">NIP</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNip">19730624 200801 1 016</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Pangkat / Gol</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiGol">Penata Tingkat 1-III/D</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Jabatan</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiJabatan">Kepala Sekolah</td>
-                    </tr>
-                  </table>
-
-                  <div class="center-banner"><strong>MENUGASKAN</strong></div>
-
-                  <p class="lead-text">Kepada :</p>
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Nama</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNama">Arif Prasetyo</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">NIP</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNip">-</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Pangkat / Gol</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaGol">-</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Jabatan</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaJabatan">Operator Sekolah</td>
-                    </tr>
-                  </table>
-
-                  <table class="table-indent mt-2">
-                    <tr>
-                      <td class="col-lbl">UNTUK</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptUntuk"></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">TANGGAL BERANGKAT</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglBerangkat"> Oktober 2026</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">TANGGAL KEMBALI</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglKembali"> Oktober 2026</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">TUJUAN</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTujuan"></td>
-                    </tr>
-                  </table>
-
-                  <p class="closing-text">Demikian surat tugas ini dibuat untuk dapat dilaksanakan dengan penuh tanggung jawab.</p>
-                </div>
-
-                <!-- 2. PREVIEW TEMPLATE SK AKTIF SISWA -->
-                <div id="previewBodySkAktif" class="hidden">
-                  <p class="lead-text">Yang bertanda tangan di bawah ini Kepala Sekolah Dasar Negeri 3 Nogoraji Kecamatan Buayan Kabupaten Kebumen, menerangkan dengan sesungguhnya bahwa:</p>
-                  
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Nama Lengkap</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewAktifNama"></strong></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">NISN / NIS</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifNisn"></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Tempat, Tgl Lahir</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifTtl"></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Tingkat / Kelas</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifKelas"></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Nama Orang Tua / Wali</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifOrtu"></td>
-                    </tr>
-                  </table>
-
-                  <p class="lead-text" style="margin-top:10px;">Adalah benar-benar siswa yang terdaftar aktif mengikuti kegiatan pembelajaran di Sekolah Dasar Negeri 3 Nogoraji pada Tahun Ajaran berjalan.</p>
-                  <p class="lead-text">Surat keterangan ini dibuat dengan sebenarnya untuk keperluan: <strong id="viewAktifKeperluan">Pencairan Dana PIP</strong>.</p>
-                  <p class="closing-text">Demikian surat keterangan ini diberikan kepada yang bersangkutan untuk dapat dipergunakan sebagaimana mestinya.</p>
-                </div>
-
-                <!-- 3. PREVIEW TEMPLATE UNDANGAN -->
-                <div id="previewBodyUndangan" class="hidden">
-                  <table style="width:100%; margin-bottom:12px;">
-                    <tr>
-                      <td style="width:12%">Hal</td>
-                      <td style="width:2%">:</td>
-                      <td id="viewUndanganPerihal"><strong>Undangan Rapat Pleno</strong></td>
-                    </tr>
-                    <tr>
-                      <td>Kepada Yth.</td>
-                      <td>:</td>
-                      <td id="viewUndanganKepada">Bapak/Ibu Orang Tua / Wali Murid Kelas I - VI</td>
-                    </tr>
-                    <tr>
-                      <td></td>
-                      <td></td>
-                      <td>di Tempat</td>
-                    </tr>
-                  </table>
-
-                  <p class="lead-text">Dengan hormat,</p>
-                  <p class="lead-text" style="text-indent: 28px;">Sehubungan dengan pelaksanaan program pendidikan dan rencana kerja sekolah tahun ajaran 2026/2027, kami mengundang Bapak/Ibu untuk hadir pada pertemuan yang akan diselenggarakan pada:</p>
-
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Hari, Tanggal</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewUndanganHariTgl">Sabtu, 24 Oktober 2026</strong></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Waktu / Jam</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewUndanganWaktu">08.30 WIB - Selesai</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Tempat</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewUndanganTempat">Aula Pertemuan SDN 3 Nogoraji</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Acara</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewUndanganAcara">Musyawarah Komite Sekolah</td>
-                    </tr>
-                  </table>
-
-                  <p class="lead-text" style="text-indent: 28px;">Mengingat pentingnya agenda tersebut, kami sangat mengharapkan kehadiran Bapak/Ibu tepat pada waktunya.</p>
-                  <p class="closing-text">Demikian surat undangan ini kami sampaikan, atas perhatian dan kehadirannya kami ucapkan terima kasih.</p>
-                </div>
-
-                <!-- 4. PREVIEW TEMPLATE SK PINDAH -->
-                <div id="previewBodySkPindah" class="hidden">
-                  <p class="lead-text">Kepala Sekolah Dasar Negeri 3 Nogoraji menerangkan bahwa siswa tersebut di bawah ini:</p>
-
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Nama Siswa</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewPindahNama">Anisa Rahmawati</strong></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">NISN</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewPindahNisn">0156723412</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Duduk di Kelas</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewPindahKelas">III (Tiga)</td>
-                    </tr>
-                  </table>
-
-                  <p class="lead-text">Telah mengajukan permohonan pindah sekolah dan disetujui untuk melanjutkan pendidikan ke:</p>
-
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Sekolah Tujuan</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewPindahTujuanSekolah">SD Negeri 1 Gombong</strong></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Alasan Kepindahan</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewPindahAlasan">Mengikuti domisili orang tua</td>
-                    </tr>
-                  </table>
-
-                  <p class="closing-text">Bersama surat ini disertakan dokumen rapor dan kelengkapan administrasi siswa yang bersangkutan untuk dipergunakan sebagaimana mestinya.</p>
-                </div>
-
-                <!-- 5. PREVIEW TEMPLATE REKOMENDASI -->
-                <div id="previewBodySkKelakuan" class="hidden">
-                  <p class="lead-text">Yang bertanda tangan di bawah ini Kepala Sekolah Dasar Negeri 3 Nogoraji, memberikan surat keterangan / rekomendasi kepada:</p>
-
-                  <table class="table-indent">
-                    <tr>
-                      <td class="col-lbl">Nama Siswa</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewKelakuanNama">Bagas Dwi Saputra</strong></td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">NISN</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewKelakuanNisn">0134981123</td>
-                    </tr>
-                    <tr>
-                      <td class="col-lbl">Tingkat / Kelas</td>
-                      <td class="col-dot">:</td>
-                      <td class="col-val" id="viewKelakuanKelas">VI (Enam)</td>
-                    </tr>
-                  </table>
-
-                  <p class="lead-text">Berdasarkan catatan buku bimbingan dan kepribadian siswa selama menempuh pendidikan di sekolah kami, yang bersangkutan dinyatakan:</p>
-                  <div class="center-banner" style="margin: 10px 0;"><strong style="font-size: 12pt;">BERKELAKUAN BAIK</strong></div>
-                  <p class="lead-text" id="viewKelakuanKet">Memiliki dedikasi tinggi, berprestasi, dan tidak pernah melakukan pelanggaran terhadap tata tertib sekolah.</p>
-                  <p class="closing-text">Demikian surat rekomendasi ini dibuat dengan sebenarnya untuk dipergunakan sebagai persyaratan pendaftaran/kegiatan lanjutan.</p>
-                </div>
-
-                <!-- PENGESAHAN KEPALA SEKOLAH (SPASI 70PX TIDAK GEPENG / DEMPET) -->
-                <div class="signature-section">
-                  <div class="sig-box">
-                    <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
-                    <p>Pada Tanggal : <span id="viewPadaTanggal">12 Oktober 2026</span></p>
-                    <p id="viewJabatanTtd">Kepala Sekolah,</p>
-
-                    <div class="visual-stamp-ttd" id="ttdBoxVisual">
-                      <div class="stamp-round">
-                        <div class="stamp-inner">
-                          <span id="stampTextInstansi">PEMERINTAH KAB. KEBUMEN</span>
-                          <span id="stampTextSekolah">★ SDN 3 NOGORAJI ★</span>
-                          <span>DINAS PENDIDIKAN</span>
-                        </div>
-                      </div>
-                      <svg class="svg-ttd" viewBox="0 0 200 80">
-                        <path d="M 20,50 Q 55,8 75,45 T 115,32 Q 145,68 175,28" stroke="#002266" stroke-width="3" fill="none" stroke-linecap="round"/>
-                        <path d="M 38,62 L 165,52" stroke="#002266" stroke-width="2" fill="none" stroke-linecap="round"/>
-                      </svg>
-                    </div>
-
-                    <strong id="viewNamaTtd">Kasmin, S.Pd., M.M.</strong>
-                    <p class="sig-nip" id="viewNipTtd">NIP. 19730624 200801 1 016</p>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        <!-- ================= TAB 2: PENGATURAN KOP MANDIRI ================= -->
-        <section id="tab-kop" class="tab-panel">
-          <div class="panel-card max-w-700">
-            <div class="card-header">
-              <h3><i class="fa-solid fa-heading"></i> Pengaturan Kop Sekolah Mandiri</h3>
-              <p>Sesuaikan nama instansi, logo, alamat, dan kontak kop surat sekolah Anda.</p>
-            </div>
-
-            <div class="form-group">
-              <label>Instansi Pembina Baris 1</label>
-              <input type="text" id="cfgKopBaris1" class="form-input" value="PEMERINTAH KABUPATEN KEBUMEN">
-            </div>
-
-            <div class="form-group">
-              <label>Instansi Pembina Baris 2</label>
-              <input type="text" id="cfgKopBaris2" class="form-input" value="DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA">
-            </div>
-
-            <div class="form-group">
-              <label>Nama Satuan Pendidikan / Sekolah</label>
-              <input type="text" id="cfgKopNamaSekolah" class="form-input" value="SEKOLAH DASAR NEGERI 3 NOGORAJI">
-            </div>
-
-            <div class="form-group">
-              <label>Alamat Lengkap</label>
-              <input type="text" id="cfgKopAlamat" class="form-input" value="Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474">
-            </div>
-
-            <div class="form-group">
-              <label>Kontak / Pos-el / NPSN</label>
-              <input type="text" id="cfgKopKontak" class="form-input" value="NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com">
-            </div>
-
-            <div class="form-group">
-              <label>Logo Sekolah (Upload Gambar Langsung)</label>
-              <input type="file" id="cfgKopLogoFile" class="form-input" accept="image/*">
-              <small class="helper-text">Pilih file logo dari laptop/HP (format PNG / JPG) agar logo tetap tampil offline.</small>
-            </div>
-
-            <div class="form-group">
-              <label>Atau Gunakan Tautan / URL Logo Online</label>
-              <input type="text" id="cfgKopLogoUrl" class="form-input" value="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png">
-            </div>
-
-            <button type="button" id="btnSimpanKop" class="btn btn-primary">
-              <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Kop Surat
-            </button>
-          </div>
-        </section>
-
-        <!-- ================= TAB 3: DATA PEGAWAI ================= -->
-        <section id="tab-pegawai" class="tab-panel">
-          <div class="panel-split">
-            <div class="panel-card">
-              <div class="card-header">
-                <h3>Tambah Data Pegawai</h3>
-                <p>Pegawai yang didaftarkan langsung muncul di menu pilihan penugasan surat.</p>
-              </div>
-
-              <div class="form-group">
-                <label>Nama Lengkap & Gelar</label>
-                <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Rina Wulandari, S.Pd.">
-              </div>
-              <div class="form-group">
-                <label>NIP / NUPTK</label>
-                <input type="text" id="newPegNip" class="form-input" placeholder="19920314 201903 2 011">
-              </div>
-              <div class="form-group">
-                <label>Pangkat / Golongan</label>
-                <input type="text" id="newPegGol" class="form-input" placeholder="Penata Muda, III/a">
-              </div>
-              <div class="form-group">
-                <label>Jabatan</label>
-                <input type="text" id="newPegJabatan" class="form-input" placeholder="Guru Kelas 3">
-              </div>
-              <button type="button" id="btnSimpanPegawai" class="btn btn-primary btn-block">
-                <i class="fa-solid fa-user-plus"></i> Simpan Pegawai
-              </button>
-            </div>
-
-            <div class="table-card">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Nama Lengkap</th>
-                    <th>NIP</th>
-                    <th>Pangkat / Gol</th>
-                    <th>Jabatan</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyPegawaiList"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ================= TAB 4: ARSIP DOKUMEN PDF ================= -->
-        <section id="tab-arsip" class="tab-panel">
-          <div class="panel-split">
-            <div class="panel-card">
-              <div class="card-header">
-                <h3>Unggah Dokumen ke Arsip</h3>
-                <p>Simpan dokumen surat tugas atau berkas kedinasan ke pengarsipan sistem.</p>
-              </div>
-
-              <div class="form-group">
-                <label>Nomor Surat</label>
-                <input type="text" id="inDocNomor" class="form-input" placeholder="400.3.5.../01/SDN.068/X/2026" readonly>
-                <small class="helper-text">Otomatis terisi dari jenis dan nomor surat yang sedang aktif dibuat.</small>
-              </div>
-
-              <div class="form-group">
-                <label>Judul / Nama Dokumen</label>
-                <input type="text" id="inDocTitle" class="form-input" placeholder="Contoh: Surat Keterangan Aktif Siswa PIP 2026">
-              </div>
-
-              <div class="form-group">
-                <label>Kategori Dokumen</label>
-                <select id="inDocCategory" class="form-input">
-                  <option value="Surat Tugas">Surat Tugas</option>
-                  <option value="Surat Keterangan">Surat Keterangan (Aktif/Pindah)</option>
-                  <option value="Surat Undangan">Surat Undangan</option>
-                  <option value="Surat Masuk">Surat Masuk</option>
-                  <option value="Surat Keputusan (SK)">Surat Keputusan (SK)</option>
-                  <option value="Dokumen Sarpras / BOS">Dokumen Sarpras / BOS</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Pilih File PDF</label>
-                <input type="file" id="inDocFile" class="form-input" accept="application/pdf">
-              </div>
-
-              <button type="button" id="btnUploadDrive" class="btn btn-primary btn-block">
-                <i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Arsip Dokumen
-              </button>
-            </div>
-
-            <!-- TABEL ARSIP DENGAN KOLOM CARI -->
-            <div class="table-card">
-              <div class="table-search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="inCariArsip" class="search-input" placeholder="Cari nomor surat, judul dokumen, atau kategori...">
-                <button type="button" id="btnResetCari" class="btn-clear-search hidden" title="Hapus pencarian">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Tanggal</th>
-                    <th>Nomor Surat</th>
-                    <th>Nama Berkas Dokumen</th>
-                    <th>Kategori</th>
-                    <th>Status</th>
-                    <th>Tindakan</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyArsipList"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-      </main>
-    </div>
-
-  </div>
-
-  <!-- JENDELA POPUP MODAL LOGIN & AKUN -->
-  <div id="modalAuth" class="modal-overlay hidden">
-    <div class="modal-card auth-modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <i class="fa-solid fa-shield-halved" style="color: var(--primary); font-size: 20px;"></i>
-          <h3 id="authModalTitle">Masuk ke Akun Persuratan</h3>
-        </div>
-        <button type="button" id="btnTutupAuthModal" class="btn-modal-close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      
-      <div class="auth-modal-body">
-        <div class="auth-tabs">
-          <button type="button" id="tabAuthLogin" class="auth-tab-btn active">Masuk Akun</button>
-          <button type="button" id="tabAuthRegister" class="auth-tab-btn">Daftar Akun Baru</button>
-        </div>
-
-        <button type="button" id="btnGoogleAuth" class="btn-google-auth">
-          <svg class="google-icon" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-          </svg>
-          <span>Lanjutkan dengan Akun Google</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>atau gunakan email & kata sandi</span>
-        </div>
-
-        <form id="formAuthEmail">
-          <div class="form-group" id="groupRegisterName" style="display: none;">
-            <label>Nama Lengkap / Instansi</label>
-            <input type="text" id="authInputName" class="form-input" placeholder="Operator SDN 3 Nogoraji">
-          </div>
-          
-          <div class="form-group">
-            <label>Alamat Email</label>
-            <input type="email" id="authInputEmail" class="form-input" placeholder="contoh: sdn3nogoraji@gmail.com" required>
-          </div>
-
-          <div class="form-group">
-            <label>Kata Sandi (Password)</label>
-            <input type="password" id="authInputPassword" class="form-input" placeholder="Minimal 6 karakter" required>
-          </div>
-
-          <div id="authErrorMessage" class="auth-error-msg hidden"></div>
-
-          <button type="submit" id="btnSubmitAuth" class="btn btn-primary btn-block" style="padding: 11px; margin-top: 8px;">
-            <i class="fa-solid fa-right-to-bracket"></i> <span id="textBtnSubmitAuth">Masuk Sekarang</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- JENDELA POPUP PRATINJAU PDF (TIDAK KELUAR KE LAYAR UTAMA) -->
-  <div id="modalPdfViewer" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title-wrap">
-          <i class="fa-solid fa-file-pdf" style="color: #dc2626; font-size: 22px;"></i>
-          <h3 id="modalPdfTitle">Pratinjau Dokumen PDF</h3>
-        </div>
-        <div class="modal-header-actions">
-          <a id="modalPdfDownload" class="btn btn-secondary btn-sm" download="dokumen.pdf">
-            <i class="fa-solid fa-download"></i> Unduh File
-          </a>
-          <button type="button" id="btnTutupModalPdf" class="btn-modal-close" title="Tutup">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </div>
-      <div class="modal-body">
-        <iframe id="modalPdfFrame" src="about:blank"></iframe>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pustaka Resmi Firebase Google -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  
-  <script src="app.js"></script>
-</body>
-</html>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll(".btn-buka-arsip").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute("data-id");
+      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
+      if (realIndex !== -1) bukaDokumenModal(realIndex);
+    });
+  });
+
+  tbody.querySelectorAll(".btn-hapus-arsip").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute("data-id");
+      const realIndex = AppState.arsip.findIndex((a) => a.id === id);
+      if (realIndex !== -1) {
+        const item = AppState.arsip[realIndex];
+        if (item && item.id) {
+          await PdfStorage.deleteFile(item.id);
+        }
+        AppState.arsip.splice(realIndex, 1);
+        AppStorage.set("listArsipSDN3", AppState.arsip);
+        
+        const inCari = document.getElementById("inCariArsip");
+        renderTabelArsip(inCari ? inCari.value : "");
+        syncDataToCloud();
+        showToast("Arsip dokumen berhasil dihapus.");
+      }
+    });
+  });
+}
+
+function initArsipModule() {
+  renderTabelArsip();
+
+  const btnUpload = document.getElementById("btnUploadDrive");
+  const inNomor = document.getElementById("inDocNomor");
+  const inTitle = document.getElementById("inDocTitle");
+  const inCategory = document.getElementById("inDocCategory");
+  const inFile = document.getElementById("inDocFile");
+
+  const inCari = document.getElementById("inCariArsip");
+  const btnResetCari = document.getElementById("btnResetCari");
+
+  if (inCari) {
+    inCari.addEventListener("input", (e) => {
+      renderTabelArsip(e.target.value);
+      if (btnResetCari) {
+        btnResetCari.classList.toggle("hidden", e.target.value.length === 0);
+      }
+    });
+  }
+
+  if (btnResetCari) {
+    btnResetCari.addEventListener("click", () => {
+      if (inCari) {
+        inCari.value = "";
+        inCari.focus();
+      }
+      btnResetCari.classList.add("hidden");
+      renderTabelArsip("");
+    });
+  }
+
+  const btnTutup = document.getElementById("btnTutupModalPdf");
+  if (btnTutup) btnTutup.addEventListener("click", tutupModalPdf);
+
+  const modal = document.getElementById("modalPdfViewer");
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) tutupModalPdf();
+    });
+  }
+
+  if (btnUpload) {
+    btnUpload.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const getVal = (el) => (el ? el.value.trim() : "");
+      const inNoSurat = document.getElementById("inputNoSurat");
+      const nomor = getVal(inNomor) || (inNoSurat ? inNoSurat.value.trim() : "-");
+      const title = getVal(inTitle);
+      const category = inCategory ? inCategory.value : "Surat Resmi";
+      const file = inFile && inFile.files ? inFile.files[0] : null;
+
+      if (!title || !file) {
+        showToast("Lengkapi judul dokumen dan pilih file PDF terlebih dahulu!", "info");
+        return;
+      }
+
+      btnUpload.disabled = true;
+      btnUpload.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...`;
+
+      const fileId = "pdf_" + Date.now();
+      const today = new Date().toLocaleDateString("id-ID");
+
+      await PdfStorage.saveFile(fileId, file);
+
+      AppState.arsip.unshift({
+        id: fileId,
+        tanggal: today,
+        nomor: nomor,
+        judul: `${title}.pdf`,
+        kategori: category,
+        status: "Tersimpan",
+        isSample: false
+      });
+
+      AppStorage.set("listArsipSDN3", AppState.arsip);
+      syncDataToCloud();
+
+      if (inCari) inCari.value = "";
+      if (btnResetCari) btnResetCari.classList.add("hidden");
+      renderTabelArsip("");
+
+      if (inNomor) inNomor.value = "";
+      if (inTitle) inTitle.value = "";
+      if (inFile) inFile.value = "";
+
+      btnUpload.disabled = false;
+      btnUpload.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Arsip Dokumen`;
+
+      showToast(`Dokumen No. ${nomor} berhasil diarsipkan! Klik Buka untuk membaca.`);
+    });
+  }
+}
+
+// =========================================================================
+// 11. NAVIGASI TAB MENU & RESPONSIVE TOGGLE
+// =========================================================================
+function initResponsiveMenu() {
+  const btnToggle = document.getElementById("btnToggleSidebar");
+  const sidebar = document.querySelector(".sidebar");
+  const backdrop = document.getElementById("sidebarBackdrop");
+  const navBtns = document.querySelectorAll(".nav-btn");
+  const btnLandscape = document.getElementById("btnLandscapeMobile");
+
+  if (btnToggle && sidebar) {
+    btnToggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (window.innerWidth <= 768) {
+        sidebar.classList.toggle("open");
+        if (backdrop) backdrop.classList.toggle("hidden");
+      } else {
+        sidebar.classList.toggle("collapsed");
+      }
+    });
+  }
+
+  if (backdrop && sidebar) {
+    backdrop.addEventListener("click", () => {
+      sidebar.classList.remove("open");
+      backdrop.classList.add("hidden");
+    });
+  }
+
+  navBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove("open");
+        if (backdrop) backdrop.classList.add("hidden");
+      }
+    });
+  });
+
+  if (btnLandscape) {
+    btnLandscape.addEventListener("click", async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape");
+          showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
+        }
+      } catch (err) {
+        showToast("Aktifkan fitur 'Putar Otomatis' di panel HP Anda.", "info");
+      }
+    });
+  }
+}
+
+function initTabNavigation() {
+  const btns = document.querySelectorAll(".nav-btn");
+  const panels = document.querySelectorAll(".tab-panel");
+  const titleDisplay = document.getElementById("headerTitle");
+
+  const titles = {
+    "tab-surat": "Buat Surat Sekolah",
+    "tab-kop": "Pengaturan Kop Sekolah Mandiri",
+    "tab-pegawai": "Kelola Data Pegawai & Guru",
+    "tab-arsip": "Arsip Dokumen PDF"
+  };
+
+  btns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btns.forEach((b) => b.classList.remove("active"));
+      panels.forEach((p) => p.classList.remove("active"));
+
+      btn.classList.add("active");
+      const targetId = btn.getAttribute("data-tab");
+      const targetPanel = document.getElementById(targetId);
+
+      if (targetPanel) {
+        targetPanel.classList.add("active");
+        if (titleDisplay) titleDisplay.innerText = titles[targetId] || "Sistem Surat";
+
+        if (targetId === "tab-arsip") {
+          const inNo = document.getElementById("inputNoSurat");
+          const inDocNomor = document.getElementById("inDocNomor");
+          if (inNo && inDocNomor) {
+            inDocNomor.value = inNo.value;
+          }
+        }
+      }
+    });
+  });
+}
+
+// Inisialisasi Utama Saat Halaman Siap
+document.addEventListener("DOMContentLoaded", () => {
+  initResponsiveMenu();
+  initTabNavigation();
+  initKopModule();
+  initPegawaiModule();
+  initTtdModule();
+  initSuratBinding();
+  initArsipModule();
+  initAuthModule();
+});
