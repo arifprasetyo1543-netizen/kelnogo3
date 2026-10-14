@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Tata Naskah & Pengarsipan Surat Digital</title>
+  <title>Sistem Tata Naskah & Pengarsipan Surat Digital - SDN 3 Nogoraji</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,9 +61,11 @@
       <!-- HEADER ATAS -->
       <header class="top-header no-print">
         <div class="header-left">
+          <!-- Tombol Garis 3 (Buka/Tutup Sidebar) -->
           <button type="button" id="btnToggleSidebar" class="btn-toggle-sidebar" title="Buka/Tutup Menu">
             <i class="fa-solid fa-bars"></i>
           </button>
+          
           <div class="breadcrumb">
             <span>Aplikasi Persuratan</span>
             <i class="fa-solid fa-chevron-right"></i>
@@ -72,20 +74,21 @@
         </div>
 
         <div class="header-tools">
-          <!-- AREA AKUN PENGGUNA (LOGIN / USER INFO) -->
+          <!-- AREA AKUN PENGGUNA -->
           <div id="userProfileArea" class="user-profile-area">
-            <button type="button" id="btnBukaAuth" class="btn btn-secondary btn-auth-trigger">
+            <button type="button" id="btnBukaAuth" class="btn btn-secondary">
               <i class="fa-solid fa-user-lock"></i> <span>Masuk / Akun</span>
             </button>
             <div id="userInfoChip" class="user-chip hidden">
-              <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=1e40af&color=fff" alt="Avatar" class="user-avatar">
+              <img id="userAvatar" src="https://ui-avatars.com/api/?name=Kasmin&background=1e40af&color=fff" alt="Avatar" class="user-avatar">
               <span id="userDisplayName" class="user-name">Pengguna</span>
-              <button type="button" id="btnLogout" class="btn-logout" title="Keluar dari Akun">
+              <button type="button" id="btnLogout" class="btn-logout" title="Keluar Akun">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
               </button>
             </div>
           </div>
 
+          <!-- Tombol Khusus Android -->
           <button type="button" id="btnLandscapeMobile" class="btn btn-secondary mobile-only" title="Kunci Layar Miring">
             <i class="fa-solid fa-mobile-screen-button fa-rotate-90"></i> Layar Miring
           </button>
@@ -104,13 +107,14 @@
         <section id="tab-surat" class="tab-panel active">
           <div class="panel-split">
             
+            <!-- FORM PARAMETER SURAT -->
             <div class="panel-card no-print">
               <div class="card-header">
                 <h3>Parameter Pembuatan Surat</h3>
                 <p>Pilih template surat yang ingin dibuat. Formulir dan format kertas A4 akan menyesuaikan seketika.</p>
               </div>
 
-              <!-- PILIH MACAM JENIS SURAT -->
+              <!-- PILIHAN MACAM-MACAM SURAT -->
               <div class="form-group highlighted-group">
                 <label><i class="fa-solid fa-list-check"></i> Pilih Jenis Surat</label>
                 <select id="selectJenisSurat" class="form-input form-select-lg">
@@ -122,6 +126,7 @@
                 </select>
               </div>
 
+              <!-- NOMOR SURAT -->
               <div class="form-group">
                 <label>Nomor Surat</label>
                 <div class="input-inline">
@@ -132,6 +137,7 @@
                 </div>
               </div>
 
+              <!-- PEJABAT PENANDATANGAN -->
               <div class="form-group">
                 <label>Pejabat Penandatangan (Kepala Sekolah)</label>
                 <select id="selectPenandatangan" class="form-input"></select>
@@ -305,7 +311,7 @@
             <div class="preview-stage">
               <div id="paperA4" class="paper-a4">
                 
-                <!-- KOP SEKOLAH PAS DI TENGAH SIMETRIS -->
+                <!-- KOP SEKOLAH 100% SIMETRIS DI TENGAH -->
                 <div class="letter-kop" id="kopContainer">
                   <div class="kop-emblem">
                     <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah">
@@ -333,17 +339,17 @@
                     <tr>
                       <td class="col-lbl">Nama</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNama">SUKIRNO, S.Pd., M.Pd.</td>
+                      <td class="col-val" id="viewSptPemberiNama">Kasmin, S.Pd., M.M.</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NIP</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNip">19680415 199303 1 005</td>
+                      <td class="col-val" id="viewSptPemberiNip">19730624 200801 1 016</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Pangkat / Gol</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiGol">Pembina Tk. I, IV/b</td>
+                      <td class="col-val" id="viewSptPemberiGol">PENATA AHLI MUDA-III/D</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Jabatan</td>
@@ -359,22 +365,22 @@
                     <tr>
                       <td class="col-lbl">Nama</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNama">Budi Santoso, S.Pd.SD</td>
+                      <td class="col-val" id="viewSptPenerimaNama">Arif Prasetyo</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NIP</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNip">19870512 201101 1 008</td>
+                      <td class="col-val" id="viewSptPenerimaNip">-</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Pangkat / Gol</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaGol">Penata Muda Tk. I, III/b</td>
+                      <td class="col-val" id="viewSptPenerimaGol">-</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Jabatan</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaJabatan">Guru PJOK</td>
+                      <td class="col-val" id="viewSptPenerimaJabatan">Operator Sekolah</td>
                     </tr>
                   </table>
 
@@ -382,7 +388,7 @@
                     <tr>
                       <td class="col-lbl">UNTUK</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptUntuk">Mengikuti Kegiatan Pelatihan...</td>
+                      <td class="col-val" id="viewSptUntuk">Mengikuti Kegiatan Pelatihan Penguatan Kurikulum dan Asesmen Pembelajaran Sekolah Dasar Tingkat Kecamatan.</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">TANGGAL BERANGKAT</td>
@@ -559,7 +565,7 @@
                   <p class="closing-text">Demikian surat rekomendasi ini dibuat dengan sebenarnya untuk dipergunakan sebagai persyaratan pendaftaran/kegiatan lanjutan.</p>
                 </div>
 
-                <!-- PENGESAHAN KEPALA SEKOLAH -->
+                <!-- PENGESAHAN KEPALA SEKOLAH (SPASI 70PX TIDAK GEPENG / DEMPET) -->
                 <div class="signature-section">
                   <div class="sig-box">
                     <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
@@ -580,8 +586,8 @@
                       </svg>
                     </div>
 
-                    <strong id="viewNamaTtd">SUKIRNO, S.Pd., M.Pd.</strong>
-                    <p class="sig-nip" id="viewNipTtd">NIP. 19680415 199303 1 005</p>
+                    <strong id="viewNamaTtd">Kasmin, S.Pd., M.M.</strong>
+                    <p class="sig-nip" id="viewNipTtd">NIP. 19730624 200801 1 016</p>
                   </div>
                 </div>
 
@@ -695,7 +701,7 @@
             <div class="panel-card">
               <div class="card-header">
                 <h3>Unggah Dokumen ke Arsip</h3>
-                <p>Simpan dokumen surat tugas atau berkas kedinasan ke pengarsipan sistem / Cloud.</p>
+                <p>Simpan dokumen surat tugas atau berkas kedinasan ke pengarsipan sistem.</p>
               </div>
 
               <div class="form-group">
@@ -731,6 +737,7 @@
               </button>
             </div>
 
+            <!-- TABEL ARSIP DENGAN KOLOM CARI -->
             <div class="table-card">
               <div class="table-search-bar">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -762,7 +769,7 @@
 
   </div>
 
-  <!-- JENDELA POPUP MODAL LOGIN & REGISTRASI AKUN -->
+  <!-- JENDELA POPUP MODAL LOGIN & AKUN -->
   <div id="modalAuth" class="modal-overlay hidden">
     <div class="modal-card auth-modal-card">
       <div class="modal-header">
@@ -776,13 +783,11 @@
       </div>
       
       <div class="auth-modal-body">
-        <!-- Tab Navigasi Masuk / Daftar -->
         <div class="auth-tabs">
           <button type="button" id="tabAuthLogin" class="auth-tab-btn active">Masuk Akun</button>
           <button type="button" id="tabAuthRegister" class="auth-tab-btn">Daftar Akun Baru</button>
         </div>
 
-        <!-- Tombol Cepat: Login dengan Akun Google -->
         <button type="button" id="btnGoogleAuth" class="btn-google-auth">
           <svg class="google-icon" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -800,7 +805,7 @@
         <form id="formAuthEmail">
           <div class="form-group" id="groupRegisterName" style="display: none;">
             <label>Nama Lengkap / Instansi</label>
-            <input type="text" id="authInputName" class="form-input" placeholder="SDN 3 Nogoraji / Operator">
+            <input type="text" id="authInputName" class="form-input" placeholder="Operator SDN 3 Nogoraji">
           </div>
           
           <div class="form-group">
@@ -819,12 +824,11 @@
             <i class="fa-solid fa-right-to-bracket"></i> <span id="textBtnSubmitAuth">Masuk Sekarang</span>
           </button>
         </form>
-
       </div>
     </div>
   </div>
 
-  <!-- JENDELA POPUP PRATINJAU PDF -->
+  <!-- JENDELA POPUP PRATINJAU PDF (TIDAK KELUAR KE LAYAR UTAMA) -->
   <div id="modalPdfViewer" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -847,11 +851,11 @@
     </div>
   </div>
 
-  <!-- PUSTAKA FIREBASE (OFFICIAL CDN) -->
+  <!-- Pustaka Resmi Firebase Google -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
