@@ -161,15 +161,46 @@ body {
   overflow: hidden;
 }
 
+/* ================= HEADER ATAS (BISA DIGESER KANAN-KIRI DI HP) ================= */
 .top-header {
   height: 64px;
   background: var(--surface);
   border-bottom: 1.5px solid #e2e8f0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
+  justify-content: flex-start; /* Beri ruang agar isi bisa digeser leluasa */
+  gap: 16px;
+  padding: 0 16px;
   flex-shrink: 0;
+  
+  /* TAMBAHKAN 3 BARIS INI BIAR BISA DIGESER: */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sembunyikan garis scrollbar agar tetap rapi */
+.top-header::-webkit-scrollbar {
+  display: none;
+}
+
+/* WAJIB: Kunci elemen agar tidak menyusut saat digulir */
+.header-left,
+.header-tools {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Mencegah tombol gepeng atau terpotong permanen */
+}
+
+.header-left {
+  gap: 12px;
+}
+
+.header-tools {
+  gap: 10px;
+  margin-left: auto; /* Mendorong tombol ke kanan jika layar cukup lebar */
+}
+
 }
 
 .header-left {
