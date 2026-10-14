@@ -45,31 +45,25 @@
         </button>
       </nav>
 
-      <div class="sidebar-status">
+      <!-- Status Sinkronisasi Akun Cloud -->
+      <div class="sidebar-status" id="sidebarCloudStatus">
         <div class="pulse-dot"></div>
-        <span>Sistem Persuratan Siap</span>
+        <span id="cloudStatusText">Mode Offline (Lokal)</span>
       </div>
     </aside>
-          <!-- Penutup sidebar yang lama -->
 
-    <!-- TARUH DI SINI: Backdrop layar gelap saat menu terbuka di HP -->
+    <!-- BACKDROP LAYAR HP -->
     <div id="sidebarBackdrop" class="sidebar-backdrop hidden no-print"></div>
-
-    <div class="main-wrapper">
-      
 
     <!-- KONTEN UTAMA -->
     <div class="main-wrapper">
       
       <!-- HEADER ATAS -->
-            <header class="top-header no-print">
-        
-        <!-- TARUH DI SINI: Bungkus tombol garis 3 bersama breadcrumb -->
+      <header class="top-header no-print">
         <div class="header-left">
           <button type="button" id="btnToggleSidebar" class="btn-toggle-sidebar" title="Buka/Tutup Menu">
             <i class="fa-solid fa-bars"></i>
           </button>
-          
           <div class="breadcrumb">
             <span>Aplikasi Persuratan</span>
             <i class="fa-solid fa-chevron-right"></i>
@@ -78,8 +72,23 @@
         </div>
 
         <div class="header-tools">
-          <!-- Tombol-tombol di sebelah kanan -->
+          <!-- AREA AKUN PENGGUNA (LOGIN / USER INFO) -->
+          <div id="userProfileArea" class="user-profile-area">
+            <button type="button" id="btnBukaAuth" class="btn btn-secondary btn-auth-trigger">
+              <i class="fa-solid fa-user-lock"></i> <span>Masuk / Akun</span>
+            </button>
+            <div id="userInfoChip" class="user-chip hidden">
+              <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=1e40af&color=fff" alt="Avatar" class="user-avatar">
+              <span id="userDisplayName" class="user-name">Pengguna</span>
+              <button type="button" id="btnLogout" class="btn-logout" title="Keluar dari Akun">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+              </button>
+            </div>
+          </div>
 
+          <button type="button" id="btnLandscapeMobile" class="btn btn-secondary mobile-only" title="Kunci Layar Miring">
+            <i class="fa-solid fa-mobile-screen-button fa-rotate-90"></i> Layar Miring
+          </button>
           <button type="button" id="btnResetSurat" class="btn btn-secondary">
             <i class="fa-solid fa-rotate-left"></i> Reset Form
           </button>
@@ -95,18 +104,17 @@
         <section id="tab-surat" class="tab-panel active">
           <div class="panel-split">
             
-            <!-- FORM INPUT SURAT -->
             <div class="panel-card no-print">
               <div class="card-header">
                 <h3>Parameter Pembuatan Surat</h3>
                 <p>Pilih template surat yang ingin dibuat. Formulir dan format kertas A4 akan menyesuaikan seketika.</p>
               </div>
 
-              <!-- PILIHAN MACAM-MACAM SURAT -->
+              <!-- PILIH MACAM JENIS SURAT -->
               <div class="form-group highlighted-group">
                 <label><i class="fa-solid fa-list-check"></i> Pilih Jenis Surat</label>
                 <select id="selectJenisSurat" class="form-input form-select-lg">
-                  <option value="spt">1. Surat Tugas (SPT)</option>
+                  <option value="spt">1. Surat Perintah Tugas (SPT)</option>
                   <option value="sk_aktif">2. Surat Keterangan Aktif Siswa (PIP/Bank)</option>
                   <option value="undangan">3. Surat Undangan Resmi / Wali Murid & Komite</option>
                   <option value="sk_pindah">4. Surat Keterangan Pindah Sekolah (Mutasi)</option>
@@ -114,18 +122,16 @@
                 </select>
               </div>
 
-              <!-- NOMOR SURAT -->
               <div class="form-group">
                 <label>Nomor Surat</label>
                 <div class="input-inline">
-                  <input type="text" id="inputNoSurat" class="form-input" value="400.3.5/01/SDN.068/X/2026">
+                  <input type="text" id="inputNoSurat" class="form-input" value="66">
                   <button type="button" id="btnTambahNomor" class="btn btn-secondary" title="Tambah Urutan Nomor">
                     <i class="fa-solid fa-plus"></i>
                   </button>
                 </div>
               </div>
 
-              <!-- PEJABAT PENANDATANGAN -->
               <div class="form-group">
                 <label>Pejabat Penandatangan (Kepala Sekolah)</label>
                 <select id="selectPenandatangan" class="form-input"></select>
@@ -142,7 +148,7 @@
                 <h4 class="section-title"><i class="fa-solid fa-clipboard-list"></i> Rincian Penugasan</h4>
                 <div class="form-group">
                   <label>UNTUK (Keperluan Tugas)</label>
-                  <textarea id="inSptUntuk" class="form-input" rows="3"></textarea>
+                  <textarea id="inSptUntuk" class="form-input" rows="3">Mengikuti Kegiatan Pelatihan Penguatan Kurikulum dan Asesmen Pembelajaran Sekolah Dasar Tingkat Kecamatan.</textarea>
                 </div>
 
                 <div class="form-grid-2">
@@ -154,6 +160,11 @@
                     <label>TANGGAL KEMBALI</label>
                     <input type="text" id="inSptTglKembali" class="form-input" value="20 Oktober 2026">
                   </div>
+                </div>
+
+                <div class="form-group">
+                  <label>TUJUAN</label>
+                  <input type="text" id="inSptTujuan" class="form-input" value="Gedung Korwil Bidik Kecamatan">
                 </div>
               </div>
 
@@ -242,7 +253,7 @@
                 </div>
                 <div class="form-group">
                   <label>Alasan Pindah</label>
-                  <input type="text" id="inPindahAlasan" class="form-input" value=" domisili dan kepindahan tugas orang tua">
+                  <input type="text" id="inPindahAlasan" class="form-input" value="Mengikuti domisili dan kepindahan tugas orang tua">
                 </div>
               </div>
 
@@ -290,29 +301,29 @@
               </div>
             </div>
 
-            <!-- PRATINJAU KERTAS CETAK A4 (TIDAK GEPENG & BISA DIGULIR KANAN KIRI) -->
+            <!-- PRATINJAU KERTAS CETAK A4 -->
             <div class="preview-stage">
               <div id="paperA4" class="paper-a4">
                 
                 <!-- KOP SEKOLAH PAS DI TENGAH SIMETRIS -->
                 <div class="letter-kop" id="kopContainer">
                   <div class="kop-emblem">
-                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/7/71/Lambang_Kabupaten_Kebumen.jpg?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Sekolah">
+                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah">
                   </div>
                   <div class="kop-headings">
                     <h4 id="viewKopBaris1">PEMERINTAH KABUPATEN KEBUMEN</h4>
                     <h4 id="viewKopBaris2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</h4>
                     <h3 id="viewKopNamaSekolah">SEKOLAH DASAR NEGERI 3 NOGORAJI</h3>
-                    <p class="address" id="viewKopAlamat">Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474</p>
-                    <p class="contact" id="viewKopKontak">NPSN: 20304713 | Pos-el: nogoraji3@gmail.com</p>
+                    <p class="address" id="viewKopAlamat">Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474</p>
+                    <p class="contact" id="viewKopKontak">NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com</p>
                   </div>
                 </div>
                 <div class="kop-divider"></div>
 
-                <!-- JUDUL SURAT DINAMIS -->
+                <!-- JUDUL SURAT -->
                 <div class="letter-title">
-                  <h3 id="viewJudulSurat">SURAT TUGAS</h3>
-                  <p>Nomor : <span id="viewNoSurat">400.3.5/01/SDN.068/X/2026</span></p>
+                  <h3 id="viewJudulSurat">SURAT PERINTAH TUGAS</h3>
+                  <p>Nomor : <span id="viewNoSurat">66</span></p>
                 </div>
 
                 <!-- 1. PREVIEW TEMPLATE SPT -->
@@ -322,17 +333,17 @@
                     <tr>
                       <td class="col-lbl">Nama</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNama">Kasmin, S.Pd.M.M</td>
+                      <td class="col-val" id="viewSptPemberiNama">SUKIRNO, S.Pd., M.Pd.</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NIP</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiNip">197305242008011016</td>
+                      <td class="col-val" id="viewSptPemberiNip">19680415 199303 1 005</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Pangkat / Gol</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPemberiGol">Penata Tk. I, III/d</td>
+                      <td class="col-val" id="viewSptPemberiGol">Pembina Tk. I, IV/b</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Jabatan</td>
@@ -348,22 +359,22 @@
                     <tr>
                       <td class="col-lbl">Nama</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNama">Sukijan, S.Pd</td>
+                      <td class="col-val" id="viewSptPenerimaNama">Budi Santoso, S.Pd.SD</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NIP</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaNip">0000000000000</td>
+                      <td class="col-val" id="viewSptPenerimaNip">19870512 201101 1 008</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Pangkat / Gol</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaGol">IX</td>
+                      <td class="col-val" id="viewSptPenerimaGol">Penata Muda Tk. I, III/b</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Jabatan</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptPenerimaJabatan">Guru</td>
+                      <td class="col-val" id="viewSptPenerimaJabatan">Guru PJOK</td>
                     </tr>
                   </table>
 
@@ -371,17 +382,22 @@
                     <tr>
                       <td class="col-lbl">UNTUK</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptUntuk"></td>
+                      <td class="col-val" id="viewSptUntuk">Mengikuti Kegiatan Pelatihan...</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">TANGGAL BERANGKAT</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglBerangkat">01 Oktober 2026</td>
+                      <td class="col-val" id="viewSptTglBerangkat">19 Oktober 2026</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">TANGGAL KEMBALI</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglKembali">01 Oktober 2026</td>
+                      <td class="col-val" id="viewSptTglKembali">20 Oktober 2026</td>
+                    </tr>
+                    <tr>
+                      <td class="col-lbl">TUJUAN</td>
+                      <td class="col-dot">:</td>
+                      <td class="col-val" id="viewSptTujuan">Gedung Korwil Bidik Kecamatan</td>
                     </tr>
                   </table>
 
@@ -396,27 +412,27 @@
                     <tr>
                       <td class="col-lbl">Nama Lengkap</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewAktifNama"></strong></td>
+                      <td class="col-val"><strong id="viewAktifNama">Muhammad Rizky Pratama</strong></td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NISN / NIS</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifNisn"></td>
+                      <td class="col-val" id="viewAktifNisn">0145892341 / 202401</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Tempat, Tgl Lahir</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifTtl"></td>
+                      <td class="col-val" id="viewAktifTtl">Kebumen, 14 Mei 2014</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Tingkat / Kelas</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifKelas"></td>
+                      <td class="col-val" id="viewAktifKelas">IV (Empat)</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Nama Orang Tua / Wali</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifOrtu"></td>
+                      <td class="col-val" id="viewAktifOrtu">Slamet Riyadi</td>
                     </tr>
                   </table>
 
@@ -543,7 +559,7 @@
                   <p class="closing-text">Demikian surat rekomendasi ini dibuat dengan sebenarnya untuk dipergunakan sebagai persyaratan pendaftaran/kegiatan lanjutan.</p>
                 </div>
 
-                <!-- PENGESAHAN KEPALA SEKOLAH (SPASI 70PX TERJAGA AMAN) -->
+                <!-- PENGESAHAN KEPALA SEKOLAH -->
                 <div class="signature-section">
                   <div class="sig-box">
                     <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
@@ -564,7 +580,7 @@
                       </svg>
                     </div>
 
-                    <strong id="viewNamaTtd">Kasmin, S.Pd.,M.M.</strong>
+                    <strong id="viewNamaTtd">SUKIRNO, S.Pd., M.Pd.</strong>
                     <p class="sig-nip" id="viewNipTtd">NIP. 19680415 199303 1 005</p>
                   </div>
                 </div>
@@ -616,7 +632,7 @@
 
             <div class="form-group">
               <label>Atau Gunakan Tautan / URL Logo Online</label>
-              <input type="text" id="cfgKopLogoUrl" class="form-input" value="">
+              <input type="text" id="cfgKopLogoUrl" class="form-input" value="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png">
             </div>
 
             <button type="button" id="btnSimpanKop" class="btn btn-primary">
@@ -636,19 +652,19 @@
 
               <div class="form-group">
                 <label>Nama Lengkap & Gelar</label>
-                <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Arif Prasetyo">
+                <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Rina Wulandari, S.Pd.">
               </div>
               <div class="form-group">
                 <label>NIP / NUPTK</label>
-                <input type="text" id="newPegNip" class="form-input" placeholder="1234567890123456789">
+                <input type="text" id="newPegNip" class="form-input" placeholder="19920314 201903 2 011">
               </div>
-                <div class="form-group">
-                    <label>Pangkat / Golongan</label>
-                    <input type="text" id="newPegPangkat" class="form-input" placeholder="Contoh: Penata Muda Tk. I, III/b">
-                </div>
+              <div class="form-group">
+                <label>Pangkat / Golongan</label>
+                <input type="text" id="newPegGol" class="form-input" placeholder="Penata Muda, III/a">
+              </div>
               <div class="form-group">
                 <label>Jabatan</label>
-                <input type="text" id="newPegJabatan" class="form-input" placeholder="GURUK KELAS...">
+                <input type="text" id="newPegJabatan" class="form-input" placeholder="Guru Kelas 3">
               </div>
               <button type="button" id="btnSimpanPegawai" class="btn btn-primary btn-block">
                 <i class="fa-solid fa-user-plus"></i> Simpan Pegawai
@@ -673,13 +689,13 @@
           </div>
         </section>
 
-        <!-- ================= TAB 4: ARSIP DOKUMEN PDF (SEARCH BAR & MODAL VIEWER) ================= -->
+        <!-- ================= TAB 4: ARSIP DOKUMEN PDF ================= -->
         <section id="tab-arsip" class="tab-panel">
           <div class="panel-split">
             <div class="panel-card">
               <div class="card-header">
                 <h3>Unggah Dokumen ke Arsip</h3>
-                <p>Simpan dokumen surat tugas atau berkas kedinasan ke pengarsipan sistem.</p>
+                <p>Simpan dokumen surat tugas atau berkas kedinasan ke pengarsipan sistem / Cloud.</p>
               </div>
 
               <div class="form-group">
@@ -715,7 +731,6 @@
               </button>
             </div>
 
-            <!-- TABEL ARSIP DENGAN PENCARIAN REAL-TIME -->
             <div class="table-card">
               <div class="table-search-bar">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -747,7 +762,69 @@
 
   </div>
 
-  <!-- JENDELA POPUP PRATINJAU PDF (DIJAMIN TIDAK KEMBALI KE LAYAR UTAMA) -->
+  <!-- JENDELA POPUP MODAL LOGIN & REGISTRASI AKUN -->
+  <div id="modalAuth" class="modal-overlay hidden">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <i class="fa-solid fa-shield-halved" style="color: var(--primary); font-size: 20px;"></i>
+          <h3 id="authModalTitle">Masuk ke Akun Persuratan</h3>
+        </div>
+        <button type="button" id="btnTutupAuthModal" class="btn-modal-close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="auth-modal-body">
+        <!-- Tab Navigasi Masuk / Daftar -->
+        <div class="auth-tabs">
+          <button type="button" id="tabAuthLogin" class="auth-tab-btn active">Masuk Akun</button>
+          <button type="button" id="tabAuthRegister" class="auth-tab-btn">Daftar Akun Baru</button>
+        </div>
+
+        <!-- Tombol Cepat: Login dengan Akun Google -->
+        <button type="button" id="btnGoogleAuth" class="btn-google-auth">
+          <svg class="google-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          <span>Lanjutkan dengan Akun Google</span>
+        </button>
+
+        <div class="auth-divider">
+          <span>atau gunakan email & kata sandi</span>
+        </div>
+
+        <form id="formAuthEmail">
+          <div class="form-group" id="groupRegisterName" style="display: none;">
+            <label>Nama Lengkap / Instansi</label>
+            <input type="text" id="authInputName" class="form-input" placeholder="SDN 3 Nogoraji / Operator">
+          </div>
+          
+          <div class="form-group">
+            <label>Alamat Email</label>
+            <input type="email" id="authInputEmail" class="form-input" placeholder="contoh: sdn3nogoraji@gmail.com" required>
+          </div>
+
+          <div class="form-group">
+            <label>Kata Sandi (Password)</label>
+            <input type="password" id="authInputPassword" class="form-input" placeholder="Minimal 6 karakter" required>
+          </div>
+
+          <div id="authErrorMessage" class="auth-error-msg hidden"></div>
+
+          <button type="submit" id="btnSubmitAuth" class="btn btn-primary btn-block" style="padding: 11px; margin-top: 8px;">
+            <i class="fa-solid fa-right-to-bracket"></i> <span id="textBtnSubmitAuth">Masuk Sekarang</span>
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JENDELA POPUP PRATINJAU PDF -->
   <div id="modalPdfViewer" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -770,6 +847,11 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- PUSTAKA FIREBASE (OFFICIAL CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  
+  <script src="app.js"></script>
 </body>
 </html>
