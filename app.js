@@ -9,14 +9,6 @@
 // =========================================================================
 // Jika Anda memiliki akun Firebase, Anda cukup menempelkan kuncinya di sini.
 // Jika belum, aplikasi tetap berjalan normal 100% dalam mode offline aman.
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAdg6j0-1x9JKexTnD3fFG4UPGryCW8rDg",
   authDomain: "surat-sdn3nogoraju.firebaseapp.com",
@@ -26,10 +18,6 @@ const firebaseConfig = {
   appId: "1:761011637070:web:1124b2ecc42ca534e86c1f",
   measurementId: "G-ZZT7EQCERG"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 let auth = null;
 let db = null;
