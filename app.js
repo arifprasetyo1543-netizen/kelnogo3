@@ -135,7 +135,7 @@ const AppState = {
 
   // Data Pegawai Bawaan Langsung Pak Kasmin & Pak Arif
   pegawai: AppStorage.get("listPegawaiSDN3", [
-    { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
+    { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "Penata Tingkat 1-III/D", jabatan: "Kepala Sekolah" },
     { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" },
     { nama: "Sri Haryani, S.Pd.SD", nip: "196701131992112001", gol: "IV/B", jabatan: "Guru Kelas I" },
     { nama: "Sarinah, S.Pd.SD", nip: "197107282008012014", gol: "III/C", jabatan: "Guru Kelas IV" },
@@ -152,7 +152,7 @@ const AppState = {
   ]),
 
   judulSuratMap: {
-    spt: "SURAT PERINTAH TUGAS",
+    spt: "SURAT TUGAS",
     sk_aktif: "SURAT KETERANGAN AKTIF SEKOLAH",
     undangan: "SURAT UNDANGAN",
     sk_pindah: "SURAT KETERANGAN PINDAH SEKOLAH",
