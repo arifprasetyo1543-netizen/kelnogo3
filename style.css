@@ -1,5 +1,5 @@
 :root {
-  --primary: #15803d;          /* Hijau Sekolah Formal */
+  --primary: #15803d;          /* Hijau Sekolah Kedinasan */
   --primary-hover: #14532d;    /* Hijau Tua */
   --primary-light: #f0fdf4;    /* Hijau Pastel */
   --primary-border: #bbf7d0;   /* Garis Batas Hijau */
@@ -162,10 +162,10 @@ body {
   overflow: hidden;
   width: 100%;
   max-width: 100vw;
-  min-width: 0 !important; /* WAJIB: Mencegah flex child melar melebihi layar HP */
+  min-width: 0 !important; /* Kunci agar flex child tidak melar melebihi layar */
 }
 
-/* ================= HEADER ATAS (BISA DIUSAP/DIGESER KANAN KIRI DI HP) ================= */
+/* ================= TOP HEADER (BISA DIGESER KANAN-KIRI DI HP) ================= */
 .top-header {
   height: 64px;
   background: var(--surface);
@@ -177,8 +177,8 @@ body {
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
-  
-  /* PENGATURAN GESER SENTUH */
+
+  /* AKTIFKAN GULIR HORIZONTAL PADA LAYAR SENTUH */
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
@@ -186,7 +186,6 @@ body {
   white-space: nowrap;
 }
 
-/* Hilangkan garis scrollbar header agar bersih */
 .top-header::-webkit-scrollbar {
   display: none;
   height: 0;
@@ -1021,11 +1020,7 @@ body {
   .mobile-only { display: inline-flex; }
   .panel-split { grid-template-columns: 1fr; }
   .content-viewport { padding: 16px 14px; }
-  
-  /* Pastikan header di HP tetap fleksibel dan tidak terjepit */
-  .top-header {
-    padding: 0 12px;
-  }
+  .top-header { padding: 0 12px; }
 }
 
 /* ================= NOTIFIKASI TOAST ================= */
