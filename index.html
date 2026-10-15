@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
@@ -45,7 +45,6 @@
         </button>
       </nav>
 
-      <!-- Status Sinkronisasi Akun Cloud -->
       <div class="sidebar-status" id="sidebarCloudStatus">
         <div class="pulse-dot"></div>
         <span id="cloudStatusText">Mode Offline (Lokal)</span>
@@ -58,10 +57,9 @@
     <!-- KONTEN UTAMA -->
     <div class="main-wrapper">
       
-      <!-- HEADER ATAS -->
+      <!-- HEADER ATAS (BISA DIGESER KANAN-KIRI DI HP) -->
       <header class="top-header no-print">
         <div class="header-left">
-          <!-- Tombol Garis 3 (Buka/Tutup Sidebar) -->
           <button type="button" id="btnToggleSidebar" class="btn-toggle-sidebar" title="Buka/Tutup Menu">
             <i class="fa-solid fa-bars"></i>
           </button>
@@ -80,7 +78,7 @@
               <i class="fa-solid fa-user-lock"></i> <span>Masuk / Akun</span>
             </button>
             <div id="userInfoChip" class="user-chip hidden">
-              <img id="userAvatar" src="https://ui-avatars.com/api/?name=Kasmin&background=1e40af&color=fff" alt="Avatar" class="user-avatar">
+              <img id="userAvatar" src="https://ui-avatars.com/api/?name=Kasmin&background=15803d&color=fff" alt="Avatar" class="user-avatar">
               <span id="userDisplayName" class="user-name">Pengguna</span>
               <button type="button" id="btnLogout" class="btn-logout" title="Keluar Akun">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -88,7 +86,6 @@
             </div>
           </div>
 
-          <!-- Tombol Khusus Android -->
           <button type="button" id="btnLandscapeMobile" class="btn btn-secondary mobile-only" title="Kunci Layar Miring">
             <i class="fa-solid fa-mobile-screen-button fa-rotate-90"></i> Layar Miring
           </button>
@@ -118,7 +115,7 @@
               <div class="form-group highlighted-group">
                 <label><i class="fa-solid fa-list-check"></i> Pilih Jenis Surat</label>
                 <select id="selectJenisSurat" class="form-input form-select-lg">
-                  <option value="spt">1. Surat Tugas</option>
+                  <option value="spt">1. Surat Perintah Tugas (SPT)</option>
                   <option value="sk_aktif">2. Surat Keterangan Aktif Siswa (PIP/Bank)</option>
                   <option value="undangan">3. Surat Undangan Resmi / Wali Murid & Komite</option>
                   <option value="sk_pindah">4. Surat Keterangan Pindah Sekolah (Mutasi)</option>
@@ -130,7 +127,7 @@
               <div class="form-group">
                 <label>Nomor Surat</label>
                 <div class="input-inline">
-                  <input type="text" id="inputNoSurat" class="form-input" value="400.3.5.../01/SDN.068/X/2026" placeholder="Contoh: 421.2/066/SDN3-NGR/X/2026">
+                  <input type="text" id="inputNoSurat" class="form-input" value="420.3.5/01/SDN.068/X/2026">
                   <button type="button" id="btnTambahNomor" class="btn btn-secondary" title="Tambah Urutan Nomor">
                     <i class="fa-solid fa-plus"></i>
                   </button>
@@ -160,17 +157,17 @@
                 <div class="form-grid-2">
                   <div class="form-group">
                     <label>TANGGAL BERANGKAT</label>
-                    <input type="text" id="inSptTglBerangkat" class="form-input" value="19 Oktober 2026">
+                    <input type="text" id="inSptTglBerangkat" class="form-input" value="01 Oktober 2026">
                   </div>
                   <div class="form-group">
                     <label>TANGGAL KEMBALI</label>
-                    <input type="text" id="inSptTglKembali" class="form-input" value="20 Oktober 2026">
+                    <input type="text" id="inSptTglKembali" class="form-input" value="01 Oktober 2026">
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label>TUJUAN</label>
-                  <input type="text" id="inSptTujuan" class="form-input" value="Gedung Korwil Bidik Kecamatan">
+                  <input type="text" id="inSptTujuan" class="form-input" value="">
                 </div>
               </div>
 
@@ -179,25 +176,25 @@
                 <h4 class="section-title"><i class="fa-solid fa-child"></i> Identitas Siswa</h4>
                 <div class="form-group">
                   <label>Nama Lengkap Siswa</label>
-                  <input type="text" id="inAktifNama" class="form-input" value="Muhammad Rizky Pratama">
+                  <input type="text" id="inAktifNama" class="form-input" value="">
                 </div>
                 <div class="form-grid-2">
                   <div class="form-group">
                     <label>NISN / NIS</label>
-                    <input type="text" id="inAktifNisn" class="form-input" value="0145892341 / 202401">
+                    <input type="text" id="inAktifNisn" class="form-input" value="">
                   </div>
                   <div class="form-group">
                     <label>Kelas</label>
-                    <input type="text" id="inAktifKelas" class="form-input" value="IV (Empat)">
+                    <input type="text" id="inAktifKelas" class="form-input" value="">
                   </div>
                 </div>
                 <div class="form-group">
                   <label>Tempat, Tanggal Lahir</label>
-                  <input type="text" id="inAktifTtl" class="form-input" value="Kebumen, 14 Mei 2014">
+                  <input type="text" id="inAktifTtl" class="form-input" value="">
                 </div>
                 <div class="form-group">
                   <label>Nama Orang Tua / Wali</label>
-                  <input type="text" id="inAktifOrtu" class="form-input" value="Slamet Riyadi">
+                  <input type="text" id="inAktifOrtu" class="form-input" value="">
                 </div>
                 <div class="form-group">
                   <label>Keperluan Pembuatan Surat</label>
@@ -320,16 +317,16 @@
                     <h4 id="viewKopBaris1">PEMERINTAH KABUPATEN KEBUMEN</h4>
                     <h4 id="viewKopBaris2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</h4>
                     <h3 id="viewKopNamaSekolah">SEKOLAH DASAR NEGERI 3 NOGORAJI</h3>
-                    <p class="address" id="viewKopAlamat">Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474</p>
-                    <p class="contact" id="viewKopKontak">NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com</p>
+                    <p class="address" id="viewKopAlamat">Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474</p>
+                    <p class="contact" id="viewKopKontak">NPSN: 20304713 | Pos-el: nogoraji3@gmail.com</p>
                   </div>
                 </div>
                 <div class="kop-divider"></div>
 
                 <!-- JUDUL SURAT -->
                 <div class="letter-title">
-                  <h3 id="viewJudulSurat">SURAT TUGAS</h3>
-                  <p>Nomor : <span id="viewNoSurat">400.3.5.../01/SDN.068/X/2026</span></p>
+                  <h3 id="viewJudulSurat">SURAT PERINTAH TUGAS</h3>
+                  <p>Nomor : <span id="viewNoSurat">420.3.5/01/SDN.068/X/2026</span></p>
                 </div>
 
                 <!-- 1. PREVIEW TEMPLATE SPT -->
@@ -393,12 +390,12 @@
                     <tr>
                       <td class="col-lbl">TANGGAL BERANGKAT</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglBerangkat"> Oktober 2026</td>
+                      <td class="col-val" id="viewSptTglBerangkat">01 Oktober 2026</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">TANGGAL KEMBALI</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewSptTglKembali"> Oktober 2026</td>
+                      <td class="col-val" id="viewSptTglKembali">01 Oktober 2026</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">TUJUAN</td>
@@ -418,27 +415,27 @@
                     <tr>
                       <td class="col-lbl">Nama Lengkap</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val"><strong id="viewAktifNama"></strong></td>
+                      <td class="col-val"><strong id="viewAktifNama">Muhammad Rizky Pratama</strong></td>
                     </tr>
                     <tr>
                       <td class="col-lbl">NISN / NIS</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifNisn"></td>
+                      <td class="col-val" id="viewAktifNisn">0145892341 / 202401</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Tempat, Tgl Lahir</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifTtl"></td>
+                      <td class="col-val" id="viewAktifTtl">Kebumen, 14 Mei 2014</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Tingkat / Kelas</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifKelas"></td>
+                      <td class="col-val" id="viewAktifKelas">IV (Empat)</td>
                     </tr>
                     <tr>
                       <td class="col-lbl">Nama Orang Tua / Wali</td>
                       <td class="col-dot">:</td>
-                      <td class="col-val" id="viewAktifOrtu"></td>
+                      <td class="col-val" id="viewAktifOrtu">Slamet Riyadi</td>
                     </tr>
                   </table>
 
@@ -565,25 +562,21 @@
                   <p class="closing-text">Demikian surat rekomendasi ini dibuat dengan sebenarnya untuk dipergunakan sebagai persyaratan pendaftaran/kegiatan lanjutan.</p>
                 </div>
 
-                <!-- PENGESAHAN KEPALA SEKOLAH (SPASI 70PX TIDAK GEPENG / DEMPET) -->
+                <!-- PENGESAHAN KEPALA SEKOLAH -->
                 <div class="signature-section">
                   <div class="sig-box">
                     <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
-                    <p>Pada Tanggal : <span id="viewPadaTanggal">12 Oktober 2026</span></p>
+                    <p>Pada Tanggal : <span id="viewPadaTanggal">01 Oktober 2026</span></p>
                     <p id="viewJabatanTtd">Kepala Sekolah,</p>
 
                     <div class="visual-stamp-ttd" id="ttdBoxVisual">
                       <div class="stamp-round">
                         <div class="stamp-inner">
-                          <span id="stampTextInstansi">PEMERINTAH KAB. KEBUMEN</span>
-                          <span id="stampTextSekolah">★ SDN 3 NOGORAJI ★</span>
-                          <span>DINAS PENDIDIKAN</span>
+                          <span id="stampTextInstansi"></span>
+                          <span id="stampTextSekolah"></span>
+                          <span></span>
                         </div>
                       </div>
-                      <svg class="svg-ttd" viewBox="0 0 200 80">
-                        <path d="M 20,50 Q 55,8 75,45 T 115,32 Q 145,68 175,28" stroke="#002266" stroke-width="3" fill="none" stroke-linecap="round"/>
-                        <path d="M 38,62 L 165,52" stroke="#002266" stroke-width="2" fill="none" stroke-linecap="round"/>
-                      </svg>
                     </div>
 
                     <strong id="viewNamaTtd">Kasmin, S.Pd., M.M.</strong>
@@ -627,7 +620,7 @@
 
             <div class="form-group">
               <label>Kontak / Pos-el / NPSN</label>
-              <input type="text" id="cfgKopKontak" class="form-input" value="NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com">
+              <input type="text" id="cfgKopKontak" class="form-input" value="NPSN: 20304713 | Pos-el: nogoraji3@gmail.com">
             </div>
 
             <div class="form-group">
@@ -638,7 +631,7 @@
 
             <div class="form-group">
               <label>Atau Gunakan Tautan / URL Logo Online</label>
-              <input type="text" id="cfgKopLogoUrl" class="form-input" value="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png">
+              <input type="text" id="cfgKopLogoUrl" class="form-input" value="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail">
             </div>
 
             <button type="button" id="btnSimpanKop" class="btn btn-primary">
@@ -706,7 +699,7 @@
 
               <div class="form-group">
                 <label>Nomor Surat</label>
-                <input type="text" id="inDocNomor" class="form-input" placeholder="400.3.5.../01/SDN.068/X/2026" readonly>
+                <input type="text" id="inDocNomor" class="form-input" placeholder="Contoh: 66 atau 421.2/066/SDN3-NGR/X/2026">
                 <small class="helper-text">Otomatis terisi dari jenis dan nomor surat yang sedang aktif dibuat.</small>
               </div>
 
@@ -737,7 +730,7 @@
               </button>
             </div>
 
-            <!-- TABEL ARSIP DENGAN KOLOM CARI -->
+            <!-- TABEL ARSIP DENGAN KOLOM CARI REAL-TIME -->
             <div class="table-card">
               <div class="table-search-bar">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -828,7 +821,7 @@
     </div>
   </div>
 
-  <!-- JENDELA POPUP PRATINJAU PDF (TIDAK KELUAR KE LAYAR UTAMA) -->
+  <!-- JENDELA POPUP PRATINJAU PDF -->
   <div id="modalPdfViewer" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -851,7 +844,7 @@
     </div>
   </div>
 
-  <!-- Pustaka Resmi Firebase Google -->
+  <!-- Pustaka Resmi Firebase Google (Versi Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
