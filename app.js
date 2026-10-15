@@ -824,8 +824,8 @@ function initSuratBinding() {
       const setuju = confirm("Apakah Anda yakin ingin mengosongkan/mereset isian formulir surat ini?");
       if (!setuju) return;
 
-      if (inNo) inNo.value = "66";
-      if (viewNo) viewNo.innerText = "66";
+      if (inNo) inNo.value = "";
+      if (viewNo) viewNo.innerText = "";
       showToast("Formulir surat berhasil direset.", "info");
     });
   }
