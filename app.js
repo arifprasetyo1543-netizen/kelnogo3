@@ -21,7 +21,7 @@ const firebaseConfig = {
 // 2. URL GOOGLE APPS SCRIPT WEB APP
 // Ganti teks di dalam tanda kutip dengan URL Web App Anda (wajib berakhiran /exec)
 // =========================================================================
-const GOOGLE_DRIVE_SCRIPT_URL = "TEMPEL_URL_WEB_APP_BERAKHIRAN_EXEC_DI_SINI";
+const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
 
 let auth = null;
 let db = null;
