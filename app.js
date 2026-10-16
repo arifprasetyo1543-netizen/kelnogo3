@@ -20,7 +20,7 @@ const firebaseConfig = {
 
 // URL Google Apps Script Web App untuk upload langsung ke Google Drive email Anda
 // (Ganti string di bawah ini dengan URL Web App milik Anda jika sudah membuat deployment baru)
-const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/execC";
+const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/u/1/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
 let auth = null;
 let db = null;
 let isFirebaseActive = false;
