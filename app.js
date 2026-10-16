@@ -1,12 +1,11 @@
 /**
  * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
  * SD NEGERI 3 NOGORAJI
- * File: script.js
- * Versi Stabil: Dual-Layer Persistence + Google Drive Integration
+ * File: script.js (Versi Penuh & Terintegrasi)
  */
 
 // =========================================================================
-// 1. KONFIGURASI GOOGLE FIREBASE MILIK ANDA
+// 1. KONFIGURASI GOOGLE FIREBASE
 // =========================================================================
 const firebaseConfig = {
   apiKey: "AIzaSyAdg6j0-1x9JKexTnD3fFG4UPGryCW8rDg",
@@ -18,9 +17,12 @@ const firebaseConfig = {
   measurementId: "G-ZZT7EQCERG"
 };
 
-// URL Google Apps Script Web App untuk upload langsung ke Google Drive email Anda
-// (Ganti string di bawah ini dengan URL Web App milik Anda jika sudah membuat deployment baru)
-const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/u/1/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
+// =========================================================================
+// 2. URL GOOGLE APPS SCRIPT WEB APP
+// Ganti teks di dalam tanda kutip dengan URL Web App Anda (wajib berakhiran /exec)
+// =========================================================================
+const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
+
 let auth = null;
 let db = null;
 let isFirebaseActive = false;
@@ -33,11 +35,11 @@ try {
     isFirebaseActive = true;
   }
 } catch (e) {
-  console.warn("Firebase gagal diinisialisasi:", e);
+  console.warn("Firebase belum aktif atau offline:", e);
 }
 
 // =========================================================================
-// 2. TEMPLATE DATA AWAL
+// 3. DATA AWAL (DEFAULT STATE)
 // =========================================================================
 function getDefaultState() {
   return {
@@ -45,12 +47,12 @@ function getDefaultState() {
       baris1: "PEMERINTAH KABUPATEN KEBUMEN",
       baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
       namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
-      alamat: "Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
-      kontak: "NPSN: 20304713 | Pos-el: nogoraji3@gmail.com",
-      logoUrl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail"
+      alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
+      kontak: "NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com",
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
     },
     pegawai: [
-      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "Penata Tingkat 1-III/D", jabatan: "Kepala Sekolah" },
+      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
       { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
     ],
     arsip: []
@@ -58,7 +60,7 @@ function getDefaultState() {
 }
 
 // =========================================================================
-// 3. STORAGE & INDEXEDDB ENGINE
+// 4. PENYIMPANAN BLOB PDF LOKAL (INDEXED DB)
 // =========================================================================
 const PdfStorage = {
   dbName: "SDN3_ArsipPDF_DB",
@@ -142,7 +144,7 @@ const AppStorage = {
 };
 
 // =========================================================================
-// 4. STATE APLIKASI
+// 5. STATE UTAMA APLIKASI
 // =========================================================================
 const defaultInit = getDefaultState();
 const AppState = {
@@ -166,12 +168,12 @@ function getUserKey(baseKey) {
 }
 
 // =========================================================================
-// 5. SISTEM SINKRONISASI GANDA (LOCAL CACHE + FIRESTORE CLOUD)
+// 6. SINKRONISASI DATA GANDA (LOCAL CACHE + CLOUD FIRESTORE)
 // =========================================================================
 async function syncDataToCloud() {
   if (!AppState.currentUser) return;
 
-  // 1. Simpan ke Cache Lokal Khusus Akun Tersebut
+  // 1. Simpan ke Cache Lokal Perangkat Khusus Akun Tersebut
   AppStorage.set(getUserKey("kopSekolah"), AppState.kop);
   AppStorage.set(getUserKey("listPegawai"), AppState.pegawai);
   AppStorage.set(getUserKey("listArsip"), AppState.arsip);
@@ -190,7 +192,7 @@ async function syncDataToCloud() {
       const statusTxt = document.getElementById("cloudStatusText");
       if (statusTxt) statusTxt.innerText = "Tersinkron ke Cloud";
     } catch (err) {
-      console.warn("Gagal simpan ke Firestore (cek Rules):", err);
+      console.warn("Sinkronisasi Firestore gagal:", err);
     }
   }
 }
@@ -199,7 +201,7 @@ async function loadDataFromCloud(user) {
   const userKey = user.uid;
   const defaults = getDefaultState();
 
-  // Layer 1: Muat instan dari Cache Lokal Perangkat jika ada
+  // Layer 1: Ambil dari Cache Lokal jika ada
   const cachedKop = AppStorage.get(`kopSekolah_${userKey}`, null);
   const cachedPeg = AppStorage.get(`listPegawai_${userKey}`, null);
   const cachedArsip = AppStorage.get(`listArsip_${userKey}`, null);
@@ -213,7 +215,7 @@ async function loadDataFromCloud(user) {
   renderTabelPegawai();
   renderTabelArsip();
 
-  // Layer 2: Tarik & Sinkronkan Data dari Cloud Firestore
+  // Layer 2: Sinkronkan dengan Firestore
   if (isFirebaseActive && db) {
     try {
       const doc = await db.collection("sekolah_data").doc(user.uid).get();
@@ -233,7 +235,6 @@ async function loadDataFromCloud(user) {
         renderTabelPegawai();
         renderTabelArsip();
       } else {
-        // Jika akun baru dan belum memiliki cache, gunakan data awal
         if (!cachedKop && !cachedPeg && !cachedArsip) {
           AppState.kop = defaults.kop;
           AppState.pegawai = defaults.pegawai;
@@ -244,8 +245,8 @@ async function loadDataFromCloud(user) {
 
       showToast(`Data akun ${user.displayName || user.email} berhasil dimuat!`);
     } catch (err) {
-      console.warn("Menggunakan cache lokal perangkat:", err);
-      showToast("Data akun dimuat dari cache perangkat.");
+      console.warn("Gagal terhubung ke cloud, menggunakan data lokal:", err);
+      showToast("Data dimuat dari memori perangkat.");
     }
   }
 }
@@ -278,7 +279,7 @@ function bindLiveSync(inputId, viewId) {
 }
 
 // =========================================================================
-// 6. MODUL AUTENTIKASI (LOGIN / REGISTER / LOGOUT)
+// 7. MODUL AUTENTIKASI PENGGUNA (LOGIN, REGISTER, LOGOUT)
 // =========================================================================
 function initAuthModule() {
   const modal = document.getElementById("modalAuth");
@@ -297,7 +298,7 @@ function initAuthModule() {
 
   const openAuth = () => {
     if (!isFirebaseActive) {
-      showToast("Firebase belum aktif. Aplikasi berjalan dalam mode lokal.", "info");
+      showToast("Firebase belum aktif. Berjalan dalam mode offline.", "info");
       return;
     }
     modal.classList.remove("hidden");
@@ -361,12 +362,12 @@ function initAuthModule() {
           showToast("Akun baru berhasil didaftarkan!");
         } else {
           await auth.signInWithEmailAndPassword(email, password);
-          showToast("Berhasil masuk ke akun Anda!");
+          showToast("Berhasil masuk ke akun!");
         }
         closeAuth();
       } catch (err) {
         errorMsg.classList.remove("hidden");
-        errorMsg.innerText = err.message || "Terjadi kesalahan saat autentikasi.";
+        errorMsg.innerText = err.message || "Gagal melakukan proses autentikasi.";
       } finally {
         textSubmit.innerHTML = isRegisterMode ? "Buat Akun Baru" : "Masuk Sekarang";
       }
@@ -384,11 +385,11 @@ function initAuthModule() {
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
         await auth.signInWithPopup(provider);
-        showToast("Berhasil masuk dengan Akun Google!");
+        showToast("Berhasil masuk dengan akun Google!");
         closeAuth();
       } catch (err) {
         errorMsg.classList.remove("hidden");
-        errorMsg.innerText = err.message || "Gagal masuk menggunakan Google.";
+        errorMsg.innerText = err.message || "Gagal masuk lewat Google.";
       }
     });
   }
@@ -418,7 +419,7 @@ function initAuthModule() {
 
         await loadDataFromCloud(user);
       } else {
-        // SAAT LOGOUT: Reset tampilan agar tidak bocor ke sesi lain
+        // RESET SAAT LOGOUT: Mengosongkan data agar tidak bocor ke akun lain
         AppState.currentUser = null;
         const defaults = getDefaultState();
         AppState.kop = defaults.kop;
@@ -439,7 +440,7 @@ function initAuthModule() {
 }
 
 // =========================================================================
-// 7. MODUL KOP SURAT SEKOLAH
+// 8. MODUL PENGATURAN KOP SURAT
 // =========================================================================
 function renderKopSurat() {
   const k = AppState.kop;
@@ -511,13 +512,13 @@ function initKopModule() {
 
       renderKopSurat();
       syncDataToCloud();
-      showToast("Kop surat berhasil diperbarui dan disimpan!");
+      showToast("Kop surat berhasil diperbarui!");
     });
   }
 }
 
 // =========================================================================
-// 8. MODUL PEGAWAI & PENANDATANGAN
+// 9. MODUL PENGELOLAAN PEGAWAI & PENANDATANGAN
 // =========================================================================
 function syncPejabatPemberi() {
   const sel = document.getElementById("selectPenandatangan");
@@ -598,7 +599,7 @@ function renderTabelPegawai() {
       <td>${p.gol || "-"}</td>
       <td>${p.jabatan || "-"}</td>
       <td>
-        <button type="button" class="btn btn-secondary btn-sm btn-delete-pegawai" data-idx="${idx}" style="color:var(--danger);">
+        <button type="button" class="btn btn-secondary btn-sm btn-delete-pegawai" data-idx="${idx}" style="color:var(--danger);" title="Hapus Pegawai">
           <i class="fa-solid fa-trash"></i>
         </button>
       </td>
@@ -606,7 +607,7 @@ function renderTabelPegawai() {
     tbody.appendChild(tr);
   });
 
-  // Hapus Pegawai dengan Konfirmasi Dialog
+  // Dialog Konfirmasi Hapus Pegawai
   tbody.querySelectorAll(".btn-delete-pegawai").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (AppState.pegawai.length <= 1) {
@@ -677,7 +678,7 @@ function initPegawaiModule() {
 }
 
 // =========================================================================
-// 9. MODUL TANDA TANGAN & STEMPEL
+// 10. MODUL TANDA TANGAN & STEMPEL
 // =========================================================================
 function initTtdModule() {
   const checkTtd = document.getElementById("checkTtd");
@@ -694,7 +695,7 @@ function initTtdModule() {
 }
 
 // =========================================================================
-// 10. MODUL MULTI-TEMPLATE SURAT
+// 11. MODUL TEMPLATE PERSURATAN
 // =========================================================================
 function updateJenisSurat(jenis) {
   const judul = AppState.judulSuratMap[jenis] || "SURAT RESMI";
@@ -817,28 +818,28 @@ function initSuratBinding() {
     });
   }
 
-  // Reset Form dengan Konfirmasi Dialog
+  // Dialog Konfirmasi Reset Form
   const btnReset = document.getElementById("btnResetSurat");
   if (btnReset) {
     btnReset.addEventListener("click", () => {
       const setuju = confirm("Apakah Anda yakin ingin mengosongkan/mereset isian formulir surat ini?");
       if (!setuju) return;
 
-      if (inNo) inNo.value = "";
-      if (viewNo) viewNo.innerText = "";
+      if (inNo) inNo.value = "66";
+      if (viewNo) viewNo.innerText = "66";
       showToast("Formulir surat berhasil direset.", "info");
     });
   }
 }
 
 // =========================================================================
-// 11. MODUL ARSIP & PRATINJAU MODAL PDF / GOOGLE DRIVE
+// 12. MODUL ARSIP & INTEGRASI GOOGLE DRIVE
 // =========================================================================
 async function bukaDokumenModal(idx) {
   const item = AppState.arsip[idx];
   if (!item) return;
 
-  // Jika dokumen tersimpan di Google Drive, buka langsung tautan resminya
+  // Jika berkas sudah memiliki link resmi Google Drive, buka langsung di tab baru
   if (item.driveUrl && item.driveUrl.startsWith("http")) {
     window.open(item.driveUrl, "_blank");
     return;
@@ -860,7 +861,7 @@ async function bukaDokumenModal(idx) {
           <h2 style="color:#15803d; margin-bottom:8px;">${item.judul}</h2>
           <p style="color:#64748b; font-size:14px;">Nomor Surat: <strong>${item.nomor}</strong> | Kategori: <strong>${item.kategori}</strong></p>
           <div style="background:#dcfce7; color:#166534; padding:12px 18px; border-radius:8px; margin-top:16px; max-width:480px; font-size:13px; border:1px solid #bbf7d0;">
-            Berkas fisik PDF tersimpan di penyimpanan perangkat saat diunggah.
+            Berkas fisik tersimpan di memori lokal perangkat saat diunggah.
           </div>
         </body>
       </html>
@@ -904,7 +905,7 @@ function renderTabelArsip(filterQuery = "") {
       <tr>
         <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
           <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
-          ${query ? `Tidak ada dokumen yang cocok dengan kata kunci "<strong>${filterQuery}</strong>".` : 'Belum ada arsip dokumen untuk akun ini.'}
+          ${query ? `Tidak ada dokumen yang cocok dengan "<strong>${filterQuery}</strong>".` : 'Belum ada arsip dokumen untuk akun ini.'}
         </td>
       </tr>
     `;
@@ -912,13 +913,17 @@ function renderTabelArsip(filterQuery = "") {
   }
 
   filteredList.forEach((item) => {
+    const isDrive = item.status === "Google Drive";
+    const statusColor = isDrive ? "color:var(--success); font-weight:700;" : "color:#0284c7; font-weight:600;";
+    const statusIcon = isDrive ? "fa-cloud" : "fa-laptop";
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.tanggal}</td>
       <td><span class="badge-nomor">${item.nomor || "-"}</span></td>
       <td><strong>${item.judul}</strong></td>
       <td>${item.kategori || "Surat Resmi"}</td>
-      <td><span style="color:var(--success); font-weight:700;"><i class="fa-solid fa-circle-check"></i> ${item.status || "Tersimpan"}</span></td>
+      <td><span style="${statusColor}"><i class="fa-solid ${statusIcon}"></i> ${item.status || "Tersimpan"}</span></td>
       <td>
         <button type="button" class="btn btn-secondary btn-sm btn-buka-arsip" data-id="${item.id}">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
@@ -940,24 +945,24 @@ function renderTabelArsip(filterQuery = "") {
     });
   });
 
-  // Hapus Arsip dengan Konfirmasi Dialog
+  // Dialog Konfirmasi Hapus Arsip
   tbody.querySelectorAll(".btn-hapus-arsip").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
       const id = btn.getAttribute("data-id");
       const realIndex = AppState.arsip.findIndex((a) => a.id === id);
-      
+
       if (realIndex !== -1) {
         const item = AppState.arsip[realIndex];
 
-        const setuju = confirm(`Apakah Anda yakin ingin menghapus dokumen "${item.judul}"?\n\nFile yang sudah dihapus tidak dapat dikembalikan.`);
+        const setuju = confirm(`Apakah Anda yakin ingin menghapus dokumen "${item.judul}"?\n\nFile yang sudah dihapus tidak dapat dipulihkan.`);
         if (!setuju) return;
 
         if (item && item.id) {
           await PdfStorage.deleteFile(item.id);
         }
         AppState.arsip.splice(realIndex, 1);
-        
+
         const inCari = document.getElementById("inCariArsip");
         renderTabelArsip(inCari ? inCari.value : "");
         syncDataToCloud();
@@ -1009,7 +1014,9 @@ function initArsipModule() {
     });
   }
 
-  // PROSES UPLOAD OTOMATIS KE GOOGLE DRIVE & CLOUD
+  // =========================================================================
+  // PROSES UNGGAH BERKAS KE GOOGLE DRIVE & SINKRONISASI
+  // =========================================================================
   if (btnUpload) {
     btnUpload.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -1033,23 +1040,30 @@ function initArsipModule() {
       let driveUrl = "#";
       let statusUpload = "Tersimpan Lokal";
 
-      // 1. Simpan salinan lokal di memori IndexedDB
+      // 1. Simpan salinan lokal di browser
       await PdfStorage.saveFile(fileId, file);
 
-      // 2. Kirim fisik file ke Google Drive Anda jika script URL tersedia
-      if (typeof GOOGLE_DRIVE_SCRIPT_URL !== "undefined" && GOOGLE_DRIVE_SCRIPT_URL.startsWith("https://script.google.com")) {
+      // 2. Kirim berkas fisik ke Google Drive
+      if (
+        typeof GOOGLE_DRIVE_SCRIPT_URL !== "undefined" &&
+        GOOGLE_DRIVE_SCRIPT_URL.startsWith("https://script.google.com") &&
+        !GOOGLE_DRIVE_SCRIPT_URL.includes("TEMPEL_URL")
+      ) {
         try {
           const reader = new FileReader();
-          const base64Promise = new Promise((resolve) => {
+          const base64Promise = new Promise((resolve, reject) => {
             reader.onload = (evt) => resolve(evt.target.result.split(",")[1]);
+            reader.onerror = reject;
             reader.readAsDataURL(file);
           });
 
           const base64Data = await base64Promise;
           const cleanFileName = `${nomor.replace(/[/\\?%*:|"<>]/g, "-")}_${title}.pdf`;
 
+          // Kirim dengan format text/plain agar tidak diblokir CORS oleh Google
           const response = await fetch(GOOGLE_DRIVE_SCRIPT_URL, {
             method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "upload_pdf",
               fileName: cleanFileName,
@@ -1061,13 +1075,27 @@ function initArsipModule() {
           if (result.status === "success") {
             driveUrl = result.fileUrl;
             statusUpload = "Google Drive";
+          } else {
+            alert("Google Apps Script menolak pengunggahan:\n" + (result.message || "Pesan galat tidak diketahui"));
           }
         } catch (err) {
-          console.warn("Gagal upload Google Drive, disimpan di perangkat:", err);
+          console.error("Gagal kirim ke Google Drive:", err);
+          alert(
+            "Gagal mengirim file ke Google Drive!\n\n" +
+            "Penyebab: " + err.message + "\n\n" +
+            "Pastikan:\n" +
+            "1. URL berakhiran /exec (bukan /dev)\n" +
+            "2. Akses deployment Google disetel ke 'Anyone / Siapa saja'"
+          );
         }
+      } else {
+        alert(
+          "Peringatan: URL Google Drive belum dipasang di script.js baris ke-24!\n\n" +
+          "Berkas sementara disimpan di memori laptop. Segera ganti GOOGLE_DRIVE_SCRIPT_URL dengan link deployment asli Anda."
+        );
       }
 
-      // 3. Simpan data riwayat ke Firestore & Cache
+      // 3. Simpan riwayat ke Firestore & Cache
       AppState.arsip.unshift({
         id: fileId,
         tanggal: today,
@@ -1095,14 +1123,14 @@ function initArsipModule() {
       if (driveUrl !== "#") {
         showToast(`Dokumen No. ${nomor} berhasil masuk ke Google Drive email Anda!`);
       } else {
-        showToast(`Dokumen No. ${nomor} berhasil diarsipkan ke akun ini!`);
+        showToast(`Dokumen No. ${nomor} disimpan ke arsip lokal.`);
       }
     });
   }
 }
 
 // =========================================================================
-// 12. NAVIGASI TAB MENU & RESPONSIVE TOGGLE
+// 13. NAVIGASI TAB MENU & RESPONSIVE TOGGLE
 // =========================================================================
 function initResponsiveMenu() {
   const btnToggle = document.getElementById("btnToggleSidebar");
@@ -1150,7 +1178,7 @@ function initResponsiveMenu() {
           showToast("Layar berhasil dikunci ke mode miring (Landscape)!");
         }
       } catch (err) {
-        showToast("Aktifkan fitur 'Putar Otomatis' di panel HP Anda.", "info");
+        showToast("Aktifkan fitur 'Putar Otomatis' di pengaturan HP Anda.", "info");
       }
     });
   }
@@ -1193,7 +1221,7 @@ function initTabNavigation() {
   });
 }
 
-// Inisialisasi Utama Saat Dokumen Siap
+// Inisialisasi Saat Dokumen Siap
 document.addEventListener("DOMContentLoaded", () => {
   initResponsiveMenu();
   initTabNavigation();
