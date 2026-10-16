@@ -484,7 +484,7 @@ body {
   min-width: 210mm;
   flex-shrink: 0;
   min-height: 297mm;
-  padding: 16mm 20mm;
+  padding: 2.54cm;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   color: #000000;
   font-family: 'Merriweather', 'Times New Roman', serif;
@@ -527,14 +527,14 @@ body {
 }
 
 .kop-headings h4 {
-  font-size: 11pt;
+  font-size: 13pt;
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
 }
 
 .kop-headings h3 {
-  font-size: 13.5pt;
+  font-size: 15.5pt;
   font-weight: 700;
   margin: 2px 0;
   line-height: 1.25;
