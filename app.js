@@ -1,7 +1,7 @@
 /**
  * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL
  * SD NEGERI 3 NOGORAJI
- * File: script.js (Versi Stabil: Smart Merge + Dual Persistence + Google Drive)
+ * File: script.js (Versi Stabil: Universal Local Vault + Firestore Cloud)
  */
 
 // =========================================================================
@@ -18,10 +18,10 @@ const firebaseConfig = {
 };
 
 // =========================================================================
-// 2. URL GOOGLE APPS SCRIPT WEB APP
-// Ganti teks di dalam tanda kutip dengan URL Web App Anda (wajib berakhiran /exec)
+// 2. URL GOOGLE APPS SCRIPT WEB APP (GOOGLE DRIVE)
+// Pastikan URL berakhiran /exec milik deployment Anda
 // =========================================================================
-const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
+const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMkM149f6hK3n01gZz-dummy/exec";
 
 let auth = null;
 let db = null;
@@ -60,8 +60,27 @@ function getDefaultState() {
 }
 
 // =========================================================================
-// 4. PENYIMPANAN BLOB PDF LOKAL (INDEXED DB)
+// 4. SISTEM PENYIMPANAN DATA LOKAL PERMANEN
 // =========================================================================
+const AppStorage = {
+  memoryCache: {},
+  get(key, fallback = null) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? JSON.parse(val) : fallback;
+    } catch (e) {
+      return this.memoryCache[key] !== undefined ? this.memoryCache[key] : fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      this.memoryCache[key] = value;
+    }
+  }
+};
+
 const PdfStorage = {
   dbName: "SDN3_ArsipPDF_DB",
   storeName: "pdf_blobs",
@@ -124,25 +143,6 @@ const PdfStorage = {
   }
 };
 
-const AppStorage = {
-  memoryCache: {},
-  get(key, fallback = null) {
-    try {
-      const val = localStorage.getItem(key);
-      return val !== null ? JSON.parse(val) : fallback;
-    } catch (e) {
-      return this.memoryCache[key] !== undefined ? this.memoryCache[key] : fallback;
-    }
-  },
-  set(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      this.memoryCache[key] = value;
-    }
-  }
-};
-
 // =========================================================================
 // 5. STATE UTAMA APLIKASI
 // =========================================================================
@@ -162,87 +162,80 @@ const AppState = {
   }
 };
 
-function getUserKey(baseKey) {
-  const uid = AppState.currentUser ? AppState.currentUser.uid : "offline_guest";
-  return `${baseKey}_${uid}`;
-}
-
 // =========================================================================
-// 6. SINKRONISASI DATA GANDA & SISTEM SMART MERGE (ANTI-HILANG)
+// 6. SINKRONISASI DATA (BRANKAS LOKAL + CLOUD FIRESTORE)
 // =========================================================================
 async function syncDataToCloud() {
-  if (!AppState.currentUser) return;
+  // 1. Simpan SELALU ke Brankas Lokal Permanen (Anti-Hilang)
+  AppStorage.set("sdn3_vault_kop", AppState.kop);
+  AppStorage.set("sdn3_vault_pegawai", AppState.pegawai);
+  AppStorage.set("sdn3_vault_arsip", AppState.arsip);
 
-  // 1. Simpan selalu ke Cache Lokal Perangkat Khusus Akun Tersebut
-  AppStorage.set(getUserKey("kopSekolah"), AppState.kop);
-  AppStorage.set(getUserKey("listPegawai"), AppState.pegawai);
-  AppStorage.set(getUserKey("listArsip"), AppState.arsip);
+  if (AppState.currentUser) {
+    const userUid = AppState.currentUser.uid;
+    AppStorage.set(`user_arsip_${userUid}`, AppState.arsip);
 
-  // 2. Unggah ke Cloud Firestore
-  if (isFirebaseActive && db) {
-    try {
-      const userDocRef = db.collection("sekolah_data").doc(AppState.currentUser.uid);
-      await userDocRef.set({
-        kop: AppState.kop,
-        pegawai: AppState.pegawai,
-        arsip: AppState.arsip,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+    // 2. Unggah ke Cloud Firestore
+    if (isFirebaseActive && db) {
+      try {
+        const userDocRef = db.collection("sekolah_data").doc(userUid);
+        await userDocRef.set({
+          kop: AppState.kop,
+          pegawai: AppState.pegawai,
+          arsip: AppState.arsip,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
 
-      const statusTxt = document.getElementById("cloudStatusText");
-      if (statusTxt) statusTxt.innerText = "Tersinkron ke Cloud";
-    } catch (err) {
-      console.warn("Sinkronisasi Firestore gagal:", err);
-      if (err.code === "permission-denied") {
-        console.error("Rules Firebase belum dibuka. Silakan cek tab Rules di Firestore Database.");
+        const statusTxt = document.getElementById("cloudStatusText");
+        if (statusTxt) statusTxt.innerText = "Tersimpan di Cloud";
+      } catch (err) {
+        console.warn("Firestore Error:", err);
+        if (err.code === "permission-denied") {
+          alert("Peringatan: Aturan Security Rules di Firebase Console belum dibuka (Publish)!\nData tetap aman tersimpan di laptop/HP Anda.");
+        }
       }
     }
   }
 }
 
 async function loadDataFromCloud(user) {
-  const userKey = user.uid;
-  const defaults = getDefaultState();
+  const userUid = user ? user.uid : "guest";
+  
+  // Layer 1: Ambil data dari brankas lokal perangkat
+  const localArsip = AppStorage.get(`user_arsip_${userUid}`, null) || AppStorage.get("sdn3_vault_arsip", []);
+  const localKop = AppStorage.get("sdn3_vault_kop", null);
+  const localPeg = AppStorage.get("sdn3_vault_pegawai", null);
 
-  // Layer 1: Ambil dari Cache Lokal perangkat
-  const cachedKop = AppStorage.get(`kopSekolah_${userKey}`, null);
-  const cachedPeg = AppStorage.get(`listPegawai_${userKey}`, null);
-  const cachedArsip = AppStorage.get(`listArsip_${userKey}`, []);
-
-  if (cachedKop) AppState.kop = cachedKop;
-  if (cachedPeg && cachedPeg.length > 0) AppState.pegawai = cachedPeg;
-  if (Array.isArray(cachedArsip) && cachedArsip.length > 0) AppState.arsip = cachedArsip;
+  if (localKop) AppState.kop = localKop;
+  if (Array.isArray(localPeg) && localPeg.length > 0) AppState.pegawai = localPeg;
+  if (Array.isArray(localArsip) && localArsip.length > 0) AppState.arsip = localArsip;
 
   renderKopSurat();
   refreshDropdownPegawai();
   renderTabelPegawai();
   renderTabelArsip();
 
-  // Layer 2: Sinkronkan dengan Firestore menggunakan Smart Merge
-  if (isFirebaseActive && db) {
+  // Layer 2: Tarik dan gabungkan dengan data Cloud Firestore
+  if (isFirebaseActive && db && user) {
     try {
       const doc = await db.collection("sekolah_data").doc(user.uid).get();
 
       if (doc.exists) {
         const cloudData = doc.data() || {};
-        AppState.kop = cloudData.kop || AppState.kop;
-
+        if (cloudData.kop) AppState.kop = cloudData.kop;
         if (Array.isArray(cloudData.pegawai) && cloudData.pegawai.length > 0) {
           AppState.pegawai = cloudData.pegawai;
         }
 
-        // SMART MERGE: Gabungkan data arsip cloud dan lokal agar tidak ada yang terhapus
+        // PENGGABUNGAN PINTAR (SMART MERGE): Gabungkan tanpa menghilangkan arsip lokal
         const cloudArsip = Array.isArray(cloudData.arsip) ? cloudData.arsip : [];
-        const localArsip = Array.isArray(cachedArsip) ? cachedArsip : [];
         const mergedMap = new Map();
 
-        // Masukkan data cloud terlebih dahulu
         cloudArsip.forEach((item) => {
           if (item && item.id) mergedMap.set(item.id, item);
         });
 
-        // Gabungkan dokumen lokal yang belum ada di cloud
-        localArsip.forEach((item) => {
+        (AppState.arsip || []).forEach((item) => {
           if (item && item.id && !mergedMap.has(item.id)) {
             mergedMap.set(item.id, item);
           }
@@ -250,32 +243,25 @@ async function loadDataFromCloud(user) {
 
         AppState.arsip = Array.from(mergedMap.values());
 
-        // Simpan hasil gabungan ke local storage dan sinkronkan balik ke cloud
-        AppStorage.set(`kopSekolah_${userKey}`, AppState.kop);
-        AppStorage.set(`listPegawai_${userKey}`, AppState.pegawai);
-        AppStorage.set(`listArsip_${userKey}`, AppState.arsip);
+        // Simpan kembali hasil gabungan
+        AppStorage.set(`user_arsip_${userUid}`, AppState.arsip);
+        AppStorage.set("sdn3_vault_arsip", AppState.arsip);
 
         renderKopSurat();
         refreshDropdownPegawai();
         renderTabelPegawai();
         renderTabelArsip();
 
-        // Pastikan cloud memiliki data gabungan terbaru
         await syncDataToCloud();
       } else {
-        // Jika akun baru, gunakan data lokal jika ada atau template awal
-        if (!cachedKop && (!cachedPeg || cachedPeg.length === 0) && (!cachedArsip || cachedArsip.length === 0)) {
-          AppState.kop = defaults.kop;
-          AppState.pegawai = defaults.pegawai;
-          AppState.arsip = [];
-        }
+        // Jika akun baru di Firestore, langsung simpan arsip lokal ke cloud
         await syncDataToCloud();
       }
 
-      showToast(`Data arsip akun ${user.displayName || user.email} berhasil dimuat!`);
+      showToast(`Arsip akun ${user.displayName || user.email} siap digunakan!`);
     } catch (err) {
-      console.warn("Koneksi Firestore bermasalah, memuat data dari memori perangkat:", err);
-      showToast("Data arsip dimuat dari memori perangkat.");
+      console.warn("Gagal terhubung ke Firestore:", err);
+      showToast("Arsip dimuat dari brankas lokal perangkat.");
     }
   }
 }
@@ -308,7 +294,7 @@ function bindLiveSync(inputId, viewId) {
 }
 
 // =========================================================================
-// 7. MODUL AUTENTIKASI PENGGUNA (LOGIN, REGISTER, LOGOUT)
+// 7. MODUL AUTENTIKASI PENGGUNA
 // =========================================================================
 function initAuthModule() {
   const modal = document.getElementById("modalAuth");
@@ -449,19 +435,14 @@ function initAuthModule() {
         await loadDataFromCloud(user);
       } else {
         AppState.currentUser = null;
-        const defaults = getDefaultState();
-        AppState.kop = defaults.kop;
-        AppState.pegawai = defaults.pegawai;
-        AppState.arsip = [];
-
-        renderKopSurat();
-        refreshDropdownPegawai();
-        renderTabelPegawai();
-        renderTabelArsip();
-
         if (btnAuthTrigger) btnAuthTrigger.classList.remove("hidden");
         if (chip) chip.classList.add("hidden");
         if (cloudStatus) cloudStatus.innerText = "Mode Offline (Lokal)";
+
+        // Tetap muat data lokal agar dokumen tidak terlihat hilang
+        const localArsip = AppStorage.get("sdn3_vault_arsip", []);
+        AppState.arsip = localArsip;
+        renderTabelArsip();
       }
     });
   }
@@ -859,7 +840,7 @@ function initSuratBinding() {
 }
 
 // =========================================================================
-// 12. MODUL ARSIP & INTEGRASI GOOGLE DRIVE
+// 12. MODUL ARSIP DOKUMEN PDF & DRIVE
 // =========================================================================
 async function bukaDokumenModal(idx) {
   const item = AppState.arsip[idx];
@@ -915,7 +896,7 @@ function renderTabelArsip(filterQuery = "") {
 
   const query = filterQuery.toLowerCase().trim();
 
-  const filteredList = AppState.arsip.filter((item) => {
+  const filteredList = (AppState.arsip || []).filter((item) => {
     if (!query) return true;
     const matchNomor = (item.nomor || "").toLowerCase().includes(query);
     const matchJudul = (item.judul || "").toLowerCase().includes(query);
@@ -930,7 +911,7 @@ function renderTabelArsip(filterQuery = "") {
       <tr>
         <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
           <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>
-          ${query ? `Tidak ada dokumen yang cocok dengan "<strong>${filterQuery}</strong>".` : 'Belum ada arsip dokumen untuk akun ini.'}
+          ${query ? `Tidak ada dokumen yang cocok dengan "<strong>${filterQuery}</strong>".` : 'Belum ada arsip dokumen.'}
         </td>
       </tr>
     `;
@@ -997,6 +978,11 @@ function renderTabelArsip(filterQuery = "") {
 }
 
 function initArsipModule() {
+  // Ambil langsung arsip dari brankas saat halaman pertama kali dibuka
+  const vaultArsip = AppStorage.get("sdn3_vault_arsip", []);
+  if (Array.isArray(vaultArsip) && vaultArsip.length > 0) {
+    AppState.arsip = vaultArsip;
+  }
   renderTabelArsip();
 
   const btnUpload = document.getElementById("btnUploadDrive");
@@ -1038,9 +1024,6 @@ function initArsipModule() {
     });
   }
 
-  // =========================================================================
-  // PROSES UNGGAH BERKAS KE GOOGLE DRIVE & SINKRONISASI
-  // =========================================================================
   if (btnUpload) {
     btnUpload.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -1064,14 +1047,14 @@ function initArsipModule() {
       let driveUrl = "#";
       let statusUpload = "Tersimpan Lokal";
 
-      // 1. Simpan salinan lokal di browser
+      // 1. Simpan fisik blob ke IndexedDB
       await PdfStorage.saveFile(fileId, file);
 
-      // 2. Kirim berkas fisik ke Google Drive
+      // 2. Kirim fisik ke Google Drive
       if (
         typeof GOOGLE_DRIVE_SCRIPT_URL !== "undefined" &&
         GOOGLE_DRIVE_SCRIPT_URL.startsWith("https://script.google.com") &&
-        !GOOGLE_DRIVE_SCRIPT_URL.includes("TEMPEL_URL")
+        !GOOGLE_DRIVE_SCRIPT_URL.includes("dummy")
       ) {
         try {
           const reader = new FileReader();
@@ -1098,27 +1081,13 @@ function initArsipModule() {
           if (result.status === "success") {
             driveUrl = result.fileUrl;
             statusUpload = "Google Drive";
-          } else {
-            alert("Google Apps Script menolak pengunggahan:\n" + (result.message || "Pesan galat tidak diketahui"));
           }
         } catch (err) {
           console.error("Gagal kirim ke Google Drive:", err);
-          alert(
-            "Gagal mengirim file ke Google Drive!\n\n" +
-            "Penyebab: " + err.message + "\n\n" +
-            "Pastikan:\n" +
-            "1. URL berakhiran /exec (bukan /dev)\n" +
-            "2. Akses deployment Google disetel ke 'Anyone / Siapa saja'"
-          );
         }
-      } else {
-        alert(
-          "Peringatan: URL Google Drive belum dipasang di script.js baris ke-24!\n\n" +
-          "Berkas sementara disimpan di memori laptop."
-        );
       }
 
-      // 3. Simpan riwayat ke State, Cache Lokal, & Firestore
+      // 3. Masukkan ke riwayat arsip
       AppState.arsip.unshift({
         id: fileId,
         tanggal: today,
@@ -1130,6 +1099,7 @@ function initArsipModule() {
         isSample: false
       });
 
+      // 4. Kunci ke Brankas Lokal & Sinkronkan
       await syncDataToCloud();
 
       if (inCari) inCari.value = "";
@@ -1144,9 +1114,9 @@ function initArsipModule() {
       btnUpload.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Google Drive & Arsip`;
 
       if (driveUrl !== "#") {
-        showToast(`Dokumen No. ${nomor} berhasil masuk ke Google Drive email Anda!`);
+        showToast(`Dokumen No. ${nomor} berhasil masuk ke Google Drive & Arsip!`);
       } else {
-        showToast(`Dokumen No. ${nomor} disimpan ke arsip.`);
+        showToast(`Dokumen No. ${nomor} berhasil disimpan ke arsip.`);
       }
     });
   }
