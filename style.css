@@ -527,14 +527,14 @@ body {
 }
 
 .kop-headings h4 {
-  font-size: 13pt;
+  font-size: 15pt;
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
 }
 
 .kop-headings h3 {
-  font-size: 15.5pt;
+  font-size: 16pt;
   font-weight: 700;
   margin: 2px 0;
   line-height: 1.25;
@@ -542,13 +542,13 @@ body {
 
 .kop-headings p.address {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 9pt;
-  margin-top: 2px;
+  font-size: 10pt;
+  margin-top: 3px;
 }
 
 .kop-headings p.contact {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 8.5pt;
+  font-size: 9pt;
 }
 
 .kop-divider {
