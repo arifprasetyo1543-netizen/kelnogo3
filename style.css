@@ -1,5 +1,5 @@
 :root {
-  --primary: #15803d;          /* Hijau Sekolah Kedinasan */
+  --primary: #15803d;          /* Hijau Sekolah Formal */
   --primary-hover: #14532d;    /* Hijau Tua */
   --primary-light: #f0fdf4;    /* Hijau Pastel */
   --primary-border: #bbf7d0;   /* Garis Batas Hijau */
@@ -43,7 +43,7 @@ body {
   overflow: hidden;
 }
 
-/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR NAVIGASI ================= */
 .sidebar {
   width: 270px;
   background: var(--bg-sidebar);
@@ -162,10 +162,10 @@ body {
   overflow: hidden;
   width: 100%;
   max-width: 100vw;
-  min-width: 0 !important; /* Kunci agar flex child tidak melar melebihi layar */
+  min-width: 0 !important; /* Mencegah header melar melebihi layar di HP */
 }
 
-/* ================= TOP HEADER (BISA DIGESER KANAN-KIRI DI HP) ================= */
+/* ================= HEADER ATAS (BISA DIGESER SENTUH DI HP) ================= */
 .top-header {
   height: 64px;
   background: var(--surface);
@@ -178,7 +178,6 @@ body {
   width: 100%;
   box-sizing: border-box;
 
-  /* AKTIFKAN GULIR HORIZONTAL PADA LAYAR SENTUH */
   overflow-x: auto !important;
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
@@ -363,7 +362,7 @@ body {
 .max-w-700 { max-width: 700px; }
 
 .card-header h3 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #14532d;
   margin-bottom: 4px;
@@ -466,9 +465,9 @@ body {
 .mt-2 { margin-top: 8px; }
 .hidden { display: none !important; }
 
-/* ================= PRATINJAU KERTAS CETAK A4 ================= */
+/* ================= PRATINJAU KERTAS CETAK A4 (STANDAR WORD NORMAL) ================= */
 .preview-stage {
-  background: #37473e;
+  background: #37473e;         /* Latar Abu-abu Lumut agar Kertas A4 Terlihat Nyata */
   border-radius: var(--radius-md);
   padding: 28px 16px;
   display: flex;
@@ -484,22 +483,24 @@ body {
   min-width: 210mm;
   flex-shrink: 0;
   min-height: 297mm;
+  /* MARGIN NORMAL SEPERTI DI WORD: 2.54 cm di Semua Sisi */
   padding: 2.54cm;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   color: #000000;
-  font-family: 'Merriweather', 'Times New Roman', serif;
-  font-size: 14pt;
-  line-height: 1.45;
+  /* FONT KEDINASAN RESMI SEPERTI DI WORD */
+  font-family: 'Times New Roman', Times, 'Merriweather', serif;
+  font-size: 12pt;             /* Standar Normal Word */
+  line-height: 1.35;           /* Spasi 1.15 s.d 1.3 Word */
   box-sizing: border-box;
   margin: 0 auto;
 }
 
-/* ================= KOP SURAT (100% PRESISI DI TENGAH LEMBAR A4) ================= */
+/* ================= KOP SURAT (PRESISI DI TENGAH LEMBAR A4) ================= */
 .letter-kop {
   position: relative;
   text-align: center;
-  padding: 0 85px;
-  min-height: 85px;
+  padding: 0 80px;             /* Keseimbangan poros tengah dengan logo di kiri */
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -527,28 +528,32 @@ body {
 }
 
 .kop-headings h4 {
-  font-size: 14pt;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
 }
 
 .kop-headings h3 {
-  font-size: 14pt;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 14pt;             /* Nama Sekolah Lebih Tegas */
   font-weight: 700;
   margin: 2px 0;
   line-height: 1.25;
 }
 
 .kop-headings p.address {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12pt;
-  margin-top: 3px;
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-size: 9.5pt;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .kop-headings p.contact {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 12pt;
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.2;
 }
 
 .kop-divider {
@@ -558,14 +563,15 @@ body {
   margin: 8px 0 16px 0;
 }
 
-/* JUDUL SURAT */
+/* ================= JUDUL SURAT ================= */
 .letter-title {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .letter-title h3 {
-  font-size: 14pt;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 13.5pt;
   font-weight: 700;
   text-decoration: underline;
   letter-spacing: 0.5px;
@@ -573,13 +579,17 @@ body {
 }
 
 .letter-title p {
+  font-family: 'Times New Roman', Times, serif;
   font-size: 12pt;
 }
 
-/* TEKS INDENTASI & TABEL PERSIS */
+/* ================= TEKS INDENTASI & TABEL PERSIS WORD ================= */
 .lead-text {
-  margin: 11px 0 4px 0;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
+  margin: 8px 0 4px 0;
   text-align: justify;
+  line-height: 1.35;
 }
 
 .table-indent {
@@ -592,11 +602,13 @@ body {
 .table-indent td {
   padding: 3px 0;
   vertical-align: top;
-  font-size: 12pt;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;             /* Standar Isi Word */
+  line-height: 1.3;
 }
 
 .col-lbl {
-  width: 200px;
+  width: 210px;
   padding-left: 28px !important;
   white-space: nowrap;
 }
@@ -613,21 +625,25 @@ body {
 
 .center-banner {
   text-align: center;
-  margin: 14px 0 10px 0;
+  margin: 12px 0 8px 0;
+  font-family: 'Times New Roman', Times, serif;
   font-size: 12pt;
   letter-spacing: 1.5px;
 }
 
 .closing-text {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
   text-align: justify;
-  margin-top: 14px;
+  margin-top: 12px;
+  line-height: 1.35;
 }
 
 /* ================= TANDA TANGAN (SPASI 70PX TIDAK DEMPET) ================= */
 .signature-section {
   display: flex;
   justify-content: flex-end;
-  margin-top: 26px;
+  margin-top: 24px;
   page-break-inside: avoid;
 }
 
@@ -635,15 +651,22 @@ body {
   width: 280px;
   text-align: left;
   position: relative;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
 }
 
 .sig-box p {
   margin-bottom: 2px;
+  line-height: 1.25;
+}
+
+.sig-box strong {
+  font-size: 12pt;
 }
 
 .visual-stamp-ttd {
   position: relative;
-  height: 70px;
+  height: 70px;                /* Ruang TTD basah tetap tersedia 70px */
   margin: 6px 0;
 }
 
@@ -674,7 +697,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 4px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
   font-size: 6.8px;
   font-weight: 800;
   box-sizing: border-box;
@@ -690,8 +713,8 @@ body {
 }
 
 .sig-nip {
-  font-size: 12pt;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 11pt;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 /* ================= TABEL ARSIP, PEGAWAI & SEARCH ================= */
@@ -1053,10 +1076,10 @@ body {
 .toast-item.success { background: #166534; }
 .toast-item.info { background: #0e7490; }
 
-/* ================= ATURAN CETAK (HANYA KERTAS A4) ================= */
+/* ================= ATURAN CETAK (STANDAR WORD NORMAL: 2,54 CM) ================= */
 @page {
   size: A4 portrait;
-  margin: 2.54cm;
+  margin: 2.54cm;              /* MARGIN NORMAL WORD: 2,54 cm Atas, Bawah, Kiri, Kanan */
 }
 
 @media print {
@@ -1105,9 +1128,11 @@ body {
     width: 100% !important;
     max-width: 100% !important;
     min-height: auto !important;
+    /* Pada saat print padding disetel 0 karena batas tepi 2.54cm sudah ditangani oleh @page */
     padding: 0 !important;
     margin: 0 !important;
     font-size: 12pt !important;
-    line-height: 1.4 !important;
+    line-height: 1.35 !important;
+    font-family: 'Times New Roman', Times, serif !important;
   }
 }
