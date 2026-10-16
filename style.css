@@ -488,7 +488,7 @@ body {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   color: #000000;
   font-family: 'Merriweather', 'Times New Roman', serif;
-  font-size: 11pt;
+  font-size: 16pt;
   line-height: 1.45;
   box-sizing: border-box;
   margin: 0 auto;
@@ -527,14 +527,14 @@ body {
 }
 
 .kop-headings h4 {
-  font-size: 15pt;
+  font-size: 19pt;
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
 }
 
 .kop-headings h3 {
-  font-size: 16pt;
+  font-size: 19pt;
   font-weight: 700;
   margin: 2px 0;
   line-height: 1.25;
@@ -565,7 +565,7 @@ body {
 }
 
 .letter-title h3 {
-  font-size: 13pt;
+  font-size: 19pt;
   font-weight: 700;
   text-decoration: underline;
   letter-spacing: 0.5px;
@@ -573,12 +573,12 @@ body {
 }
 
 .letter-title p {
-  font-size: 11pt;
+  font-size: 19pt;
 }
 
 /* TEKS INDENTASI & TABEL PERSIS */
 .lead-text {
-  margin: 10px 0 4px 0;
+  margin: 11px 0 4px 0;
   text-align: justify;
 }
 
