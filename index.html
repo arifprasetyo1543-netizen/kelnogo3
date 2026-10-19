@@ -10,19 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- Pemanggilan Berkas CSS Terpisah -->
-  <link rel="stylesheet" href="style.css">
+  <!-- Berkas CSS dengan Pemutus Cache (?v=2.1) -->
+  <link rel="stylesheet" href="style.css?v=2.1">
 
-  <!-- Pemanggilan Berkas JavaScript Terpisah -->
-  <script defer src="script.js"></script>
+  <!-- Berkas JavaScript dengan Pemutus Cache (?v=2.1) -->
+  <script defer src="script.js?v=2.1"></script>
 </head>
 <body>
 
+  <!-- ================================================================= -->
+  <!-- 1. HALAMAN LOGIN MANDIRI DI AWAL (FULLSCREEN)                     -->
+  <!-- ================================================================= -->
   <section id="loginScreen" class="login-wrapper">
     <div class="login-card">
       <div class="login-header">
         <div class="login-logo-box">
-          <img src="" alt="Logo Tut Wuri Handayani">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Tut Wuri Handayani">
         </div>
         <h2>SDN 3 NOGORAJI</h2>
         <p>Sistem Informasi Persuratan & Pengarsipan Digital</p>
@@ -82,13 +85,14 @@
           <span>Masuk ke Sistem</span>
         </button>
 
+        <!-- Akun Cepat yang Bisa Langsung Diklik -->
         <div class="account-helper">
-          <div class="helper-title"><i class="fa-solid fa-circle-info"></i> Akun Bawaan Operator:</div>
+          <div class="helper-title"><i class="fa-solid fa-circle-info"></i> Klik untuk Masuk Cepat:</div>
           <div class="quick-login-grid">
-            <div class="btn-quick-acc">
+            <button type="button" class="btn-quick-acc" onclick="fillQuickLogin('admin', '123')" title="Klik untuk mengisi otomatis">
               <strong>Operator Sekolah</strong>
-              <small>admin / 123</small>
-            </div>
+              <small>admin / 123 <i class="fa-solid fa-arrow-right"></i></small>
+            </button>
           </div>
         </div>
       </form>
@@ -124,9 +128,11 @@
     </div>
   </section>
 
+  <!-- ================================================================= -->
+  <!-- 2. DASBOR UTAMA PERSURATAN (TERSEMBUNYI SEBELUM LOGIN)           -->
+  <!-- ================================================================= -->
   <div id="mainApp" class="app-layout" style="display: none;">
     
-    <!-- Bilah Navigasi Samping (Sidebar) -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <img id="sideLogo" src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah" class="side-logo">
@@ -340,7 +346,6 @@
                   </div>
                 </div>
 
-                <!-- Tanggal & Lokasi Penetapan -->
                 <h4 class="form-section-divider">Penetapan Surat</h4>
                 <div class="form-row-2">
                   <div class="form-group">
@@ -378,7 +383,6 @@
               </div>
               <div class="preview-scroll-area">
                 <article class="letter-page" id="printableLetter">
-                  <!-- Kop Surat Lembaga -->
                   <header class="letter-header">
                     <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah" class="letter-logo">
                     <div class="kop-text">
@@ -391,7 +395,6 @@
                   </header>
                   <div class="letter-divider"></div>
 
-                  <!-- Judul & Nomor Registrasi Surat -->
                   <div class="letter-title-section" id="previewTitleSection">
                     <h3 id="viewJudulSurat">SURAT PERINTAH TUGAS</h3>
                     <p>Nomor: <span id="viewNoSurat">400.3.5 / 100 / SDN.068 / X / 2026</span></p>
@@ -709,7 +712,6 @@
     </div>
   </div>
 
-  <!-- Wadah Toast Notifikasi -->
   <div id="toastContainer" class="toast-container"></div>
 
 </body>
