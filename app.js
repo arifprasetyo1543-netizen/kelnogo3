@@ -1,11 +1,20 @@
+/**
+ * APLIKASI SISTEM PERSURATAN & ARSIP DIGITAL SDN 3 NOGORAJI
+ * Versi 2.1 (Anti-Crash, Pelindung Galat, & Pemutus Cache)
+ */
+
 const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
 const STORAGE_USERS_KEY = "sdn3_registered_users_db";
 
+// =========================================================================
+// 1. PENYIMPANAN LOCAL & INDEXEDDB DENGAN ERROR SHIELD
+// =========================================================================
 const AppStorage = {
   get(key, fallback = null) {
     try {
       const val = localStorage.getItem(key) || sessionStorage.getItem(key);
-      return val !== null ? JSON.parse(val) : fallback;
+      if (val === null || val === "undefined") return fallback;
+      return JSON.parse(val);
     } catch (e) {
       return fallback;
     }
@@ -133,6 +142,21 @@ const AppState = {
   }
 };
 
+// =========================================================================
+// 2. FUNGSI KLIK MASUK CEPAT (GLOBAL)
+// =========================================================================
+window.fillQuickLogin = function(username, password) {
+  const inU = document.getElementById("loginUsername");
+  const inP = document.getElementById("loginPassword");
+  if (inU) inU.value = username;
+  if (inP) inP.value = password;
+  const btnSubmit = document.getElementById("btnLoginSubmit");
+  if (btnSubmit) {
+    btnSubmit.focus();
+    showToast("Akun operator siap masuk, klik Masuk!", "info");
+  }
+};
+
 function openModalConfirm(message, onConfirm) {
   const modal = document.getElementById("modalConfirm");
   const txt = document.getElementById("modalConfirmText");
@@ -246,7 +270,6 @@ async function syncDataToCloud() {
 async function loadDataFromCloud() {
   const statusTxt = document.getElementById("cloudStatusText");
 
-  // 1. Ambil data lokal terlebih dahulu agar halaman cepat terbuka
   const localKop = AppStorage.get("sdn3_drive_kop", null);
   const localPeg = AppStorage.get("sdn3_drive_pegawai", null);
   const localArsip = AppStorage.get("sdn3_drive_arsip", []);
@@ -260,7 +283,6 @@ async function loadDataFromCloud() {
   renderTabelPegawai();
   renderTabelArsip();
 
-  // 2. Tarik data arsip & pengguna langsung dari Google Drive cloud (anti-cache)
   if (GOOGLE_DRIVE_SCRIPT_URL && GOOGLE_DRIVE_SCRIPT_URL.startsWith("https://script.google.com")) {
     try {
       if (statusTxt) statusTxt.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Menyinkronkan Drive...';
@@ -296,8 +318,12 @@ async function loadDataFromCloud() {
         if (Array.isArray(cloudData.users) && cloudData.users.length > 0) {
           const localUsers = getStoredUsers();
           const userMap = new Map();
-          localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-          cloudData.users.forEach(u => userMap.set(u.username.toLowerCase(), u));
+          localUsers.forEach(u => {
+            if (u && u.username) userMap.set(u.username.toLowerCase(), u);
+          });
+          cloudData.users.forEach(u => {
+            if (u && u.username) userMap.set(u.username.toLowerCase(), u);
+          });
           AppStorage.set(STORAGE_USERS_KEY, Array.from(userMap.values()), true);
         }
 
@@ -310,11 +336,6 @@ async function loadDataFromCloud() {
         renderTabelPegawai();
         renderTabelArsip();
 
-        if (statusTxt) statusTxt.innerHTML = '<i class="fa-solid fa-cloud"></i> Tersambung ke Google Drive';
-      } else {
-        if (AppState.arsip.length > 0 || AppState.pegawai.length > 0) {
-          await syncDataToCloud();
-        }
         if (statusTxt) statusTxt.innerHTML = '<i class="fa-solid fa-cloud"></i> Tersambung ke Google Drive';
       }
     } catch (err) {
@@ -333,11 +354,11 @@ function showDashboard(user) {
   const roleEl = document.getElementById("sidebarUserRole");
   const avatarIcon = document.getElementById("sidebarAvatarIcon");
 
-  if (nameEl) nameEl.innerText = user.name;
-  if (roleEl) roleEl.innerText = user.role || "Pegawai";
+  if (nameEl) nameEl.innerText = (user && user.name) ? user.name : "Operator";
+  if (roleEl) roleEl.innerText = (user && user.role) ? user.role : "Administrator";
 
   if (avatarIcon) {
-    if (user.isGoogleAuth) {
+    if (user && user.isGoogleAuth) {
       avatarIcon.innerHTML = '<i class="fa-brands fa-google" style="color:#ea4335;"></i>';
     } else {
       avatarIcon.innerHTML = '<i class="fa-solid fa-user-check"></i>';
@@ -408,7 +429,7 @@ function initAuthGateway() {
         AppState.currentUser = googleUser;
         AppStorage.set("sdn3_active_user", googleUser, true);
 
-        const exists = AppState.pegawai.some((p) => p.nama.toLowerCase() === nama.toLowerCase());
+        const exists = AppState.pegawai.some((p) => p && p.nama && p.nama.toLowerCase() === nama.toLowerCase());
         if (!exists) {
           AppState.pegawai.push({
             nama: nama,
@@ -451,7 +472,7 @@ function initAuthGateway() {
 
       const registeredUsers = getStoredUsers();
       const foundUser = registeredUsers.find(
-        (acc) => acc.username.toLowerCase() === u && acc.password === p
+        (acc) => acc && acc.username && acc.username.toLowerCase() === u && acc.password === p
       );
 
       if (foundUser) {
@@ -493,7 +514,7 @@ function initAuthGateway() {
       }
 
       const users = getStoredUsers();
-      const isExist = users.some((acc) => acc.username.toLowerCase() === username);
+      const isExist = users.some((acc) => acc && acc.username && acc.username.toLowerCase() === username);
 
       if (isExist) {
         if (loginAlert && loginAlertText) {
@@ -541,7 +562,7 @@ function initAuthGateway() {
 }
 
 function renderKopSurat() {
-  const k = AppState.kop;
+  const k = AppState.kop || {};
   const setTxt = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.innerText = val || "";
@@ -559,7 +580,7 @@ function renderKopSurat() {
   if (sideLogo && k.logoUrl) sideLogo.src = k.logoUrl;
 
   setTxt("sideSchoolName", k.namaSekolah);
-  setTxt("stampTextSekolah", `★ ${k.namaSekolah} ★`);
+  setTxt("stampTextSekolah", `★ ${k.namaSekolah || 'SEKOLAH'} ★`);
 }
 
 function initKopModule() {
@@ -1349,13 +1370,21 @@ function showToast(pesan, jenis = "success") {
   }, 3500);
 }
 
+// Inisialisasi Aman dengan Pelindung Galat (Try-Catch Isolated)
 document.addEventListener("DOMContentLoaded", () => {
-  // Muat data cloud secara instan di latar belakang sebelum pengguna berinteraksi
-  loadDataFromCloud();
-  initAuthGateway();
-  initTabNavigation();
-  initKopModule();
-  initPegawaiModule();
-  initSuratBinding();
-  initArsipModule();
+  const runSafe = (fn, name) => {
+    try {
+      fn();
+    } catch (err) {
+      console.warn(`[Module Warning] ${name}:`, err);
+    }
+  };
+
+  runSafe(loadDataFromCloud, "CloudLoader");
+  runSafe(initAuthGateway, "AuthGateway");
+  runSafe(initTabNavigation, "TabNavigation");
+  runSafe(initKopModule, "KopModule");
+  runSafe(initPegawaiModule, "PegawaiModule");
+  runSafe(initSuratBinding, "SuratBinding");
+  runSafe(initArsipModule, "ArsipModule");
 });
