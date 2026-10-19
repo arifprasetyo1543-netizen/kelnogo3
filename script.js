@@ -3,7 +3,7 @@
  * Versi 2.1 (Anti-Crash, Pelindung Galat, & Pemutus Cache)
  */
 
-const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
+const GOOGLE_DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
 const STORAGE_USERS_KEY = "sdn3_registered_users_db";
 
 // =========================================================================
