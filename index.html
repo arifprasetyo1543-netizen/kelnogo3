@@ -1,1958 +1,1666 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  Shield, 
-  ShieldCheck, 
-  FileText, 
-  FolderArchive, 
-  Users, 
-  School, 
-  User, 
-  LogOut, 
-  RefreshCw, 
-  Plus, 
-  Minus, 
-  Printer, 
-  Search, 
-  Trash2, 
-  Copy, 
-  Check, 
-  Eye, 
-  EyeOff, 
-  Smartphone, 
-  Key, 
-  Upload, 
-  Clock, 
-  Wifi, 
-  BatteryMedium, 
-  AlertCircle, 
-  CheckCircle2, 
-  ArrowRight,
-  ChevronRight,
-  ExternalLink,
-  Lock,
-  Mail
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#15803d" />
+  <title>SDN 3 Nogoraji - Persuratan & Arsip Cloud</title>
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
-const LOCAL_CACHE_KEY = "sdn3_cloud_react_db_v3";
-const ACTIVE_SESSION_KEY = "sdn3_active_react_user_v3";
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-// Engine TOTP RFC 6238 Mandiri untuk Google Authenticator
-const TOTP_ENGINE = {
-  base32Alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+  <!-- FontAwesome 6 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-  generateSecret(length = 16) {
-    let secret = "";
-    const bytes = new Uint8Array(length);
-    window.crypto.getRandomValues(bytes);
-    for (let i = 0; i < length; i++) {
-      secret += this.base32Alphabet[bytes[i] % this.base32Alphabet.length];
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
-    return secret;
-  },
-
-  base32Decode(base32) {
-    let bits = "";
-    const clean = base32.toUpperCase().replace(/=+$/, "").replace(/\s+/g, "");
-    for (let i = 0; i < clean.length; i++) {
-      const val = this.base32Alphabet.indexOf(clean[i]);
-      if (val === -1) continue;
-      bits += val.toString(2).padStart(5, '0');
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
     }
-    const bytes = [];
-    for (let i = 0; i + 8 <= bits.length; i += 8) {
-      bytes.push(parseInt(bits.substring(i, i + 8), 2));
+    /* Kertas Dokumen A4 Pas 1 Lembar */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      padding: 12mm 15mm 12mm 20mm;
+      background: #ffffff;
+      box-sizing: border-box;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 10.5pt;
+      line-height: 1.35;
+      color: #000000;
+      position: relative;
+      overflow: hidden;
     }
-    return new Uint8Array(bytes);
-  },
-
-  async getOtp(secretBase32, timeOffset = 0) {
-    try {
-      const keyBytes = this.base32Decode(secretBase32);
-      const epoch = Math.floor(Date.now() / 1000);
-      const counter = Math.floor(epoch / 30) + timeOffset;
-
-      const counterBuffer = new ArrayBuffer(8);
-      const counterView = new DataView(counterBuffer);
-      counterView.setUint32(0, Math.floor(counter / 0x100000000), false);
-      counterView.setUint32(4, counter & 0xffffffff, false);
-
-      const cryptoKey = await window.crypto.subtle.importKey(
-        "raw",
-        keyBytes,
-        { name: "HMAC", hash: { name: "SHA-1" } },
-        false,
-        ["sign"]
-      );
-
-      const signature = await window.crypto.subtle.sign("HMAC", cryptoKey, counterBuffer);
-      const sigBytes = new Uint8Array(signature);
-      const offset = sigBytes[sigBytes.length - 1] & 0x0f;
-
-      const binary =
-        ((sigBytes[offset] & 0x7f) << 24) |
-        ((sigBytes[offset + 1] & 0xff) << 16) |
-        ((sigBytes[offset + 2] & 0xff) << 8) |
-        (sigBytes[offset + 3] & 0xff);
-
-      return (binary % 1000000).toString().padStart(6, '0');
-    } catch (err) {
-      console.warn("Gagal komputasi WebCrypto TOTP, menggunakan fallback:", err);
-      return null;
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
     }
-  },
-
-  async verify(secretBase32, userOtp) {
-    const clean = String(userOtp || "").trim();
-    if (clean.length !== 6) return false;
-    // Cek selisih waktu toleransi ±30 detik (sekarang, 30 detik lalu, 30 detik ke depan)
-    for (const offset of [0, -1, 1]) {
-      const expected = await this.getOtp(secretBase32, offset);
-      if (expected && expected === clean) return true;
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbdad1;
+      border-radius: 4px;
     }
-    // Fallback darurat jika WebCrypto terbatas di Webview non-HTTPS
-    if (clean === "123456") return true;
-    return false;
-  }
-};
-
-const DEFAULT_KOP = {
-  baris1: "PEMERINTAH KABUPATEN KEBUMEN",
-  baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
-  namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
-  alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
-  kontak: "NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com",
-  logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
-};
-
-const INITIAL_DB = {
-  users: {
-    "arifprasetyo1543@gmail.com": {
-      email: "arifprasetyo1543@gmail.com",
-      name: "Arif Prasetyo",
-      role: "Operator Sekolah",
-      password: "123",
-      authenticatorEnabled: false,
-      authenticatorSecret: null
-    },
-    "sdn3nogoraji@gmail.com": {
-      email: "sdn3nogoraji@gmail.com",
-      name: "Kasmin, S.Pd., M.M.",
-      role: "Kepala Sekolah",
-      password: "123",
-      authenticatorEnabled: false,
-      authenticatorSecret: null
+    /* Mode Cetak Bersih A4 */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0 !important;
+      }
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only-container {
+        display: block !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .a4-page {
+        box-shadow: none !important;
+        border: none !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
     }
-  },
-  vaults: {
-    "arifprasetyo1543@gmail.com": {
-      kop: DEFAULT_KOP,
-      pegawai: [
-        { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
-        { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
-      ],
-      arsip: []
-    },
-    "sdn3nogoraji@gmail.com": {
-      kop: DEFAULT_KOP,
-      pegawai: [],
-      arsip: []
-    }
-  }
-};
+  </style>
+</head>
+<body class="bg-[#0b1e15] text-[#0f291e] antialiased min-h-screen flex items-center justify-center p-0 md:p-4 select-none">
 
-export default function App() {
-  // Database Cloud & Status
-  const [cloudDb, setCloudDb] = useState(() => {
-    try {
-      const cached = localStorage.getItem(LOCAL_CACHE_KEY);
-      return cached ? JSON.parse(cached) : INITIAL_DB;
-    } catch (e) {
-      return INITIAL_DB;
-    }
-  });
+  <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-11/12 max-w-sm pointer-events-none flex flex-col gap-2"></div>
 
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
-  const [isCloudReady, setIsCloudReady] = useState(false);
-  const [cloudStatusMsg, setCloudStatusMsg] = useState("Menghubungkan Cloud...");
+  <!-- Modal Konfirmasi Custom (Pengganti confirm() bawaan) -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9998] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl border border-emerald-200">
+      <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg mb-3 mx-auto">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-xs font-bold text-slate-800 text-center mb-1">Konfirmasi Aksi</h3>
+      <p id="confirmMessage" class="text-[11px] text-slate-500 text-center mb-4 leading-relaxed"></p>
+      <div class="flex gap-2">
+        <button id="btnConfirmCancel" type="button" class="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">Batal</button>
+        <button id="btnConfirmOk" type="button" class="flex-1 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition">Lanjutkan</button>
+      </div>
+    </div>
+  </div>
 
-  // Navigasi & Tampilan
-  const [activeTab, setActiveTab] = useState("surat"); // surat | arsip | pegawai | kop | akun
-  const [authMode, setAuthMode] = useState("login"); // login | register
-  const [toast, setToast] = useState(null);
+  <div class="no-print w-full max-w-[480px] min-h-screen md:min-h-[92vh] md:max-h-[92vh] bg-[#edf6f1] md:rounded-[36px] md:border-8 md:border-[#163625] shadow-2xl flex flex-col relative overflow-hidden">
+    
+    <!-- Status Bar Mobile -->
+    <div class="bg-[#14532d] text-white px-5 py-2 flex items-center justify-between text-xs font-semibold z-40 sticky top-0 shadow-sm">
+      <div class="flex items-center gap-2">
+        <span id="liveMobileClock" class="font-mono-num text-[11px]">12:00</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+      </div>
+      <div class="flex items-center gap-2 text-[10.5px]">
+        <span id="badgeCloudStatus" class="bg-[#166534] text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
+          <i id="cloudSpinIcon" class="fa-solid fa-cloud text-[10px]"></i>
+          <span id="cloudStatusText" class="truncate max-w-[130px]">Menghubungkan...</span>
+        </span>
+        <i class="fa-solid fa-wifi text-emerald-300 text-[10px]"></i>
+        <i class="fa-solid fa-battery-half text-emerald-300 text-[10px]"></i>
+      </div>
+    </div>
 
-  // Form Login & Pendaftaran
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPass, setLoginPass] = useState("");
-  const [loginOtp, setLoginOtp] = useState("");
-  const [showLoginPass, setShowLoginPass] = useState(false);
+    <header class="bg-[#15803d] text-white px-4 py-2.5 flex items-center justify-between shadow-sm z-30">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-white p-1 flex items-center justify-center shadow">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo Sekolah" class="w-6 h-auto" />
+        </div>
+        <div>
+          <h1 class="text-xs font-bold tracking-tight">SDN 3 NOGORAJI</h1>
+          <p class="text-[9.5px] text-emerald-100">Sistem Persuratan & Arsip Cloud</p>
+        </div>
+      </div>
+      <button id="btnManualSync" type="button" class="w-7 h-7 rounded-full bg-[#166534] hover:bg-[#14532d] flex items-center justify-center text-white transition shadow" title="Tarik Data Cloud Drive">
+        <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
+      </button>
+    </header>
 
-  const [regName, setRegName] = useState("");
-  const [regEmail, setRegEmail] = useState("");
-  const [regRole, setRegRole] = useState("Operator Sekolah");
-  const [regPass, setRegPass] = useState("");
+    <div id="viewAuth" class="flex-1 flex flex-col justify-center p-4 bg-gradient-to-b from-[#edf6f1] via-white to-[#edf6f1] overflow-y-auto">
+      <div class="bg-white rounded-3xl p-5 shadow-xl border border-emerald-200/80 mb-3">
+        
+        <!-- Tab Masuk vs Daftar -->
+        <div class="flex bg-[#edf6f1] p-1 rounded-2xl mb-4 border border-emerald-200">
+          <button id="tabBtnLogin" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-xl transition bg-white text-[#15803d] shadow-sm">Masuk Akun</button>
+          <button id="tabBtnRegister" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800">Daftar Akun Baru</button>
+        </div>
 
-  // Modals
-  const [show2FaSetupModal, setShow2FaSetupModal] = useState(false);
-  const [pendingSecret2Fa, setPendingSecret2Fa] = useState("");
-  const [verify2FaInput, setVerify2FaInput] = useState("");
-  const [showA4PreviewModal, setShowA4PreviewModal] = useState(false);
-  const [showGooglePickerModal, setShowGooglePickerModal] = useState(false);
+        <!-- Tombol Google Cepat -->
+        <button id="btnOpenGooglePicker" type="button" class="w-full py-2.5 px-4 mb-3.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-2xl flex items-center justify-center gap-2.5 text-xs font-semibold text-slate-700 shadow-sm transition active:scale-95">
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>Pilih Akun Google SDN 3 Nogoraji</span>
+        </button>
 
-  // Stepper Penomoran Surat
-  const [numKode, setNumKode] = useState("400.3.5");
-  const [numUrut, setNumUrut] = useState(100);
-  const [numInstansi, setNumInstansi] = useState("SDN.068");
-  const [numBulan, setNumBulan] = useState("X");
-  const [numTahun, setNumTahun] = useState("2026");
+        <div class="flex items-center gap-3 my-2.5">
+          <div class="flex-1 h-px bg-slate-200"></div>
+          <span id="lblAuthDivider" class="text-[9.5px] text-slate-400 font-medium">atau masuk dengan email & sandi</span>
+          <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
 
-  // Form Dokumen Surat
-  const [jenisSurat, setJenisSurat] = useState("spt");
-  const [sptKeperluan, setSptKeperluan] = useState("");
-  const [sptTglBerangkat, setSptTglBerangkat] = useState("20 Oktober 2026");
-  const [sptTglKembali, setSptTglKembali] = useState("20 Oktober 2026");
-  const [sptTujuan, setSptTujuan] = useState("");
-  const [selectedPenandatanganIdx, setSelectedPenandatanganIdx] = useState(0);
-  const [selectedPenerimaIdx, setSelectedPenerimaIdx] = useState(1);
+        <!-- FORM LOGIN -->
+        <form id="formLogin" class="space-y-3">
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Alamat Email Terdaftar</label>
+            <div class="relative flex items-center">
+              <i class="fa-solid fa-envelope absolute left-3 text-slate-400 text-xs"></i>
+              <input id="inLoginEmail" type="email" required placeholder="arifprasetyo1543@gmail.com" class="w-full pl-8 pr-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]" />
+            </div>
+          </div>
 
-  // Form Dokumen SK Siswa
-  const [skNamaSiswa, setSkNamaSiswa] = useState("");
-  const [skNisn, setSkNisn] = useState("");
-  const [skKelas, setSkKelas] = useState("");
-  const [skTtl, setSkTtl] = useState("");
-  const [skOrtu, setSkOrtu] = useState("");
-  const [skKeperluan, setSkKeperluan] = useState("");
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kata Sandi</label>
+            <div class="relative flex items-center">
+              <i class="fa-solid fa-lock absolute left-3 text-slate-400 text-xs"></i>
+              <input id="inLoginPass" type="password" required placeholder="Masukkan kata sandi" class="w-full pl-8 pr-8 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]" />
+              <button id="btnToggleEye" type="button" class="absolute right-2.5 text-slate-400 hover:text-slate-600 text-xs">
+                <i id="eyeIcon" class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
 
-  // Form Dokumen Undangan
-  const [undanganPerihal, setUndanganPerihal] = useState("");
-  const [undanganKepada, setUndanganKepada] = useState("");
-  const [undanganHariTgl, setUndanganHariTgl] = useState("");
-  const [undanganWaktu, setUndanganWaktu] = useState("");
-  const [undanganTempat, setUndanganTempat] = useState("");
-  const [undanganAcara, setUndanganAcara] = useState("");
+          <div id="box2FaChallenge" class="hidden p-3 bg-amber-50 rounded-2xl border border-amber-300">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10.5px] font-bold text-amber-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-amber-600"></i> Kode Google Authenticator
+              </span>
+              <span class="text-[8.5px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">2FA Aktif</span>
+            </div>
+            <input id="inLoginOtp" type="text" inputmode="numeric" maxlength="6" placeholder="000000" class="w-full text-center tracking-[6px] font-mono-num text-sm font-bold py-1.5 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500" />
+            <span class="block text-[9px] text-amber-800 text-center mt-1">Buka aplikasi Google Authenticator di HP Anda</span>
+          </div>
 
-  // Tempat & Tanggal Penetapan
-  const [docTempat, setDocTempat] = useState("Nogoraji");
-  const [docTanggal, setDocTanggal] = useState("20 Oktober 2026");
+          <button type="submit" class="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-2xl font-bold text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+            <span>Buka Brankas Cloud Akun</span>
+            <i class="fa-solid fa-arrow-right text-[11px]"></i>
+          </button>
+        </form>
 
-  // Form Arsip PDF
-  const [uploadJudul, setUploadJudul] = useState("");
-  const [uploadKategori, setUploadKategori] = useState("Surat Tugas");
-  const [uploadFile, setUploadFile] = useState(null);
-  const [searchArsip, setSearchArsip] = useState("");
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+        <form id="formRegister" class="space-y-2.5 hidden">
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+            <input id="inRegName" type="text" required placeholder="Contoh: Arif Prasetyo" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]" />
+          </div>
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Alamat Email Aktif</label>
+            <input id="inRegEmail" type="email" required placeholder="emailanda@gmail.com" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]" />
+          </div>
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Jabatan di Sekolah</label>
+            <input id="inRegRole" type="text" value="Operator Sekolah" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kata Sandi Baru</label>
+            <input id="inRegPass" type="password" required placeholder="Minimal 3 karakter" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none" />
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-2xl font-bold text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+            <span>Daftarkan Akun ke Cloud Drive</span>
+            <i class="fa-solid fa-arrow-right text-[11px]"></i>
+          </button>
+        </form>
 
-  // Form Tambah Pegawai
-  const [newPegNama, setNewPegNama] = useState("");
-  const [newPegNip, setNewPegNip] = useState("");
-  const [newPegGol, setNewPegGol] = useState("");
-  const [newPegJabatan, setNewPegJabatan] = useState("");
+        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+          <span>Akun Contoh Default:</span>
+          <button id="btnQuickFillArif" type="button" class="font-bold text-[#15803d] hover:underline">Arif Prasetyo (123)</button>
+        </div>
+      </div>
 
-  // Form Pengaturan Kop
-  const [editKop, setEditKop] = useState(DEFAULT_KOP);
+      <div class="bg-emerald-100/60 rounded-2xl p-2.5 border border-emerald-200 text-[10px] text-[#14532d] flex items-start gap-2">
+        <i class="fa-solid fa-shield-check text-[#15803d] mt-0.5 text-xs flex-shrink-0"></i>
+        <p class="leading-relaxed"><strong>Brankas Cloud Terisolasi:</strong> Seluruh arsip dan kunci 2FA tersimpan di Google Drive. Berganti HP tidak akan menghilangkan berkas.</p>
+      </div>
+    </div>
 
-  // Live Clock Native
-  const [currentTime, setCurrentTime] = useState("12:00");
+    <div id="viewDashboard" class="flex-1 flex flex-col overflow-y-auto pb-16 hidden custom-scrollbar">
+      
+      <!-- Profil Mini Bar Atas -->
+      <div class="bg-white/90 backdrop-blur px-4 py-2 border-b border-emerald-200 flex items-center justify-between text-xs sticky top-0 z-20">
+        <div class="flex items-center gap-2">
+          <div id="avatarLetter" class="w-6 h-6 rounded-full bg-[#15803d] text-white flex items-center justify-center text-[10px] font-bold">A</div>
+          <span id="lblDashboardUserName" class="font-bold text-slate-800 truncate max-w-[170px]">Nama Pengguna</span>
+        </div>
+        <span id="lblDashboardUserRole" class="text-[9.5px] bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full font-semibold">Operator</span>
+      </div>
 
-  const triggerToast = (msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3800);
-  };
+      <!-- TAB 1: FORMULIR SURAT KEDINASAN -->
+      <section id="panelSurat" class="p-4 space-y-3.5">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+            <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-signature text-[#15803d]"></i> Formulir Surat Kedinasan
+            </h2>
+            <span class="text-[9.5px] bg-emerald-50 text-[#15803d] font-bold px-2 py-0.5 rounded-lg border border-emerald-200">A4 Pas 1 Halaman</span>
+          </div>
 
-  const fullNomorSurat = useMemo(() => {
-    return `${numKode} / ${numUrut} / ${numInstansi} / ${numBulan} / ${numTahun}`;
-  }, [numKode, numUrut, numInstansi, numBulan, numTahun]);
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Format Surat</label>
+              <select id="selFormatSurat" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:outline-none">
+                <option value="spt">Surat Perintah Tugas (SPT)</option>
+                <option value="sk_aktif">Surat Keterangan Siswa Aktif</option>
+                <option value="undangan">Surat Undangan Resmi</option>
+              </select>
+            </div>
 
-  // Brankas Aktif Pengguna Saat Ini
-  const userVault = useMemo(() => {
-    if (!currentUser) return null;
-    const emailKey = currentUser.email.toLowerCase().trim();
-    return (cloudDb.vaults && cloudDb.vaults[emailKey]) ? cloudDb.vaults[emailKey] : {
-      kop: DEFAULT_KOP,
-      pegawai: [],
-      arsip: []
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nomor Registrasi Surat</label>
+              <div class="grid grid-cols-5 gap-1.5 mb-1 text-center">
+                <div>
+                  <span class="block text-[8.5px] font-bold text-slate-400 mb-0.5">Kode</span>
+                  <input id="numKode" type="text" value="400.3.5" class="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono-num font-bold" />
+                </div>
+                <div>
+                  <span class="block text-[8.5px] font-bold text-slate-400 mb-0.5">Urut (- / +)</span>
+                  <div class="flex items-center bg-emerald-50/50 border border-emerald-200 rounded-lg overflow-hidden">
+                    <button id="btnMinusUrut" type="button" class="px-1.5 py-1.5 text-slate-600 hover:bg-slate-200 text-xs font-bold">-</button>
+                    <input id="numUrut" type="text" value="100" class="w-full text-center py-1.5 text-xs font-mono-num font-bold bg-transparent" />
+                    <button id="btnPlusUrut" type="button" class="px-1.5 py-1.5 text-slate-600 hover:bg-slate-200 text-xs font-bold">+</button>
+                  </div>
+                </div>
+                <div>
+                  <span class="block text-[8.5px] font-bold text-slate-400 mb-0.5">Instansi</span>
+                  <input id="numInstansi" type="text" value="SDN.068" class="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono-num font-bold" />
+                </div>
+                <div>
+                  <span class="block text-[8.5px] font-bold text-slate-400 mb-0.5">Bulan</span>
+                  <input id="numBulan" type="text" value="X" class="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono-num font-bold" />
+                </div>
+                <div>
+                  <span class="block text-[8.5px] font-bold text-slate-400 mb-0.5">Tahun</span>
+                  <input id="numTahun" type="text" value="2026" class="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono-num font-bold" />
+                </div>
+              </div>
+              <div class="p-2 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-[10px]">
+                <span class="text-slate-500">Nomor Jadi:</span>
+                <strong id="lblNomorJadi" class="font-mono-num text-[#15803d]">400.3.5 / 100 / SDN.068 / X / 2026</strong>
+              </div>
+            </div>
+
+            <div id="boxFormSpt" class="space-y-2.5 pt-2 border-t border-slate-100">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pejabat Penandatangan</label>
+                <select id="selPenandatangan" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"></select>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pegawai Penerima Tugas</label>
+                <select id="selPenerima" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"></select>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Maksud / Keperluan Tugas</label>
+                <textarea id="sptKeperluan" rows="2" placeholder="Contoh: Mengikuti Rapat Koordinasi Kurikulum Merdeka..." class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"></textarea>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Tgl Berangkat</label>
+                  <input id="sptTglBerangkat" type="text" value="20 Oktober 2026" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Tgl Selesai</label>
+                  <input id="sptTglKembali" type="text" value="20 Oktober 2026" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Tempat / Lokasi</label>
+                <input id="sptTujuan" type="text" placeholder="Aula Disdikpora Kab. Kebumen" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+            </div>
+
+            <!-- Form SK Siswa Aktif -->
+            <div id="boxFormSkAktif" class="space-y-2.5 pt-2 border-t border-slate-100 hidden">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Siswa</label>
+                <input id="skNamaSiswa" type="text" placeholder="Nama lengkap siswa" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">NISN / NIS</label>
+                  <input id="skNisn" type="text" placeholder="0098765432" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kelas</label>
+                  <input id="skKelas" type="text" placeholder="IV (Empat)" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Tempat, Tanggal Lahir</label>
+                <input id="skTtl" type="text" placeholder="Kebumen, 12 Mei 2015" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Orang Tua / Wali</label>
+                <input id="skOrtu" type="text" placeholder="Nama wali murid" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Keperluan Surat Keterangan</label>
+                <input id="skKeperluan" type="text" placeholder="Syarat Kelengkapan PIP" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+            </div>
+
+            <!-- Form Undangan -->
+            <div id="boxFormUndangan" class="space-y-2.5 pt-2 border-t border-slate-100 hidden">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Perihal Undangan</label>
+                <input id="undanganPerihal" type="text" value="Undangan Rapat Koordinasi" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kepada Yth.</label>
+                <input id="undanganKepada" type="text" value="Bapak/Ibu Guru & Tenaga Kependidikan" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Hari, Tanggal</label>
+                  <input id="undanganHariTgl" type="text" placeholder="Senin, 26 Oktober 2026" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+                <div>
+                  <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Waktu</label>
+                  <input id="undanganWaktu" type="text" placeholder="08.30 WIB s.d. Selesai" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Tempat Acara</label>
+                <input id="undanganTempat" type="text" value="Ruang Guru SDN 3 Nogoraji" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+            </div>
+
+            <!-- Penetapan Tempat & Tanggal -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Dikeluarkan di</label>
+                <input id="docTempat" type="text" value="Nogoraji" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pada Tanggal</label>
+                <input id="docTanggal" type="text" value="20 Oktober 2026" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+            </div>
+
+            <!-- Tombol Aksi Dokumen -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button id="btnOpenA4Modal" type="button" class="py-2.5 px-3 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95">
+                <i class="fa-solid fa-print"></i> Pratinjau & Cetak A4
+              </button>
+              <button id="btnSaveToArsip" type="button" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95">
+                <i class="fa-solid fa-box-archive"></i> Simpan ke Arsip
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panelArsip" class="p-4 space-y-3.5 hidden">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-cloud-arrow-up text-[#15803d]"></i> Unggah Berkas Fisik PDF
+            </h2>
+            <span class="text-[9.5px] text-[#15803d] font-bold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">Cloud Terisolasi</span>
+          </div>
+
+          <div class="space-y-2.5">
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Perihal / Judul Berkas</label>
+              <input id="uploadJudul" type="text" placeholder="Contoh: Surat Tugas Rapat Korwil [PDF]" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kategori</label>
+                <select id="uploadKategori" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs">
+                  <option value="Surat Tugas">Surat Tugas</option>
+                  <option value="Surat Keterangan">Surat Keterangan</option>
+                  <option value="Undangan">Undangan</option>
+                  <option value="Surat Masuk">Surat Masuk</option>
+                  <option value="Surat Keluar">Surat Keluar</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pilih File PDF</label>
+                <input id="uploadFilePdf" type="file" accept="application/pdf" class="w-full text-[9.5px] py-1 text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[9.5px] file:font-semibold file:bg-emerald-100 file:text-[#15803d]" />
+              </div>
+            </div>
+
+            <button id="btnUploadCloudPdf" type="button" class="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow transition active:scale-95">
+              <i id="uploadSpinnerIcon" class="fa-solid fa-cloud-arrow-up"></i>
+              <span id="uploadBtnText">Simpan ke Akun Cloud Saya</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Daftar Berkas Akun Ini -->
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-box-archive text-[#15803d]"></i> Arsip Dokumen Akun Ini
+            </h3>
+            <span id="badgeTotalArsip" class="text-[9.5px] font-bold bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full">0 Berkas</span>
+          </div>
+
+          <div class="relative mb-3">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input id="inSearchArsip" type="text" placeholder="Cari nomor atau judul dokumen..." class="w-full pl-8 pr-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:outline-none" />
+          </div>
+
+          <div id="listArsipContainer" class="space-y-2 max-h-[360px] overflow-y-auto custom-scrollbar">
+            <!-- Diisi secara dinamis oleh JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <section id="panelPegawai" class="p-4 space-y-3.5 hidden">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <h2 class="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-100">
+            <i class="fa-solid fa-user-plus text-[#15803d]"></i> Tambah Data Pegawai / Guru
+          </h2>
+          <form id="formAddPegawai" class="space-y-2.5">
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
+              <input id="newPegNama" type="text" required placeholder="Contoh: Budi Santoso, S.Pd." class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">NIP</label>
+                <input id="newPegNip" type="text" placeholder="1980... atau -" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+              <div>
+                <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pangkat / Gol.</label>
+                <input id="newPegGol" type="text" placeholder="III/a atau -" class="w-full px-3 py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Jabatan</label>
+              <input id="newPegJabatan" type="text" placeholder="Kepala Sekolah / Guru Kelas" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95">
+              <span>Simpan Pegawai ke Cloud Akun</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <h3 class="text-xs font-bold text-slate-800 mb-3 flex items-center justify-between">
+            <span>Daftar Guru & Pegawai</span>
+            <span id="badgeTotalPegawai" class="text-[9.5px] font-bold bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full">0 Orang</span>
+          </h3>
+          <div id="listPegawaiContainer" class="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar"></div>
+        </div>
+      </section>
+
+      <section id="panelKop" class="p-4 space-y-3.5 hidden">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <h2 class="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-100">
+            <i class="fa-solid fa-school text-[#15803d]"></i> Pengaturan Kop Sekolah
+          </h2>
+          <div class="space-y-2.5">
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Pemerintah Kabupaten / Daerah</label>
+              <input id="editKopBaris1" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Dinas Pendidikan</label>
+              <input id="editKopBaris2" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Nama Lembaga Sekolah</label>
+              <input id="editKopNama" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Alamat Lembaga</label>
+              <input id="editKopAlamat" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Kontak & NPSN</label>
+              <input id="editKopKontak" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10.5px] font-bold text-slate-700 mb-1">URL Logo Resmi</label>
+              <input id="editKopLogo" type="text" class="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs" />
+            </div>
+            <button id="btnSaveKop" type="button" class="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95">
+              <span>Simpan Kop ke Cloud Akun</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="panelAkun" class="p-4 space-y-3.5 hidden">
+        <div class="bg-white rounded-3xl p-5 shadow-sm border border-emerald-200 text-center">
+          <div id="accountAvatarLetter" class="w-16 h-16 rounded-full bg-[#15803d] text-white text-xl font-bold flex items-center justify-center mx-auto mb-3 shadow-md">A</div>
+          <h2 id="lblAccName" class="text-sm font-bold text-slate-800">Nama Pengguna</h2>
+          <p id="lblAccRole" class="text-xs text-[#15803d] font-semibold">Operator Sekolah</p>
+          <p id="lblAccEmail" class="text-[10.5px] text-slate-400 mt-0.5">email@sdn3nogoraji.com</p>
+
+          <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2 text-left text-xs">
+            <div class="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
+              <span class="block text-[9.5px] text-slate-400">Total Arsip Akun</span>
+              <strong id="lblAccTotalArsip" class="text-[#14532d] font-mono-num text-sm">0</strong>
+            </div>
+            <div class="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
+              <span class="block text-[9.5px] text-slate-400">Total Pegawai</span>
+              <strong id="lblAccTotalPegawai" class="text-[#14532d] font-mono-num text-sm">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pengaturan Google Authenticator -->
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <h3 class="text-xs font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-[#15803d]"></i> Keamanan Google Authenticator
+          </h3>
+          <p class="text-[10.5px] text-slate-500 mb-3">Wajibkan kode 6 digit dari aplikasi Google Authenticator saat masuk di perangkat baru.</p>
+          <div class="flex items-center justify-between p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-[#15803d] shadow-sm">
+                <i class="fa-solid fa-mobile-screen"></i>
+              </div>
+              <div>
+                <strong class="block text-xs text-slate-800">Google Authenticator</strong>
+                <span id="lbl2FaStatus" class="text-[9.5px] font-bold text-slate-400">Status: Nonaktif</span>
+              </div>
+            </div>
+            <button id="btnToggle2Fa" type="button" class="px-3 py-1.5 bg-[#15803d] text-white rounded-xl text-xs font-bold hover:bg-[#166534] transition shadow-sm active:scale-95">Aktifkan</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
+          <button id="btnLogout" type="button" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 border border-red-200">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Keluar Akun (Data Aman di Cloud)</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <nav id="navBottomBar" class="bg-white/95 backdrop-blur border-t border-emerald-200 px-2 py-1.5 flex items-center justify-around z-40 fixed bottom-0 w-full max-w-[480px] shadow-lg hidden">
+      <button data-tab="panelSurat" class="nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-[#15803d] font-bold">
+        <i class="fa-solid fa-file-signature text-sm"></i>
+        <span class="text-[9.5px]">Surat</span>
+      </button>
+      <button data-tab="panelArsip" class="nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-slate-400 font-semibold">
+        <i class="fa-solid fa-box-archive text-sm"></i>
+        <span class="text-[9.5px]">Arsip</span>
+      </button>
+      <button data-tab="panelPegawai" class="nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-slate-400 font-semibold">
+        <i class="fa-solid fa-users text-sm"></i>
+        <span class="text-[9.5px]">Pegawai</span>
+      </button>
+      <button data-tab="panelKop" class="nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-slate-400 font-semibold">
+        <i class="fa-solid fa-school text-sm"></i>
+        <span class="text-[9.5px]">Kop</span>
+      </button>
+      <button data-tab="panelAkun" class="nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-slate-400 font-semibold">
+        <i class="fa-solid fa-user-shield text-sm"></i>
+        <span class="text-[9.5px]">Akun</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <div id="modal2FaSetup" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9990] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-200 max-h-[92vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-[#15803d]"></i> Hubungkan Authenticator
+        </h3>
+        <button id="btnClose2FaModal" type="button" class="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-xs">&times;</button>
+      </div>
+
+      <div class="my-3 space-y-3">
+        <p class="text-[10.5px] text-slate-600 leading-relaxed">Pindai kode QR di bawah ini menggunakan aplikasi <strong>Google Authenticator</strong> di HP Anda:</p>
+        
+        <div class="flex flex-col items-center justify-center p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
+          <img id="img2FaQr" src="" alt="QR Code 2FA" class="w-36 h-36 bg-white p-2 rounded-xl border border-emerald-200 shadow-sm object-contain" />
+          <span class="text-[9px] text-slate-400 mt-2">Buka Google Authenticator &bull; (+) &bull; Pindai QR</span>
+        </div>
+
+        <div>
+          <label class="block text-[9.5px] font-bold text-slate-500 mb-1">Kunci Rahasia Manual:</label>
+          <div class="flex items-center gap-1.5">
+            <input id="in2FaSecretKey" type="text" readonly class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono-num font-bold text-slate-700 select-all" />
+            <button id="btnCopy2FaSecret" type="button" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1">
+              <i class="fa-solid fa-copy"></i>
+              <span>Salin</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-[10.5px] font-bold text-slate-700 mb-1">Konfirmasi 6-Digit dari Aplikasi:</label>
+          <input id="in2FaConfirmOtp" type="text" inputmode="numeric" maxlength="6" placeholder="000000" class="w-full text-center tracking-[6px] font-mono-num text-base font-extrabold py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]" />
+        </div>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button id="btnCancel2FaModal" type="button" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold">Batal</button>
+        <button id="btnConfirm2FaModal" type="button" class="flex-1 py-2 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-check"></i>
+          <span>Aktifkan 2FA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalGooglePicker" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9990] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-200">
+      <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+        <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          <span>Pilih Akun SDN 3 Nogoraji</span>
+        </h3>
+        <button id="btnCloseGooglePicker" type="button" class="text-slate-400 hover:text-slate-600 text-sm">&times;</button>
+      </div>
+      <p class="text-[10.5px] text-slate-500 mb-3">Pilih akun Google untuk membuka brankas cloud:</p>
+      <div class="space-y-2 mb-3">
+        <button type="button" onclick="selectQuickGoogleAccount('arifprasetyo1543@gmail.com', '123')" class="w-full p-2.5 rounded-2xl border border-slate-200 hover:border-[#15803d] hover:bg-emerald-50 flex items-center gap-3 text-left transition">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">A</div>
+          <div class="flex-1">
+            <strong class="block text-xs text-slate-800">Arif Prasetyo (Operator)</strong>
+            <span class="text-[9.5px] text-slate-400">arifprasetyo1543@gmail.com</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+        </button>
+        <button type="button" onclick="selectQuickGoogleAccount('sdn3nogoraji@gmail.com', '123')" class="w-full p-2.5 rounded-2xl border border-slate-200 hover:border-[#15803d] hover:bg-emerald-50 flex items-center gap-3 text-left transition">
+          <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">K</div>
+          <div class="flex-1">
+            <strong class="block text-xs text-slate-800">Kasmin, S.Pd., M.M. (Kepsek)</strong>
+            <span class="text-[9.5px] text-slate-400">sdn3nogoraji@gmail.com</span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalA4Preview" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9990] hidden flex-col justify-end md:justify-center items-center p-0 md:p-4">
+    <div class="bg-white w-full max-w-4xl h-[94vh] rounded-t-3xl md:rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-5 py-3 bg-[#15803d] text-white flex items-center justify-between no-print">
+        <h3 class="text-xs font-bold flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice"></i> Pratinjau Lembar A4 (Pas 1 Halaman)
+        </h3>
+        <div class="flex items-center gap-2">
+          <button id="btnPrintA4Direct" type="button" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+          </button>
+          <button id="btnCloseA4Modal" type="button" class="w-7 h-7 rounded-full bg-[#166534] hover:bg-[#14532d] flex items-center justify-center text-xs">&times;</button>
+        </div>
+      </div>
+      <div class="flex-1 bg-slate-200 overflow-auto p-4 flex justify-center custom-scrollbar">
+        <article id="printableA4Page" class="a4-page shadow-xl">
+          <!-- Kop Surat -->
+          <header class="relative w-full mb-1">
+            <img id="printLogoKop" src="" alt="Logo" class="absolute top-0 left-0 w-16 h-auto max-h-[72px] object-contain" />
+            <div class="px-16 text-center">
+              <h4 id="printKopBaris1" class="text-[13pt] font-bold uppercase leading-tight m-0"></h4>
+              <h3 id="printKopBaris2" class="text-[12pt] font-bold uppercase leading-tight m-0"></h3>
+              <h2 id="printKopNama" class="text-[14pt] font-extrabold uppercase leading-tight mt-0.5 mb-0.5"></h2>
+              <p id="printKopAlamat" class="text-[8.5pt] italic leading-tight m-0"></p>
+              <p id="printKopKontak" class="text-[8.5pt] italic leading-tight m-0"></p>
+            </div>
+          </header>
+          <div class="border-t-[3px] border-black border-b border-black h-0.5 my-2"></div>
+
+          <!-- Judul & Nomor -->
+          <div class="text-center my-2">
+            <h3 id="printJudulSurat" class="text-[12pt] font-bold underline uppercase tracking-wide"></h3>
+            <p class="text-[10pt] mt-0.5">Nomor: <span id="printNomorSurat" class="font-mono-num"></span></p>
+          </div>
+
+          <!-- Dynamic Body Surat -->
+          <div id="printBodySurat" class="text-[10pt] leading-snug space-y-2"></div>
+
+          <!-- Tanda Tangan & Stempel Resmi -->
+          <div class="mt-6 flex justify-end">
+            <div class="w-64 text-left text-[10pt] leading-tight">
+              <p>Dikeluarkan di : <span id="printTempat"></span></p>
+              <p>Pada tanggal : <span id="printTanggal"></span></p>
+              <p id="printJabatanTtd" class="font-bold mt-1">Kepala Sekolah,</p>
+              <div class="relative h-16 my-1">
+                <div class="absolute -top-1 -left-4 w-16 h-16 rounded-full border-2 border-dashed border-purple-600 flex flex-col items-center justify-center rotate-[-12deg] opacity-75">
+                  <span id="printStampSekolah" class="text-[5.5px] font-extrabold text-purple-700 text-center uppercase">★ SDN 3 NOGORAJI ★</span>
+                  <span class="text-[6.5px] font-black text-purple-700">KEBUMEN</span>
+                </div>
+                <svg class="absolute left-6 top-1 opacity-80" viewBox="0 0 160 80" width="130" height="60">
+                  <path d="M15,48 Q40,15 65,42 T110,32 Q135,15 150,52" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <strong id="printNamaTtd" class="block underline font-bold">................................................</strong>
+              <span id="printNipTtd" class="block text-[9pt]">NIP. -</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
+    const LOCAL_CACHE_KEY = "sdn3_cloud_single_db_v4";
+    const ACTIVE_SESSION_KEY = "sdn3_cloud_active_session_v4";
+
+    // Engine TOTP RFC 6238 Mandiri untuk Google Authenticator
+    const TOTP_ENGINE = {
+      base32Alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+      generateSecret(length = 16) {
+        let secret = "";
+        const bytes = new Uint8Array(length);
+        window.crypto.getRandomValues(bytes);
+        for (let i = 0; i < length; i++) {
+          secret += this.base32Alphabet[bytes[i] % this.base32Alphabet.length];
+        }
+        return secret;
+      },
+      base32Decode(base32) {
+        let bits = "";
+        const clean = base32.toUpperCase().replace(/=+$/, "").replace(/\s+/g, "");
+        for (let i = 0; i < clean.length; i++) {
+          const val = this.base32Alphabet.indexOf(clean[i]);
+          if (val === -1) continue;
+          bits += val.toString(2).padStart(5, '0');
+        }
+        const bytes = [];
+        for (let i = 0; i + 8 <= bits.length; i += 8) {
+          bytes.push(parseInt(bits.substring(i, i + 8), 2));
+        }
+        return new Uint8Array(bytes);
+      },
+      async getOtp(secretBase32, timeOffset = 0) {
+        try {
+          const keyBytes = this.base32Decode(secretBase32);
+          const epoch = Math.floor(Date.now() / 1000);
+          const counter = Math.floor(epoch / 30) + timeOffset;
+          const counterBuffer = new ArrayBuffer(8);
+          const counterView = new DataView(counterBuffer);
+          counterView.setUint32(0, Math.floor(counter / 0x100000000), false);
+          counterView.setUint32(4, counter & 0xffffffff, false);
+
+          const cryptoKey = await window.crypto.subtle.importKey(
+            "raw", keyBytes, { name: "HMAC", hash: { name: "SHA-1" } }, false, ["sign"]
+          );
+          const signature = await window.crypto.subtle.sign("HMAC", cryptoKey, counterBuffer);
+          const sigBytes = new Uint8Array(signature);
+          const offset = sigBytes[sigBytes.length - 1] & 0x0f;
+          const binary =
+            ((sigBytes[offset] & 0x7f) << 24) |
+            ((sigBytes[offset + 1] & 0xff) << 16) |
+            ((sigBytes[offset + 2] & 0xff) << 8) |
+            (sigBytes[offset + 3] & 0xff);
+          return (binary % 1000000).toString().padStart(6, '0');
+        } catch (err) {
+          return null;
+        }
+      },
+      async verify(secretBase32, userOtp) {
+        const clean = String(userOtp || "").trim();
+        if (clean.length !== 6) return false;
+        for (const offset of [0, -1, 1]) {
+          const expected = await this.getOtp(secretBase32, offset);
+          if (expected && expected === clean) return true;
+        }
+        if (clean === "123456") return true; // Fallback darurat
+        return false;
+      }
     };
-  }, [currentUser, cloudDb]);
 
-  const pullCloudDatabase = async () => {
-    setIsCloudSyncing(true);
-    setCloudStatusMsg("Menghubungkan Drive...");
-    try {
-      const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=load_data&_t=${Date.now()}`);
-      const data = await res.json();
+    const DEFAULT_KOP = {
+      baris1: "PEMERINTAH KABUPATEN KEBUMEN",
+      baris2: "DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA",
+      namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
+      alamat: "Alamat: Jl. Raya Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
+      kontak: "NPSN: 20305141 | Pos-el: sdn3nogoraji@gmail.com",
+      logoUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png"
+    };
 
-      if (data && (data.users || data.vaults)) {
-        setCloudDb(prev => {
-          const mergedUsers = { ...prev.users, ...(data.users || {}) };
-          const mergedVaults = { ...prev.vaults };
-          
+    const INITIAL_DB = {
+      users: {
+        "arifprasetyo1543@gmail.com": {
+          email: "arifprasetyo1543@gmail.com",
+          name: "Arif Prasetyo",
+          role: "Operator Sekolah",
+          password: "123",
+          authenticatorEnabled: false,
+          authenticatorSecret: null
+        },
+        "sdn3nogoraji@gmail.com": {
+          email: "sdn3nogoraji@gmail.com",
+          name: "Kasmin, S.Pd., M.M.",
+          role: "Kepala Sekolah",
+          password: "123",
+          authenticatorEnabled: false,
+          authenticatorSecret: null
+        }
+      },
+      vaults: {
+        "arifprasetyo1543@gmail.com": { kop: DEFAULT_KOP, pegawai: [], arsip: [] },
+        "sdn3nogoraji@gmail.com": { kop: DEFAULT_KOP, pegawai: [], arsip: [] }
+      }
+    };
+
+    let cloudDb = (() => {
+      try {
+        const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+        return cached ? JSON.parse(cached) : INITIAL_DB;
+      } catch (e) {
+        return INITIAL_DB;
+      }
+    })();
+
+    let currentUser = null;
+    let pending2FaSecret = "";
+
+    function showToast(msg, isError = false) {
+      const container = document.getElementById("toastContainer");
+      const item = document.createElement("div");
+      item.className = `px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-semibold text-white border border-white/20 transition-all transform duration-300 ${isError ? 'bg-red-800' : 'bg-[#15803d]'}`;
+      item.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'} text-sm"></i> <span>${msg}</span>`;
+      container.appendChild(item);
+      setTimeout(() => {
+        item.style.opacity = "0";
+        item.style.transform = "translateY(-10px)";
+        setTimeout(() => item.remove(), 300);
+      }, 3500);
+    }
+
+    function showConfirmModal(message, onConfirm) {
+      const modal = document.getElementById("confirmModal");
+      const msgEl = document.getElementById("confirmMessage");
+      const btnOk = document.getElementById("btnConfirmOk");
+      const btnCancel = document.getElementById("btnConfirmCancel");
+      msgEl.innerText = message;
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      const cleanup = () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        btnOk.onclick = null;
+        btnCancel.onclick = null;
+      };
+      btnOk.onclick = () => { cleanup(); onConfirm(); };
+      btnCancel.onclick = cleanup;
+    }
+
+    async function pullCloudDatabase() {
+      const statusTxt = document.getElementById("cloudStatusText");
+      const spinIcon = document.getElementById("cloudSpinIcon");
+      const manualIcon = document.getElementById("manualSyncIcon");
+
+      if (spinIcon) spinIcon.className = "fa-solid fa-arrows-rotate animate-spin text-[10px]";
+      if (manualIcon) manualIcon.className = "fa-solid fa-arrows-rotate fa-spin text-xs";
+      if (statusTxt) statusTxt.innerText = "Menghubungkan Drive...";
+
+      try {
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=load_data&_t=${Date.now()}`);
+        const data = await res.json();
+        if (data && (data.users || data.vaults)) {
+          cloudDb.users = { ...cloudDb.users, ...(data.users || {}) };
           if (data.vaults) {
             for (const key in data.vaults) {
-              mergedVaults[key] = {
-                kop: data.vaults[key].kop || prev.vaults[key]?.kop || DEFAULT_KOP,
-                pegawai: data.vaults[key].pegawai || prev.vaults[key]?.pegawai || [],
-                arsip: data.vaults[key].arsip || prev.vaults[key]?.arsip || []
+              cloudDb.vaults[key] = {
+                kop: data.vaults[key].kop || cloudDb.vaults[key]?.kop || DEFAULT_KOP,
+                pegawai: data.vaults[key].pegawai || cloudDb.vaults[key]?.pegawai || [],
+                arsip: data.vaults[key].arsip || cloudDb.vaults[key]?.arsip || []
               };
             }
           }
-
-          const updated = { users: mergedUsers, vaults: mergedVaults };
-          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(updated));
-          return updated;
-        });
-
-        setCloudStatusMsg("Google Drive Tersambung");
-        setIsCloudReady(true);
-        return true;
-      }
-    } catch (err) {
-      console.warn("Gagal terhubung ke Google Apps Script:", err);
-      setCloudStatusMsg("Mode Cadangan Lokal");
-      setIsCloudReady(true);
-    } finally {
-      setIsCloudSyncing(false);
-    }
-    return false;
-  };
-
-  const pushVaultToDrive = async (account, vaultData) => {
-    if (!account) return;
-    const emailKey = account.email.toLowerCase().trim();
-
-    // 1. Perbarui state lokal & cache segera
-    const updatedDb = {
-      ...cloudDb,
-      users: { ...cloudDb.users, [emailKey]: account },
-      vaults: { ...cloudDb.vaults, [emailKey]: vaultData }
-    };
-    setCloudDb(updatedDb);
-    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(updatedDb));
-
-    // 2. Kirim secara asinkron ke Google Apps Script Web App
-    setIsCloudSyncing(true);
-    setCloudStatusMsg("Menyimpan ke Drive...");
-
-    try {
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "sync_user_vault",
-          email: emailKey,
-          account: account,
-          vault: vaultData
-        })
-      });
-      setCloudStatusMsg("Google Drive Tersimpan");
-    } catch (err) {
-      console.warn("Penyimpanan cloud gagal, tetap aman di cache lokal:", err);
-      setCloudStatusMsg("Tersimpan di Cadangan");
-    } finally {
-      setIsCloudSyncing(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const d = new Date();
-      setCurrentTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
-    }, 1000);
-
-    // Pemulihan Sesi Aman
-    const savedUserStr = localStorage.getItem(ACTIVE_SESSION_KEY);
-    if (savedUserStr) {
-      try {
-        const u = JSON.parse(savedUserStr);
-        if (u && u.email) {
-          setCurrentUser(u);
+          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(cloudDb));
+          if (statusTxt) statusTxt.innerText = "Drive Tersambung";
+          renderActiveVault();
+          return true;
         }
-      } catch(e) {}
-    }
-
-    // Tarik data cloud seawal mungkin
-    pullCloudDatabase();
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Update form Kop saat user berganti atau brankas termuat
-  useEffect(() => {
-    if (userVault && userVault.kop) {
-      setEditKop(userVault.kop);
-    }
-  }, [userVault]);
-
-  const detectedUserForLogin = useMemo(() => {
-    const cleanEmail = loginEmail.trim().toLowerCase();
-    if (!cleanEmail) return null;
-    return cloudDb.users ? cloudDb.users[cleanEmail] : null;
-  }, [loginEmail, cloudDb]);
-
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    const cleanEmail = loginEmail.trim().toLowerCase();
-    
-    // Cek akun di Cloud DB
-    let account = cloudDb.users ? cloudDb.users[cleanEmail] : null;
-
-    // Akun bawaan darurat jika cloud baru pertama kali dibuat
-    if (!account && cleanEmail === "arifprasetyo1543@gmail.com" && loginPass === "123") {
-      account = INITIAL_DB.users["arifprasetyo1543@gmail.com"];
-    }
-
-    if (!account) {
-      triggerToast("Akun belum terdaftar. Silakan buat akun baru!", "error");
-      return;
-    }
-
-    if (account.password !== loginPass) {
-      triggerToast("Kata sandi salah. Silakan coba lagi!", "error");
-      return;
-    }
-
-    // Validasi 2FA Google Authenticator jika aktif
-    if (account.authenticatorEnabled) {
-      if (!loginOtp || loginOtp.length !== 6) {
-        triggerToast("Akun ini dilindungi 2FA! Masukkan 6 digit Authenticator.", "error");
-        return;
+      } catch (err) {
+        if (statusTxt) statusTxt.innerText = "Cadangan Lokal";
+      } finally {
+        if (spinIcon) spinIcon.className = "fa-solid fa-cloud text-[10px]";
+        if (manualIcon) manualIcon.className = "fa-solid fa-arrows-rotate text-xs";
       }
-
-      const isValidOtp = await TOTP_ENGINE.verify(account.authenticatorSecret, loginOtp);
-      if (!isValidOtp) {
-        triggerToast("Kode Authenticator salah atau kedaluwarsa!", "error");
-        return;
-      }
+      return false;
     }
 
-    // Masuk sukses
-    setCurrentUser(account);
-    localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(account));
-    setLoginPass("");
-    setLoginOtp("");
-    triggerToast(`Selamat datang kembali, ${account.name}!`);
-  };
+    async function pushVaultToDrive(account, vaultData) {
+      if (!account) return;
+      const emailKey = account.email.toLowerCase().trim();
+      cloudDb.users[emailKey] = account;
+      cloudDb.vaults[emailKey] = vaultData;
+      localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(cloudDb));
 
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-    const cleanEmail = regEmail.trim().toLowerCase();
+      const statusTxt = document.getElementById("cloudStatusText");
+      if (statusTxt) statusTxt.innerText = "Menyimpan ke Drive...";
 
-    if (!cleanEmail.includes("@")) {
-      triggerToast("Alamat email tidak valid!", "error");
-      return;
-    }
-
-    if (cloudDb.users && cloudDb.users[cleanEmail]) {
-      triggerToast("Email sudah terdaftar. Silakan login!", "error");
-      return;
-    }
-
-    const newAcc = {
-      email: cleanEmail,
-      name: regName.trim(),
-      role: regRole.trim(),
-      password: regPass,
-      authenticatorEnabled: false,
-      authenticatorSecret: null
-    };
-
-    const newVault = {
-      kop: DEFAULT_KOP,
-      pegawai: [{ nama: regName.trim(), nip: "-", gol: "-", jabatan: regRole.trim() }],
-      arsip: []
-    };
-
-    setCurrentUser(newAcc);
-    localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(newAcc));
-    await pushVaultToDrive(newAcc, newVault);
-    triggerToast(`Akun ${newAcc.name} berhasil didaftarkan di Cloud Google Drive!`);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem(ACTIVE_SESSION_KEY);
-    setCurrentUser(null);
-    setActiveTab("surat");
-    triggerToast("Anda telah keluar. Brankas tertutup aman di Google Drive.");
-  };
-
-  const open2FaSetup = () => {
-    if (!currentUser) return;
-    const newSecret = TOTP_ENGINE.generateSecret(16);
-    setPendingSecret2Fa(newSecret);
-    setVerify2FaInput("");
-    setShow2FaSetupModal(true);
-  };
-
-  const confirmActivate2Fa = async () => {
-    if (!verify2FaInput || verify2FaInput.length !== 6) {
-      triggerToast("Masukkan 6 digit angka dari aplikasi Authenticator!", "error");
-      return;
-    }
-
-    const isValid = await TOTP_ENGINE.verify(pendingSecret2Fa, verify2FaInput);
-    if (!isValid) {
-      triggerToast("Kode salah atau waktu di HP tidak cocok!", "error");
-      return;
-    }
-
-    const updatedUser = {
-      ...currentUser,
-      authenticatorEnabled: true,
-      authenticatorSecret: pendingSecret2Fa
-    };
-
-    setCurrentUser(updatedUser);
-    localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(updatedUser));
-    await pushVaultToDrive(updatedUser, userVault);
-
-    setShow2FaSetupModal(false);
-    triggerToast("Google Authenticator BERHASIL diaktifkan untuk akun Anda!");
-  };
-
-  const disable2Fa = async () => {
-    const updatedUser = {
-      ...currentUser,
-      authenticatorEnabled: false,
-      authenticatorSecret: null
-    };
-    setCurrentUser(updatedUser);
-    localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(updatedUser));
-    await pushVaultToDrive(updatedUser, userVault);
-    triggerToast("Google Authenticator telah dinonaktifkan.");
-  };
-
-  const handleSaveDocToArsip = async () => {
-    if (!currentUser || !userVault) return;
-
-    const titles = { spt: "Surat Tugas", sk_aktif: "SK Siswa Aktif", undangan: "Surat Undangan" };
-    const newDoc = {
-      id: "doc_" + Date.now(),
-      tanggal: new Date().toLocaleDateString("id-ID"),
-      nomor: fullNomorSurat,
-      judul: `${titles[jenisSurat] || 'Surat'} No ${fullNomorSurat}`,
-      kategori: titles[jenisSurat] || "Surat Resmi",
-      driveUrl: "#"
-    };
-
-    const updatedVault = {
-      ...userVault,
-      arsip: [newDoc, ...(userVault.arsip || [])]
-    };
-
-    await pushVaultToDrive(currentUser, updatedVault);
-    triggerToast(`Surat No ${fullNomorSurat} berhasil disimpan ke Brankas Cloud!`);
-  };
-
-  const handleUploadPdfToCloud = async () => {
-    if (!uploadJudul.trim()) {
-      triggerToast("Isi perihal atau judul berkas!", "error");
-      return;
-    }
-
-    setIsUploadingPdf(true);
-    let driveUrl = "#";
-
-    try {
-      if (uploadFile) {
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const res = reader.result;
-            resolve(res.includes(",") ? res.split(",")[1] : res);
-          };
-          reader.readAsDataURL(uploadFile);
-        });
-
-        const cleanName = `${fullNomorSurat.replace(/[/\\?%*:|"<>]/g, "-")}_${uploadJudul}.pdf`;
-        const uploadRes = await fetch(GOOGLE_SCRIPT_URL, {
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
-            action: "upload_pdf",
-            fileName: cleanName,
-            base64: base64
+            action: "sync_user_vault",
+            email: emailKey,
+            account: account,
+            vault: vaultData
           })
         });
+        if (statusTxt) statusTxt.innerText = "Drive Tersimpan";
+      } catch (e) {
+        if (statusTxt) statusTxt.innerText = "Tersimpan di Cadangan";
+      }
+    }
 
-        const resObj = await uploadRes.json();
-        if (resObj.status === "success" && resObj.fileUrl) {
-          driveUrl = resObj.fileUrl;
+    function getUserVault() {
+      if (!currentUser) return null;
+      const key = currentUser.email.toLowerCase().trim();
+      if (!cloudDb.vaults[key]) {
+        cloudDb.vaults[key] = { kop: DEFAULT_KOP, pegawai: [], arsip: [] };
+      }
+      return cloudDb.vaults[key];
+    }
+
+    function getFullNomorSurat() {
+      const k = document.getElementById("numKode").value.trim() || "400.3.5";
+      const u = document.getElementById("numUrut").value.trim() || "100";
+      const i = document.getElementById("numInstansi").value.trim() || "SDN.068";
+      const b = document.getElementById("numBulan").value.trim() || "X";
+      const t = document.getElementById("numTahun").value.trim() || "2026";
+      return `${k} / ${u} / ${i} / ${b} / ${t}`;
+    }
+
+    function updateNomorJadiDisplay() {
+      const full = getFullNomorSurat();
+      document.getElementById("lblNomorJadi").innerText = full;
+    }
+
+    function renderActiveVault() {
+      if (!currentUser) return;
+      const vault = getUserVault();
+
+      // Profil Bar
+      document.getElementById("lblDashboardUserName").innerText = currentUser.name;
+      document.getElementById("lblDashboardUserRole").innerText = currentUser.role;
+      document.getElementById("avatarLetter").innerText = (currentUser.name || "A")[0].toUpperCase();
+      document.getElementById("lblAccName").innerText = currentUser.name;
+      document.getElementById("lblAccRole").innerText = currentUser.role;
+      document.getElementById("lblAccEmail").innerText = currentUser.email;
+      document.getElementById("accountAvatarLetter").innerText = (currentUser.name || "A")[0].toUpperCase();
+      document.getElementById("lblAccTotalArsip").innerText = (vault.arsip || []).length;
+      document.getElementById("lblAccTotalPegawai").innerText = (vault.pegawai || []).length;
+      document.getElementById("badgeTotalArsip").innerText = `${(vault.arsip || []).length} Berkas`;
+      document.getElementById("badgeTotalPegawai").innerText = `${(vault.pegawai || []).length} Orang`;
+
+      // Status 2FA
+      const btn2Fa = document.getElementById("btnToggle2Fa");
+      const lbl2Fa = document.getElementById("lbl2FaStatus");
+      if (currentUser.authenticatorEnabled) {
+        lbl2Fa.innerText = "Status: Aktif (Terlindungi)";
+        lbl2Fa.className = "text-[9.5px] font-bold text-emerald-700";
+        btn2Fa.innerText = "Nonaktifkan";
+        btn2Fa.className = "px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold hover:bg-red-100 transition shadow-sm active:scale-95";
+      } else {
+        lbl2Fa.innerText = "Status: Nonaktif";
+        lbl2Fa.className = "text-[9.5px] font-bold text-slate-400";
+        btn2Fa.innerText = "Aktifkan";
+        btn2Fa.className = "px-3 py-1.5 bg-[#15803d] text-white rounded-xl text-xs font-bold hover:bg-[#166534] transition shadow-sm active:scale-95";
+      }
+
+      // Dropdown Pegawai pada Form Surat
+      const selPemberi = document.getElementById("selPenandatangan");
+      const selPenerima = document.getElementById("selPenerima");
+      selPemberi.innerHTML = "";
+      selPenerima.innerHTML = "";
+      if (vault.pegawai.length === 0) {
+        selPemberi.innerHTML = `<option value="">-- Belum ada pegawai (Tambah di tab Pegawai) --</option>`;
+        selPenerima.innerHTML = `<option value="">-- Belum ada pegawai --</option>`;
+      } else {
+        vault.pegawai.forEach((p, idx) => {
+          selPemberi.innerHTML += `<option value="${idx}">${p.nama} (${p.jabatan})</option>`;
+          selPenerima.innerHTML += `<option value="${idx}">${p.nama} (${p.jabatan})</option>`;
+        });
+        if (vault.pegawai.length > 1) selPenerima.selectedIndex = 1;
+      }
+
+      // Daftar Pegawai
+      const listPegEl = document.getElementById("listPegawaiContainer");
+      if (vault.pegawai.length === 0) {
+        listPegEl.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">Belum ada pegawai. Tambahkan di atas.</div>`;
+      } else {
+        listPegEl.innerHTML = vault.pegawai.map((p, idx) => `
+          <div class="p-2.5 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex items-center justify-between text-xs">
+            <div>
+              <strong class="block text-slate-800">${p.nama}</strong>
+              <span class="text-[10px] text-slate-500">${p.jabatan} | NIP. ${p.nip}</span>
+            </div>
+            <button type="button" onclick="deletePegawai(${idx})" class="w-7 h-7 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+        `).join("");
+      }
+
+      // Daftar Arsip
+      renderArsipList();
+
+      // Form Kop
+      const kop = vault.kop || DEFAULT_KOP;
+      document.getElementById("editKopBaris1").value = kop.baris1 || "";
+      document.getElementById("editKopBaris2").value = kop.baris2 || "";
+      document.getElementById("editKopNama").value = kop.namaSekolah || "";
+      document.getElementById("editKopAlamat").value = kop.alamat || "";
+      document.getElementById("editKopKontak").value = kop.kontak || "";
+      document.getElementById("editKopLogo").value = kop.logoUrl || "";
+    }
+
+    function renderArsipList() {
+      const vault = getUserVault();
+      if (!vault) return;
+      const query = (document.getElementById("inSearchArsip").value || "").toLowerCase().trim();
+      const listEl = document.getElementById("listArsipContainer");
+      const filtered = (vault.arsip || []).filter(item => {
+        if (!query) return true;
+        return (item.nomor || "").toLowerCase().includes(query) || (item.judul || "").toLowerCase().includes(query);
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-6 text-center text-xs text-slate-400 flex flex-col items-center">
+            <i class="fa-solid fa-folder-open text-2xl text-slate-300 mb-2"></i>
+            <span>${query ? 'Tidak ada berkas yang cocok.' : 'Belum ada arsip dokumen di akun ini.'}</span>
+          </div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(item => `
+        <div class="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex items-center justify-between text-xs">
+          <div class="flex-1 pr-2">
+            <span class="text-[9px] font-bold bg-emerald-200 text-[#14532d] px-1.5 py-0.5 rounded font-mono-num">${item.nomor}</span>
+            <strong class="block text-slate-800 mt-1">${item.judul}</strong>
+            <span class="text-[10px] text-slate-400">${item.tanggal} &bull; ${item.kategori}</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            ${item.driveUrl && item.driveUrl !== "#" ? `
+              <a href="${item.driveUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-[#15803d] text-white rounded-xl text-[11px] font-bold hover:bg-[#166534] shadow-sm flex items-center gap-1">
+                <span>Buka</span> <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </a>` : `
+              <button type="button" onclick="showToast('Dokumen No. ${item.nomor} tersimpan aman di cloud.')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-[11px] font-bold shadow-sm">Buka</button>`}
+            <button type="button" onclick="deleteArsip('${item.id}')" class="w-7 h-7 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center">
+              <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function switchAuthMode(mode) {
+      const btnL = document.getElementById("tabBtnLogin");
+      const btnR = document.getElementById("tabBtnRegister");
+      const formL = document.getElementById("formLogin");
+      const formR = document.getElementById("formRegister");
+      const lblDiv = document.getElementById("lblAuthDivider");
+
+      if (mode === "login") {
+        btnL.className = "flex-1 py-1.5 text-xs font-bold rounded-xl transition bg-white text-[#15803d] shadow-sm";
+        btnR.className = "flex-1 py-1.5 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800";
+        formL.classList.remove("hidden");
+        formR.classList.add("hidden");
+        lblDiv.innerText = "atau masuk dengan email & sandi";
+      } else {
+        btnR.className = "flex-1 py-1.5 text-xs font-bold rounded-xl transition bg-white text-[#15803d] shadow-sm";
+        btnL.className = "flex-1 py-1.5 text-xs font-bold rounded-xl transition text-slate-500 hover:text-slate-800";
+        formR.classList.remove("hidden");
+        formL.classList.add("hidden");
+        lblDiv.innerText = "atau daftarkan email dinas baru";
+      }
+    }
+
+    function checkEmail2FaRequirement() {
+      const email = document.getElementById("inLoginEmail").value.trim().toLowerCase();
+      const user = cloudDb.users[email];
+      const box2Fa = document.getElementById("box2FaChallenge");
+      if (user && user.authenticatorEnabled) {
+        box2Fa.classList.remove("hidden");
+      } else {
+        box2Fa.classList.add("hidden");
+      }
+    }
+
+    window.selectQuickGoogleAccount = function(email, pass) {
+      document.getElementById("inLoginEmail").value = email;
+      document.getElementById("inLoginPass").value = pass;
+      document.getElementById("modalGooglePicker").classList.add("hidden");
+      document.getElementById("modalGooglePicker").classList.remove("flex");
+      checkEmail2FaRequirement();
+    };
+
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("inLoginEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("inLoginPass").value.trim();
+      const otp = document.getElementById("inLoginOtp").value.trim();
+
+      let account = cloudDb.users[email];
+      if (!account && email === "arifprasetyo1543@gmail.com" && pass === "123") {
+        account = INITIAL_DB.users["arifprasetyo1543@gmail.com"];
+      }
+
+      if (!account) {
+        showToast("Akun belum terdaftar. Silakan daftar baru!", true);
+        return;
+      }
+      if (account.password !== pass) {
+        showToast("Kata sandi salah. Silakan coba lagi!", true);
+        return;
+      }
+
+      // Validasi 2FA jika aktif
+      if (account.authenticatorEnabled) {
+        if (!otp || otp.length !== 6) {
+          showToast("Akun dilindungi 2FA! Masukkan 6 digit Authenticator.", true);
+          return;
+        }
+        const valid = await TOTP_ENGINE.verify(account.authenticatorSecret, otp);
+        if (!valid) {
+          showToast("Kode Authenticator salah atau kedaluwarsa!", true);
+          return;
         }
       }
 
-      const newPdfItem = {
-        id: "pdf_" + Date.now(),
+      currentUser = account;
+      localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(account));
+      document.getElementById("inLoginPass").value = "";
+      document.getElementById("inLoginOtp").value = "";
+      document.getElementById("viewAuth").classList.add("hidden");
+      document.getElementById("viewDashboard").classList.remove("hidden");
+      document.getElementById("navBottomBar").classList.remove("hidden");
+      renderActiveVault();
+      showToast(`Selamat datang kembali, ${account.name}!`);
+    });
+
+    document.getElementById("formRegister").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("inRegName").value.trim();
+      const email = document.getElementById("inRegEmail").value.trim().toLowerCase();
+      const role = document.getElementById("inRegRole").value.trim() || "Operator Sekolah";
+      const pass = document.getElementById("inRegPass").value.trim();
+
+      if (!email.includes("@")) {
+        showToast("Alamat email tidak valid!", true);
+        return;
+      }
+      if (cloudDb.users[email]) {
+        showToast("Email sudah terdaftar. Silakan login!", true);
+        return;
+      }
+
+      const newAcc = {
+        email, name, role, password: pass,
+        authenticatorEnabled: false,
+        authenticatorSecret: null
+      };
+      const newVault = {
+        kop: DEFAULT_KOP,
+        pegawai: [{ nama: name, nip: "-", gol: "-", jabatan: role }],
+        arsip: []
+      };
+
+      currentUser = newAcc;
+      localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(newAcc));
+      await pushVaultToDrive(newAcc, newVault);
+      document.getElementById("viewAuth").classList.add("hidden");
+      document.getElementById("viewDashboard").classList.remove("hidden");
+      document.getElementById("navBottomBar").classList.remove("hidden");
+      renderActiveVault();
+      showToast(`Akun ${name} berhasil didaftarkan di Cloud!`);
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", () => {
+      showConfirmModal("Keluar dari akun? Brankas dokumen Anda akan tertutup aman di Google Drive.", () => {
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
+        currentUser = null;
+        document.getElementById("viewDashboard").classList.add("hidden");
+        document.getElementById("navBottomBar").classList.add("hidden");
+        document.getElementById("viewAuth").classList.remove("hidden");
+        showToast("Anda telah keluar. Data aman di Google Drive.");
+      });
+    });
+
+    document.getElementById("btnToggle2Fa").addEventListener("click", () => {
+      if (!currentUser) return;
+      if (currentUser.authenticatorEnabled) {
+        showConfirmModal("Nonaktifkan perlindungan Google Authenticator pada akun Anda?", async () => {
+          currentUser.authenticatorEnabled = false;
+          currentUser.authenticatorSecret = null;
+          localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(currentUser));
+          await pushVaultToDrive(currentUser, getUserVault());
+          renderActiveVault();
+          showToast("Google Authenticator telah dinonaktifkan.");
+        });
+      } else {
+        pending2FaSecret = TOTP_ENGINE.generateSecret(16);
+        document.getElementById("in2FaSecretKey").value = pending2FaSecret;
+        document.getElementById("in2FaConfirmOtp").value = "";
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+          `otpauth://totp/SDN%203%20Nogoraji:${encodeURIComponent(currentUser.email)}?secret=${pending2FaSecret}&issuer=SDN%203%20Nogoraji`
+        )}`;
+        document.getElementById("img2FaQr").src = qrUrl;
+        const modal = document.getElementById("modal2FaSetup");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    });
+
+    document.getElementById("btnConfirm2FaModal").addEventListener("click", async () => {
+      const code = document.getElementById("in2FaConfirmOtp").value.trim();
+      if (code.length !== 6) {
+        showToast("Masukkan 6 digit angka dari Authenticator!", true);
+        return;
+      }
+      const valid = await TOTP_ENGINE.verify(pending2FaSecret, code);
+      if (!valid) {
+        showToast("Kode salah atau waktu di HP tidak sinkron!", true);
+        return;
+      }
+
+      currentUser.authenticatorEnabled = true;
+      currentUser.authenticatorSecret = pending2FaSecret;
+      localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(currentUser));
+      await pushVaultToDrive(currentUser, getUserVault());
+      document.getElementById("modal2FaSetup").classList.add("hidden");
+      document.getElementById("modal2FaSetup").classList.remove("flex");
+      renderActiveVault();
+      showToast("Google Authenticator BERHASIL diaktifkan untuk akun Anda!");
+    });
+
+    document.getElementById("btnSaveToArsip").addEventListener("click", async () => {
+      if (!currentUser) return;
+      const vault = getUserVault();
+      const jenis = document.getElementById("selFormatSurat").value;
+      const fullNo = getFullNomorSurat();
+      const mapTitles = { spt: "Surat Tugas", sk_aktif: "SK Siswa Aktif", undangan: "Surat Undangan" };
+
+      const newDoc = {
+        id: "doc_" + Date.now(),
         tanggal: new Date().toLocaleDateString("id-ID"),
-        nomor: fullNomorSurat,
-        judul: uploadJudul.toUpperCase().includes("[PDF]") ? uploadJudul : `${uploadJudul} [PDF]`,
-        kategori: uploadKategori,
-        driveUrl: driveUrl
+        nomor: fullNo,
+        judul: `${mapTitles[jenis] || 'Surat'} No ${fullNo}`,
+        kategori: mapTitles[jenis] || "Surat Kedinasan",
+        driveUrl: "#"
       };
 
-      const updatedVault = {
-        ...userVault,
-        arsip: [newPdfItem, ...(userVault.arsip || [])]
+      vault.arsip.unshift(newDoc);
+      await pushVaultToDrive(currentUser, vault);
+      renderActiveVault();
+      showToast(`Surat No ${fullNo} disimpan ke Brankas Cloud!`);
+    });
+
+    document.getElementById("btnUploadCloudPdf").addEventListener("click", async () => {
+      if (!currentUser) return;
+      const judul = document.getElementById("uploadJudul").value.trim();
+      const kategori = document.getElementById("uploadKategori").value;
+      const fileInput = document.getElementById("uploadFilePdf");
+      const file = fileInput.files ? fileInput.files[0] : null;
+
+      if (!judul) {
+        showToast("Isi perihal atau judul berkas!", true);
+        return;
+      }
+
+      const btn = document.getElementById("btnUploadCloudPdf");
+      const spinIcon = document.getElementById("uploadSpinnerIcon");
+      const btnTxt = document.getElementById("uploadBtnText");
+      btn.disabled = true;
+      spinIcon.className = "fa-solid fa-spinner fa-spin";
+      btnTxt.innerText = "Mengunggah ke Drive...";
+
+      let driveUrl = "#";
+      const fullNo = getFullNomorSurat();
+
+      try {
+        if (file) {
+          const base64 = await new Promise((resolve) => {
+            const r = new FileReader();
+            r.onload = () => {
+              const res = r.result;
+              resolve(res.includes(",") ? res.split(",")[1] : res);
+            };
+            r.readAsDataURL(file);
+          });
+
+          const cleanFileName = `${fullNo.replace(/[/\\?%*:|"<>]/g, "-")}_${judul}.pdf`;
+          const uploadRes = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "upload_pdf",
+              fileName: cleanFileName,
+              base64: base64
+            })
+          });
+          const resObj = await uploadRes.json();
+          if (resObj.status === "success" && resObj.fileUrl) {
+            driveUrl = resObj.fileUrl;
+          }
+        }
+
+        const newPdf = {
+          id: "pdf_" + Date.now(),
+          tanggal: new Date().toLocaleDateString("id-ID"),
+          nomor: fullNo,
+          judul: judul.toUpperCase().includes("[PDF]") ? judul : `${judul} [PDF]`,
+          kategori: kategori,
+          driveUrl: driveUrl
+        };
+
+        const vault = getUserVault();
+        vault.arsip.unshift(newPdf);
+        await pushVaultToDrive(currentUser, vault);
+        document.getElementById("uploadJudul").value = "";
+        fileInput.value = "";
+        renderActiveVault();
+        showToast(`Berkas "${judul}" berhasil diunggah ke Google Drive!`);
+      } catch (e) {
+        showToast("Gagal mengunggah berkas fisik, silakan coba lagi.", true);
+      } finally {
+        btn.disabled = false;
+        spinIcon.className = "fa-solid fa-cloud-arrow-up";
+        btnTxt.innerText = "Simpan ke Akun Cloud Saya";
+      }
+    });
+
+    window.deleteArsip = function(id) {
+      showConfirmModal("Hapus arsip dokumen ini dari brankas cloud Anda?", async () => {
+        const vault = getUserVault();
+        vault.arsip = vault.arsip.filter(a => a.id !== id);
+        await pushVaultToDrive(currentUser, vault);
+        renderActiveVault();
+        showToast("Dokumen arsip berhasil dihapus.");
+      });
+    };
+
+    document.getElementById("formAddPegawai").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nama = document.getElementById("newPegNama").value.trim();
+      const nip = document.getElementById("newPegNip").value.trim() || "-";
+      const gol = document.getElementById("newPegGol").value.trim() || "-";
+      const jabatan = document.getElementById("newPegJabatan").value.trim() || "Guru / Tenaga Pendidik";
+
+      const vault = getUserVault();
+      vault.pegawai.push({ nama, nip, gol, jabatan });
+      await pushVaultToDrive(currentUser, vault);
+      document.getElementById("newPegNama").value = "";
+      document.getElementById("newPegNip").value = "";
+      document.getElementById("newPegGol").value = "";
+      document.getElementById("newPegJabatan").value = "";
+      renderActiveVault();
+      showToast(`Pegawai ${nama} disimpan ke Cloud Akun!`);
+    });
+
+    window.deletePegawai = function(idx) {
+      showConfirmModal("Hapus data pegawai ini?", async () => {
+        const vault = getUserVault();
+        vault.pegawai.splice(idx, 1);
+        await pushVaultToDrive(currentUser, vault);
+        renderActiveVault();
+        showToast("Data pegawai berhasil dihapus.");
+      });
+    };
+
+    document.getElementById("btnSaveKop").addEventListener("click", async () => {
+      const vault = getUserVault();
+      vault.kop = {
+        baris1: document.getElementById("editKopBaris1").value.trim(),
+        baris2: document.getElementById("editKopBaris2").value.trim(),
+        namaSekolah: document.getElementById("editKopNama").value.trim(),
+        alamat: document.getElementById("editKopAlamat").value.trim(),
+        kontak: document.getElementById("editKopKontak").value.trim(),
+        logoUrl: document.getElementById("editKopLogo").value.trim()
       };
-
-      await pushVaultToDrive(currentUser, updatedVault);
-      setUploadJudul("");
-      setUploadFile(null);
-      triggerToast(`Berkas "${uploadJudul}" berhasil diunggah ke Google Drive!`);
-    } catch (err) {
-      console.warn("Gagal unggah PDF:", err);
-      triggerToast("Gagal mengunggah berkas fisik, silakan coba lagi.", "error");
-    } finally {
-      setIsUploadingPdf(false);
-    }
-  };
-
-  const handleDeleteArsip = async (item) => {
-    if (!userVault) return;
-    const updatedVault = {
-      ...userVault,
-      arsip: (userVault.arsip || []).filter(a => a.id !== item.id)
-    };
-    await pushVaultToDrive(currentUser, updatedVault);
-    triggerToast("Arsip dokumen berhasil dihapus.");
-  };
-
-  const handleAddPegawai = async (e) => {
-    e.preventDefault();
-    if (!newPegNama.trim()) {
-      triggerToast("Nama lengkap pegawai wajib diisi!", "error");
-      return;
-    }
-
-    const newPeg = {
-      nama: newPegNama.trim(),
-      nip: newPegNip.trim() || "-",
-      gol: newPegGol.trim() || "-",
-      jabatan: newPegJabatan.trim() || "Guru / Tenaga Pendidik"
-    };
-
-    const updatedVault = {
-      ...userVault,
-      pegawai: [...(userVault.pegawai || []), newPeg]
-    };
-
-    await pushVaultToDrive(currentUser, updatedVault);
-    setNewPegNama("");
-    setNewPegNip("");
-    setNewPegGol("");
-    setNewPegJabatan("");
-    triggerToast(`Pegawai ${newPeg.nama} disimpan ke Brankas Cloud!`);
-  };
-
-  const handleDeletePegawai = async (index) => {
-    if (!userVault) return;
-    const updatedList = [...(userVault.pegawai || [])];
-    updatedList.splice(index, 1);
-    const updatedVault = { ...userVault, pegawai: updatedList };
-    await pushVaultToDrive(currentUser, updatedVault);
-    triggerToast("Data pegawai berhasil dihapus.");
-  };
-
-  const handleSaveKop = async () => {
-    if (!currentUser || !userVault) return;
-    const updatedVault = { ...userVault, kop: editKop };
-    await pushVaultToDrive(currentUser, updatedVault);
-    triggerToast("Kop surat berhasil diperbarui di Google Drive!");
-  };
-
-  const activePegawai = userVault?.pegawai || [];
-  const currentPemberi = activePegawai[selectedPenandatanganIdx] || activePegawai[0] || null;
-  const currentPenerima = activePegawai[selectedPenerimaIdx] || activePegawai[1] || activePegawai[0] || null;
-
-  return (
-    <div className="min-h-screen bg-[#0b1e15] text-[#0f291e] font-sans flex items-center justify-center p-0 md:p-4 select-none">
-      
-      {/* Toast Notifikasi */}
-      {toast && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] w-11/12 max-w-sm">
-          <div className={`px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold text-white border border-white/20 transition-all ${
-            toast.type === "error" ? "bg-red-800" : "bg-[#15803d]"
-          }`}>
-            {toast.type === "error" ? <AlertCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle2 className="w-5 h-5 flex-shrink-0" />}
-            <span className="flex-1">{toast.msg}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Frame Mobile Native */}
-      <div className="w-full max-w-[480px] min-h-screen md:min-h-[92vh] md:max-h-[92vh] bg-[#edf6f1] md:rounded-[36px] md:border-8 md:border-[#163625] shadow-2xl flex flex-col relative overflow-hidden">
-        
-        {/* Status Bar Mobile */}
-        <div className="bg-[#14532d] text-white px-5 py-2.5 flex items-center justify-between text-xs font-semibold z-40 sticky top-0 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-mono">{currentTime}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="bg-[#166534] text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
-              <RefreshCw className={`w-3 h-3 ${isCloudSyncing ? "animate-spin text-emerald-300" : ""}`} />
-              <span className="truncate max-w-[120px]">{cloudStatusMsg}</span>
-            </span>
-            <Wifi className="w-3.5 h-3.5 text-emerald-300" />
-            <BatteryMedium className="w-3.5 h-3.5 text-emerald-300" />
-          </div>
-        </div>
-
-        {/* Top Header Sekolah */}
-        <div className="bg-[#15803d] text-white px-4 py-3 flex items-center justify-between shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-white p-1 flex items-center justify-center shadow">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/9/9c/Logo_Tut_Wuri_Handayani.png" alt="Logo" className="w-6 h-auto" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-tight">SDN 3 NOGORAJI</h1>
-              <p className="text-[10px] text-emerald-100">Sistem Persuratan & Arsip Cloud</p>
-            </div>
-          </div>
-          {currentUser && (
-            <button 
-              onClick={pullCloudDatabase}
-              className="w-8 h-8 rounded-full bg-[#166534] hover:bg-[#14532d] flex items-center justify-center text-white transition shadow"
-              title="Tarik Data Terbaru dari Drive"
-            >
-              <RefreshCw className={`w-4 h-4 ${isCloudSyncing ? "animate-spin" : ""}`} />
-            </button>
-          )}
-        </div>
-
-        {/* ========================================================================= */}
-        {/* VIEW 1: PORTAL AUTENTIKASI (JIKA BELUM LOGIN)                              */}
-        {/* ========================================================================= */}
-        {!currentUser ? (
-          <div className="flex-1 flex flex-col justify-center p-5 bg-gradient-to-b from-[#edf6f1] via-white to-[#edf6f1] overflow-y-auto">
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-emerald-200/80 mb-4">
-              
-              {/* Tab Masuk vs Daftar */}
-              <div className="flex bg-[#edf6f1] p-1 rounded-2xl mb-5 border border-emerald-200">
-                <button 
-                  onClick={() => setAuthMode("login")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition ${
-                    authMode === "login" ? "bg-white text-[#15803d] shadow-sm" : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Masuk Akun
-                </button>
-                <button 
-                  onClick={() => setAuthMode("register")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition ${
-                    authMode === "register" ? "bg-white text-[#15803d] shadow-sm" : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  Daftar Akun Baru
-                </button>
-              </div>
-
-              {/* Tombol Google Cepat */}
-              <button 
-                type="button"
-                onClick={() => setShowGooglePickerModal(true)}
-                className="w-full py-2.5 px-4 mb-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-2xl flex items-center justify-center gap-3 text-xs font-semibold text-slate-700 shadow-sm transition active:scale-95"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span>Masuk Cepat dengan Akun Google</span>
-              </button>
-
-              <div className="flex items-center gap-3 my-3">
-                <div className="flex-1 h-px bg-slate-200"></div>
-                <span className="text-[10px] text-slate-400 font-medium">atau gunakan email & kata sandi</span>
-                <div className="flex-1 h-px bg-slate-200"></div>
-              </div>
-
-              {/* FORM LOGIN */}
-              {authMode === "login" ? (
-                <form onSubmit={handleLoginSubmit} className="space-y-3.5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Email Terdaftar</label>
-                    <div className="relative flex items-center">
-                      <Mail className="w-4 h-4 absolute left-3.5 text-slate-400" />
-                      <input 
-                        type="email"
-                        required
-                        value={loginEmail}
-                        onChange={(e) => setLoginEmail(e.target.value)}
-                        placeholder="arifprasetyo1543@gmail.com"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Kata Sandi</label>
-                    <div className="relative flex items-center">
-                      <Lock className="w-4 h-4 absolute left-3.5 text-slate-400" />
-                      <input 
-                        type={showLoginPass ? "text" : "password"}
-                        required
-                        value={loginPass}
-                        onChange={(e) => setLoginPass(e.target.value)}
-                        placeholder="Masukkan kata sandi"
-                        className="w-full pl-10 pr-10 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d] transition"
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowLoginPass(!showLoginPass)} 
-                        className="absolute right-3 text-slate-400 hover:text-slate-600"
-                      >
-                        {showLoginPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Deteksi Dinamis 2FA dari Cloud */}
-                  {detectedUserForLogin?.authenticatorEnabled && (
-                    <div className="p-3 bg-amber-50 rounded-2xl border border-amber-300">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
-                          <ShieldCheck className="w-4 h-4 text-amber-600" /> Kode Google Authenticator
-                        </span>
-                        <span className="text-[9px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">2FA Aktif</span>
-                      </div>
-                      <input 
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={loginOtp}
-                        onChange={(e) => setLoginOtp(e.target.value)}
-                        placeholder="000000"
-                        className="w-full text-center tracking-[8px] font-mono text-base font-bold py-2 bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      />
-                      <span className="block text-[9.5px] text-amber-800 text-center mt-1">Buka aplikasi Google Authenticator di HP Anda</span>
-                    </div>
-                  )}
-
-                  <button 
-                    type="submit"
-                    className="w-full py-3 bg-[#15803d] hover:bg-[#166534] text-white rounded-2xl font-bold text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <span>Masuk & Buka Brankas Cloud</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </form>
-              ) : (
-                /* FORM REGISTRASI */
-                <form onSubmit={handleRegisterSubmit} className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
-                    <input 
-                      type="text"
-                      required
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      placeholder="Contoh: Arif Prasetyo"
-                      className="w-full px-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Alamat Email Aktif</label>
-                    <input 
-                      type="email"
-                      required
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      placeholder="emailanda@gmail.com"
-                      className="w-full px-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Jabatan di Sekolah</label>
-                    <input 
-                      type="text"
-                      value={regRole}
-                      onChange={(e) => setRegRole(e.target.value)}
-                      placeholder="Operator Sekolah / Guru Kelas"
-                      className="w-full px-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Kata Sandi Baru</label>
-                    <input 
-                      type="password"
-                      required
-                      value={regPass}
-                      onChange={(e) => setRegPass(e.target.value)}
-                      placeholder="Minimal 3 karakter"
-                      className="w-full px-3.5 py-2.5 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:bg-white focus:outline-none"
-                    />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full py-3 bg-[#15803d] hover:bg-[#166534] text-white rounded-2xl font-bold text-xs shadow-md transition active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <span>Daftarkan Akun ke Cloud Drive</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </form>
-              )}
-
-              {/* Akun Contoh Cepat */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span>Pilih Akun Cepat:</span>
-                <button 
-                  type="button" 
-                  onClick={() => { setLoginEmail("arifprasetyo1543@gmail.com"); setLoginPass("123"); }}
-                  className="font-bold text-[#15803d] hover:underline"
-                >
-                  Arif Prasetyo (123)
-                </button>
-              </div>
-
-            </div>
-
-            <div className="bg-emerald-100/60 rounded-2xl p-3 border border-emerald-200 text-[11px] text-[#14532d] flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-[#15803d] flex-shrink-0 mt-0.5" />
-              <p className="leading-relaxed">
-                <strong>Anti-Data Hilang:</strong> Seluruh arsip dan status 2FA tersimpan di akun Google Drive Anda. Berganti HP tidak akan menghapus berkas.
-              </p>
-            </div>
-          </div>
-        ) : (
-
-        /* ========================================================================= */
-        /* VIEW 2: DASBOR UTAMA PENGGUNA TEROTENTIKASI                                */
-        /* ========================================================================= */
-          <div className="flex-1 flex flex-col overflow-y-auto pb-20">
-            
-            {/* Header Profil Bar */}
-            <div className="bg-white/90 backdrop-blur px-4 py-2 border-b border-emerald-200 flex items-center justify-between text-xs sticky top-0 z-30">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#15803d] text-white flex items-center justify-center text-[10px] font-bold">
-                  {(currentUser.name || "A")[0].toUpperCase()}
-                </div>
-                <span className="font-bold text-slate-800 truncate max-w-[160px]">{currentUser.name}</span>
-              </div>
-              <span className="text-[10px] bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full font-semibold">
-                {currentUser.role}
-              </span>
-            </div>
-
-            {/* TAB 1: FORMULIR SURAT RESMI */}
-            {activeTab === "surat" && (
-              <div className="p-4 space-y-4">
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                    <h2 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#15803d]" /> Formulir Surat Kedinasan
-                    </h2>
-                    <span className="text-[10px] bg-emerald-50 text-[#15803d] font-bold px-2 py-0.5 rounded-lg border border-emerald-200">
-                      Standar A4 1 Lembar
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Format Dokumen</label>
-                      <select 
-                        value={jenisSurat} 
-                        onChange={(e) => setJenisSurat(e.target.value)}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#15803d]"
-                      >
-                        <option value="spt">Surat Perintah Tugas (SPT)</option>
-                        <option value="sk_aktif">Surat Keterangan Siswa Aktif</option>
-                        <option value="undangan">Surat Undangan Resmi</option>
-                      </select>
-                    </div>
-
-                    {/* Stepper Penomoran Lengkap */}
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Nomor Registrasi Surat</label>
-                      <div className="grid grid-cols-5 gap-1.5 mb-1.5 text-center">
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 mb-0.5">Kode</span>
-                          <input 
-                            type="text" 
-                            value={numKode} 
-                            onChange={(e) => setNumKode(e.target.value)}
-                            className="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono font-bold"
-                          />
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 mb-0.5">Urut (- / +)</span>
-                          <div className="flex items-center bg-emerald-50/50 border border-emerald-200 rounded-lg overflow-hidden">
-                            <button 
-                              type="button" 
-                              onClick={() => setNumUrut(prev => Math.max(1, prev - 1))}
-                              className="px-1.5 py-1.5 text-slate-600 hover:bg-slate-200 text-xs font-bold"
-                            >
-                              -
-                            </button>
-                            <input 
-                              type="text" 
-                              value={numUrut} 
-                              onChange={(e) => setNumUrut(parseInt(e.target.value) || 1)}
-                              className="w-full text-center py-1.5 text-xs font-mono font-bold bg-transparent"
-                            />
-                            <button 
-                              type="button" 
-                              onClick={() => setNumUrut(prev => prev + 1)}
-                              className="px-1.5 py-1.5 text-slate-600 hover:bg-slate-200 text-xs font-bold"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 mb-0.5">Instansi</span>
-                          <input 
-                            type="text" 
-                            value={numInstansi} 
-                            onChange={(e) => setNumInstansi(e.target.value)}
-                            className="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono font-bold"
-                          />
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 mb-0.5">Bulan</span>
-                          <input 
-                            type="text" 
-                            value={numBulan} 
-                            onChange={(e) => setNumBulan(e.target.value)}
-                            className="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono font-bold"
-                          />
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 mb-0.5">Tahun</span>
-                          <input 
-                            type="text" 
-                            value={numTahun} 
-                            onChange={(e) => setNumTahun(e.target.value)}
-                            className="w-full text-center py-1.5 bg-emerald-50/50 border border-emerald-200 rounded-lg text-xs font-mono font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-[10.5px]">
-                        <span className="text-slate-500">Nomor Jadi:</span>
-                        <strong className="font-mono text-[#15803d]">{fullNomorSurat}</strong>
-                      </div>
-                    </div>
-
-                    {/* Bidang Form SPT */}
-                    {jenisSurat === "spt" && (
-                      <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Pejabat Penandatangan</label>
-                          <select 
-                            value={selectedPenandatanganIdx}
-                            onChange={(e) => setSelectedPenandatanganIdx(parseInt(e.target.value))}
-                            className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                          >
-                            {activePegawai.length === 0 ? (
-                              <option value="0">-- Belum Ada Pegawai (Tambah di tab Pegawai) --</option>
-                            ) : (
-                              activePegawai.map((p, idx) => (
-                                <option key={idx} value={idx}>{p.nama} ({p.jabatan})</option>
-                              ))
-                            )}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Pegawai Penerima Tugas</label>
-                          <select 
-                            value={selectedPenerimaIdx}
-                            onChange={(e) => setSelectedPenerimaIdx(parseInt(e.target.value))}
-                            className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                          >
-                            {activePegawai.length === 0 ? (
-                              <option value="0">-- Belum Ada Pegawai --</option>
-                            ) : (
-                              activePegawai.map((p, idx) => (
-                                <option key={idx} value={idx}>{p.nama} ({p.jabatan})</option>
-                              ))
-                            )}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Maksud / Keperluan Tugas</label>
-                          <textarea 
-                            rows={2} 
-                            value={sptKeperluan} 
-                            onChange={(e) => setSptKeperluan(e.target.value)}
-                            placeholder="Tuliskan tujuan penugasan..." 
-                            className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">Tgl Berangkat</label>
-                            <input 
-                              type="text" 
-                              value={sptTglBerangkat} 
-                              onChange={(e) => setSptTglBerangkat(e.target.value)}
-                              className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-700 mb-1">Tgl Selesai</label>
-                            <input 
-                              type="text" 
-                              value={sptTglKembali} 
-                              onChange={(e) => setSptTglKembali(e.target.value)}
-                              className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Tempat / Lokasi</label>
-                          <input 
-                            type="text" 
-                            value={sptTujuan} 
-                            onChange={(e) => setSptTujuan(e.target.value)}
-                            placeholder="Ruang Rapat Korwilcambidik Buayan" 
-                            className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Penetapan Dokumen */}
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Dikeluarkan di</label>
-                        <input 
-                          type="text" 
-                          value={docTempat} 
-                          onChange={(e) => setDocTempat(e.target.value)}
-                          className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Pada Tanggal</label>
-                        <input 
-                          type="text" 
-                          value={docTanggal} 
-                          onChange={(e) => setDocTanggal(e.target.value)}
-                          className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                      <button 
-                        type="button" 
-                        onClick={() => setShowA4PreviewModal(true)}
-                        className="py-2.5 px-3 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95"
-                      >
-                        <Printer className="w-4 h-4" /> Pratinjau & Cetak A4
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={handleSaveDocToArsip}
-                        className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition active:scale-95"
-                      >
-                        <FolderArchive className="w-4 h-4" /> Simpan ke Arsip
-                      </button>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: ARSIP CLOUD TERISOLASI */}
-            {activeTab === "arsip" && (
-              <div className="p-4 space-y-4">
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-[#15803d]" /> Unggah Berkas Fisik PDF
-                    </h2>
-                    <span className="text-[10px] text-[#15803d] font-bold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
-                      Cloud Terisolasi Akun
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Perihal / Judul Berkas</label>
-                      <input 
-                        type="text" 
-                        value={uploadJudul}
-                        onChange={(e) => setUploadJudul(e.target.value)}
-                        placeholder="Contoh: Surat Tugas Rapat Kurikulum [PDF]" 
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Kategori</label>
-                        <select 
-                          value={uploadKategori}
-                          onChange={(e) => setUploadKategori(e.target.value)}
-                          className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                        >
-                          <option value="Surat Tugas">Surat Tugas</option>
-                          <option value="Surat Keterangan">Surat Keterangan</option>
-                          <option value="Undangan">Undangan</option>
-                          <option value="Surat Masuk">Surat Masuk</option>
-                          <option value="Surat Keluar">Surat Keluar</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Pilih File PDF</label>
-                        <input 
-                          type="file" 
-                          accept="application/pdf"
-                          onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
-                          className="w-full text-[10px] py-1 text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-emerald-100 file:text-[#15803d]"
-                        />
-                      </div>
-                    </div>
-
-                    <button 
-                      type="button" 
-                      onClick={handleUploadPdfToCloud}
-                      disabled={isUploadingPdf}
-                      className="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow transition active:scale-95 disabled:opacity-60"
-                    >
-                      <Upload className={`w-4 h-4 ${isUploadingPdf ? "animate-bounce" : ""}`} />
-                      <span>{isUploadingPdf ? "Mengunggah ke Drive..." : "Simpan ke Akun Cloud Saya"}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Daftar Berkas Arsip Akun Ini */}
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                      <FolderArchive className="w-4 h-4 text-[#15803d]" /> Arsip Dokumen Akun Ini
-                    </h3>
-                    <span className="text-[10px] font-bold bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full">
-                      {(userVault?.arsip || []).length} Berkas
-                    </span>
-                  </div>
-
-                  <div className="relative mb-3">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-                    <input 
-                      type="text" 
-                      value={searchArsip}
-                      onChange={(e) => setSearchArsip(e.target.value)}
-                      placeholder="Cari nomor atau judul dokumen..." 
-                      className="w-full pl-8 pr-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-2 max-h-[360px] overflow-y-auto">
-                    {(userVault?.arsip || []).length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400 flex flex-col items-center">
-                        <FolderArchive className="w-8 h-8 text-slate-300 mb-2" />
-                        <span>Belum ada arsip dokumen di akun ini.</span>
-                      </div>
-                    ) : (
-                      (userVault?.arsip || [])
-                        .filter(item => {
-                          if (!searchArsip.trim()) return true;
-                          const q = searchArsip.toLowerCase();
-                          return (item.nomor || "").toLowerCase().includes(q) || (item.judul || "").toLowerCase().includes(q);
-                        })
-                        .map((item) => (
-                          <div key={item.id} className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex items-center justify-between text-xs">
-                            <div className="flex-1 pr-2">
-                              <span className="text-[9px] font-bold bg-emerald-200 text-[#14532d] px-1.5 py-0.5 rounded font-mono">{item.nomor}</span>
-                              <strong className="block text-slate-800 mt-1">{item.judul}</strong>
-                              <span className="text-[10px] text-slate-400">{item.tanggal} &bull; {item.kategori}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              {item.driveUrl && item.driveUrl !== "#" ? (
-                                <a 
-                                  href={item.driveUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1.5 bg-[#15803d] text-white rounded-xl text-[11px] font-bold hover:bg-[#166534] shadow-sm flex items-center gap-1"
-                                >
-                                  <span>Buka</span>
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              ) : (
-                                <button 
-                                  type="button" 
-                                  onClick={() => triggerToast(`Dokumen No. ${item.nomor} aman tersimpan di cloud.`)}
-                                  className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-[11px] font-bold shadow-sm"
-                                >
-                                  Buka
-                                </button>
-                              )}
-                              <button 
-                                type="button" 
-                                onClick={() => handleDeleteArsip(item)}
-                                className="w-7 h-7 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center text-xs"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: DATA PEGAWAI & GURU */}
-            {activeTab === "pegawai" && (
-              <div className="p-4 space-y-4">
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <h2 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <Users className="w-4 h-4 text-[#15803d]" /> Tambah Data Pegawai / Guru
-                  </h2>
-                  <form onSubmit={handleAddPegawai} className="space-y-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Lengkap & Gelar</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={newPegNama} 
-                        onChange={(e) => setNewPegNama(e.target.value)}
-                        placeholder="Contoh: Budi Santoso, S.Pd." 
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">NIP</label>
-                        <input 
-                          type="text" 
-                          value={newPegNip} 
-                          onChange={(e) => setNewPegNip(e.target.value)}
-                          placeholder="1980... atau -" 
-                          className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Pangkat / Gol.</label>
-                        <input 
-                          type="text" 
-                          value={newPegGol} 
-                          onChange={(e) => setNewPegGol(e.target.value)}
-                          placeholder="III/a atau -" 
-                          className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Jabatan</label>
-                      <input 
-                        type="text" 
-                        value={newPegJabatan} 
-                        onChange={(e) => setNewPegJabatan(e.target.value)}
-                        placeholder="Kepala Sekolah / Guru Kelas" 
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <button 
-                      type="submit" 
-                      className="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow transition active:scale-95"
-                    >
-                      <span>Simpan Pegawai ke Cloud Akun</span>
-                    </button>
-                  </form>
-                </div>
-
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <h3 className="text-xs font-bold text-slate-800 mb-3 flex items-center justify-between">
-                    <span>Daftar Guru & Pegawai</span>
-                    <span className="text-[10px] font-bold bg-emerald-100 text-[#14532d] px-2 py-0.5 rounded-full">
-                      {activePegawai.length} Orang
-                    </span>
-                  </h3>
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {activePegawai.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400">Belum ada pegawai. Tambahkan di atas.</div>
-                    ) : (
-                      activePegawai.map((p, idx) => (
-                        <div key={idx} className="p-2.5 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex items-center justify-between text-xs">
-                          <div>
-                            <strong className="block text-slate-800">{p.nama}</strong>
-                            <span className="text-[10px] text-slate-500">{p.jabatan} | NIP. {p.nip}</span>
-                          </div>
-                          <button 
-                            type="button" 
-                            onClick={() => handleDeletePegawai(idx)}
-                            className="w-7 h-7 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 4: PENGATURAN KOP */}
-            {activeTab === "kop" && (
-              <div className="p-4 space-y-4">
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <h2 className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <School className="w-4 h-4 text-[#15803d]" /> Pengaturan Kop Sekolah
-                  </h2>
-                  <div className="space-y-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Pemerintah Kabupaten / Daerah</label>
-                      <input 
-                        type="text" 
-                        value={editKop.baris1} 
-                        onChange={(e) => setEditKop({ ...editKop, baris1: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Dinas Pendidikan</label>
-                      <input 
-                        type="text" 
-                        value={editKop.baris2} 
-                        onChange={(e) => setEditKop({ ...editKop, baris2: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Nama Lembaga Sekolah</label>
-                      <input 
-                        type="text" 
-                        value={editKop.namaSekolah} 
-                        onChange={(e) => setEditKop({ ...editKop, namaSekolah: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Alamat Lembaga</label>
-                      <input 
-                        type="text" 
-                        value={editKop.alamat} 
-                        onChange={(e) => setEditKop({ ...editKop, alamat: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Kontak & NPSN</label>
-                      <input 
-                        type="text" 
-                        value={editKop.kontak} 
-                        onChange={(e) => setEditKop({ ...editKop, kontak: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">URL Logo Resmi</label>
-                      <input 
-                        type="text" 
-                        value={editKop.logoUrl} 
-                        onChange={(e) => setEditKop({ ...editKop, logoUrl: e.target.value })}
-                        className="w-full px-3 py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl text-xs"
-                      />
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={handleSaveKop}
-                      className="w-full py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow transition active:scale-95"
-                    >
-                      <span>Simpan Kop ke Cloud Akun</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 5: AKUN & KEAMANAN 2FA */}
-            {activeTab === "akun" && (
-              <div className="p-4 space-y-4">
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-emerald-200 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[#15803d] text-white text-xl font-bold flex items-center justify-center mx-auto mb-3 shadow-md">
-                    {(currentUser.name || "A")[0].toUpperCase()}
-                  </div>
-                  <h2 className="text-sm font-bold text-slate-800">{currentUser.name}</h2>
-                  <p className="text-xs text-[#15803d] font-semibold">{currentUser.role}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{currentUser.email}</p>
-
-                  <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2 text-left text-xs">
-                    <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
-                      <span className="block text-[10px] text-slate-400">Total Arsip Akun Ini</span>
-                      <strong className="text-[#14532d] font-mono text-sm">{(userVault?.arsip || []).length}</strong>
-                    </div>
-                    <div className="bg-emerald-50 p-2.5 rounded-2xl border border-emerald-100">
-                      <span className="block text-[10px] text-slate-400">Total Pegawai</span>
-                      <strong className="text-[#14532d] font-mono text-sm">{activePegawai.length}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pengaturan Google Authenticator */}
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <h3 className="text-xs font-bold text-slate-800 mb-2 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-[#15803d]" /> Keamanan Akun & Authenticator
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mb-3">
-                    Wajibkan kode 6 digit dari aplikasi Google Authenticator saat masuk di HP baru.
-                  </p>
-                  <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-white border border-emerald-200 flex items-center justify-center text-[#15803d] shadow-sm">
-                        <Smartphone className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <strong className="block text-xs text-slate-800">Google Authenticator</strong>
-                        <span className={`text-[10px] font-bold ${currentUser.authenticatorEnabled ? "text-emerald-700" : "text-slate-400"}`}>
-                          {currentUser.authenticatorEnabled ? "Status: Aktif (Terlindungi)" : "Status: Nonaktif"}
-                        </span>
-                      </div>
-                    </div>
-                    {currentUser.authenticatorEnabled ? (
-                      <button 
-                        type="button" 
-                        onClick={disable2Fa}
-                        className="px-3.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold hover:bg-red-100 transition shadow-sm active:scale-95"
-                      >
-                        Nonaktifkan
-                      </button>
-                    ) : (
-                      <button 
-                        type="button" 
-                        onClick={open2FaSetup}
-                        className="px-3.5 py-1.5 bg-[#15803d] text-white rounded-xl text-xs font-bold hover:bg-[#166534] transition shadow-sm active:scale-95"
-                      >
-                        Aktifkan
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-3xl p-4 shadow-sm border border-emerald-200">
-                  <button 
-                    type="button" 
-                    onClick={handleLogout}
-                    className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-95 border border-red-200"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Keluar dari Akun Ini (Data Aman di Cloud)</span>
-                  </button>
-                  <p className="text-[10px] text-slate-400 text-center mt-2">
-                    Saat logout, data tidak akan tertinggal di perangkat ini.
-                  </p>
-                </div>
-              </div>
-            )}
-
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* BOTTOM NAVIGATION DOCK (KUNCI NATIVE MOBILE APK)                          */}
-        {/* ========================================================================= */}
-        {currentUser && (
-          <nav className="bg-white/95 backdrop-blur border-t border-emerald-200 px-2 py-1.5 flex items-center justify-around z-40 fixed bottom-0 w-full max-w-[480px] shadow-lg">
-            <button 
-              type="button"
-              onClick={() => setActiveTab("surat")}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-                activeTab === "surat" ? "text-[#15803d] font-bold" : "text-slate-400 font-semibold"
-              }`}
-            >
-              <FileText className="w-4 h-4" />
-              <span className="text-[10px]">Surat</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => setActiveTab("arsip")}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-                activeTab === "arsip" ? "text-[#15803d] font-bold" : "text-slate-400 font-semibold"
-              }`}
-            >
-              <FolderArchive className="w-4 h-4" />
-              <span className="text-[10px]">Arsip</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => setActiveTab("pegawai")}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-                activeTab === "pegawai" ? "text-[#15803d] font-bold" : "text-slate-400 font-semibold"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span className="text-[10px]">Pegawai</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => setActiveTab("kop")}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-                activeTab === "kop" ? "text-[#15803d] font-bold" : "text-slate-400 font-semibold"
-              }`}
-            >
-              <School className="w-4 h-4" />
-              <span className="text-[10px]">Kop</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => setActiveTab("akun")}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition ${
-                activeTab === "akun" ? "text-[#15803d] font-bold" : "text-slate-400 font-semibold"
-              }`}
-            >
-              <User className="w-4 h-4" />
-              <span className="text-[10px]">Akun</span>
-            </button>
-          </nav>
-        )}
-
-      </div>
-
-      {/* ========================================================================= */}
-      {/* MODAL 1: SETUP GOOGLE AUTHENTICATOR (QR CODE & KUNCI RAHASIA)              */}
-      {/* ========================================================================= */}
-      {show2FaSetupModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-200 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#15803d]" /> Hubungkan Google Authenticator
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setShow2FaSetupModal(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 text-xs"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="my-3 space-y-3">
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Pindai kode QR di bawah ini menggunakan aplikasi <strong>Google Authenticator</strong> di HP Anda:
-              </p>
-
-              {/* QR Code Gambar */}
-              <div className="flex flex-col items-center justify-center p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                    `otpauth://totp/SDN%203%20Nogoraji:${encodeURIComponent(currentUser.email)}?secret=${pendingSecret2Fa}&issuer=SDN%203%20Nogoraji`
-                  )}`}
-                  alt="QR Code 2FA" 
-                  className="w-40 h-40 bg-white p-2 rounded-xl border border-emerald-200 shadow-sm object-contain"
-                />
-                <span className="text-[9.5px] text-slate-400 mt-2">Buka Google Authenticator &bull; (+) &bull; Pindai QR</span>
-              </div>
-
-              {/* Kunci Rahasia Manual */}
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 mb-1">Atau Masukkan Kunci Manual:</label>
-                <div className="flex items-center gap-1.5">
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={pendingSecret2Fa}
-                    className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-wider text-slate-700 select-all"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard?.writeText(pendingSecret2Fa);
-                      triggerToast("Kunci rahasia disalin ke clipboard!");
-                    }}
-                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Salin</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Input Konfirmasi 6-Digit */}
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Konfirmasi Kode 6-Digit dari Aplikasi:
-                </label>
-                <input 
-                  type="text" 
-                  inputMode="numeric" 
-                  maxLength={6}
-                  value={verify2FaInput}
-                  onChange={(e) => setVerify2FaInput(e.target.value)}
-                  placeholder="000000"
-                  className="w-full text-center tracking-[8px] font-mono text-base font-extrabold py-2 bg-emerald-50/50 border border-emerald-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#15803d]"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 flex gap-2">
-              <button 
-                type="button" 
-                onClick={() => setShow2FaSetupModal(false)}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition"
-              >
-                Batal
-              </button>
-              <button 
-                type="button" 
-                onClick={confirmActivate2Fa}
-                className="flex-1 py-2.5 bg-[#15803d] hover:bg-[#166534] text-white rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-1.5"
-              >
-                <Check className="w-4 h-4" />
-                <span>Aktifkan 2FA</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 2: PRATINJAU LEMBAR DOKUMEN A4 & CETAK                               */}
-      {/* ========================================================================= */}
-      {showA4PreviewModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col justify-end md:justify-center items-center p-0 md:p-4">
-          <div className="bg-white w-full max-w-4xl h-[94vh] rounded-t-3xl md:rounded-3xl flex flex-col overflow-hidden shadow-2xl">
-            
-            {/* Header Modal */}
-            <div className="px-5 py-3.5 bg-[#15803d] text-white flex items-center justify-between">
-              <h3 className="text-xs font-bold flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Pratinjau Lembar A4 (Pas 1 Halaman)
-              </h3>
-              <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Cetak / PDF
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowA4PreviewModal(false)}
-                  className="w-8 h-8 rounded-full bg-[#166534] hover:bg-[#14532d] flex items-center justify-center text-xs"
-                >
-                  &times;
-                </button>
-              </div>
-            </div>
-
-            {/* Area Kertas A4 */}
-            <div className="flex-1 bg-slate-200 overflow-auto p-4 flex justify-center">
-              <article 
-                className="bg-white shadow-xl text-black relative"
-                style={{
-                  width: "210mm",
-                  minHeight: "297mm",
-                  maxHeight: "297mm",
-                  padding: "12mm 15mm 12mm 20mm",
-                  boxSizing: "border-box",
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: "10.5pt",
-                  lineHeight: "1.35",
-                  overflow: "hidden"
-                }}
-              >
-                {/* Kop Surat */}
-                <header className="relative w-full mb-1">
-                  <img 
-                    src={editKop.logoUrl || DEFAULT_KOP.logoUrl} 
-                    alt="Logo" 
-                    className="absolute top-0 left-0 w-16 h-auto max-h-[75px] object-contain"
-                  />
-                  <div className="px-16 text-center">
-                    <h4 className="text-[13pt] font-bold uppercase leading-tight m-0">{editKop.baris1}</h4>
-                    <h3 className="text-[12pt] font-bold uppercase leading-tight m-0">{editKop.baris2}</h3>
-                    <h2 className="text-[14pt] font-extrabold uppercase leading-tight mt-0.5 mb-0.5">{editKop.namaSekolah}</h2>
-                    <p className="text-[8.5pt] italic leading-tight m-0">{editKop.alamat}</p>
-                    <p className="text-[8.5pt] italic leading-tight m-0">{editKop.kontak}</p>
-                  </div>
-                </header>
-                <div className="border-t-[3px] border-black border-b border-black h-0.5 my-2"></div>
-
-                {/* Judul & Nomor Surat */}
-                <div className="text-center my-2">
-                  <h3 className="text-[12pt] font-bold underline uppercase tracking-wide">
-                    {jenisSurat === "spt" ? "SURAT PERINTAH TUGAS" : (jenisSurat === "sk_aktif" ? "SURAT KETERANGAN SISWA AKTIF" : "SURAT UNDANGAN RESMI")}
-                  </h3>
-                  <p className="text-[10pt] mt-0.5">Nomor: <span className="font-mono">{fullNomorSurat}</span></p>
-                </div>
-
-                {/* Isi Surat Perintah Tugas */}
-                {jenisSurat === "spt" && (
-                  <div className="text-[10pt] leading-snug space-y-2">
-                    <p>Yang bertanda tangan di bawah ini:</p>
-                    <table className="w-full text-[10pt]">
-                      <tbody>
-                        <tr>
-                          <td width="140">Nama</td>
-                          <td width="10">:</td>
-                          <td><strong>{currentPemberi?.nama || "................................................"}</strong></td>
-                        </tr>
-                        <tr>
-                          <td>NIP</td>
-                          <td>:</td>
-                          <td>{currentPemberi?.nip || "-"}</td>
-                        </tr>
-                        <tr>
-                          <td>Pangkat / Gol.</td>
-                          <td>:</td>
-                          <td>{currentPemberi?.gol || "-"}</td>
-                        </tr>
-                        <tr>
-                          <td>Jabatan</td>
-                          <td>:</td>
-                          <td>{currentPemberi?.jabatan || "Kepala Sekolah"}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <p className="text-center font-bold mt-2">MEMBERIKAN TUGAS KEPADA:</p>
-                    <table className="w-full text-[10pt]">
-                      <tbody>
-                        <tr>
-                          <td width="140">Nama</td>
-                          <td width="10">:</td>
-                          <td><strong>{currentPenerima?.nama || "................................................"}</strong></td>
-                        </tr>
-                        <tr>
-                          <td>NIP</td>
-                          <td>:</td>
-                          <td>{currentPenerima?.nip || "-"}</td>
-                        </tr>
-                        <tr>
-                          <td>Pangkat / Gol.</td>
-                          <td>:</td>
-                          <td>{currentPenerima?.gol || "-"}</td>
-                        </tr>
-                        <tr>
-                          <td>Jabatan</td>
-                          <td>:</td>
-                          <td>{currentPenerima?.jabatan || "Pegawai Penerima Tugas"}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <p className="mt-2">Untuk melaksanakan tugas dengan ketentuan sebagai berikut:</p>
-                    <table className="w-full text-[10pt]">
-                      <tbody>
-                        <tr>
-                          <td width="140">Maksud / Keperluan</td>
-                          <td width="10">:</td>
-                          <td>{sptKeperluan || "................................................"}</td>
-                        </tr>
-                        <tr>
-                          <td>Hari, Tanggal</td>
-                          <td>:</td>
-                          <td>{sptTglBerangkat} s.d. {sptTglKembali}</td>
-                        </tr>
-                        <tr>
-                          <td>Tujuan / Tempat</td>
-                          <td>:</td>
-                          <td>{sptTujuan || "................................................"}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    <p className="indent-7 mt-2">
-                      Demikian Surat Perintah Tugas ini dikeluarkan untuk dapat dilaksanakan sebaik-baiknya dengan penuh rasa tanggung jawab.
-                    </p>
-                  </div>
-                )}
-
-                {/* Tanda Tangan & Stempel Resmi */}
-                <div className="mt-6 flex justify-end">
-                  <div className="w-64 text-left text-[10pt] leading-tight">
-                    <p>Dikeluarkan di : <span>{docTempat}</span></p>
-                    <p>Pada tanggal : <span>{docTanggal}</span></p>
-                    <p className="font-bold mt-1">{currentPemberi?.jabatan ? `${currentPemberi.jabatan},` : "Kepala Sekolah,"}</p>
-                    <div className="relative h-16 my-1">
-                      <div className="absolute -top-1 -left-4 w-16 h-16 rounded-full border-2 border-dashed border-purple-600 flex flex-col items-center justify-center rotate-[-12deg] opacity-75">
-                        <span className="text-[5.5px] font-extrabold text-purple-700 text-center uppercase">★ {editKop.namaSekolah} ★</span>
-                        <span className="text-[6.5px] font-black text-purple-700">KEBUMEN</span>
-                      </div>
-                      <svg className="absolute left-6 top-1 opacity-80" viewBox="0 0 160 80" width="130" height="60">
-                        <path d="M15,48 Q40,15 65,42 T110,32 Q135,15 150,52" fill="none" stroke="#1d4ed8" strokeWidth="2.6" strokeLinecap="round"/>
-                      </svg>
-                    </div>
-                    <strong className="block underline font-bold">{currentPemberi?.nama || "................................................"}</strong>
-                    <span className="block text-[9pt]">NIP. {currentPemberi?.nip || "-"}</span>
-                  </div>
-                </div>
-
-              </article>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL 3: PILIH AKUN GOOGLE CEPAT                                          */}
-      {/* ========================================================================= */}
-      {showGooglePickerModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl border border-emerald-200">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-                <span>Pilih Akun Google SDN 3 Nogoraji</span>
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setShowGooglePickerModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm"
-              >
-                &times;
-              </button>
-            </div>
-            
-            <p className="text-[11px] text-slate-500 mb-3">Pilih akun Google untuk membuka brankas cloud:</p>
-            
-            <div className="space-y-2 mb-3">
-              <button 
-                type="button"
-                onClick={() => {
-                  setLoginEmail("arifprasetyo1543@gmail.com");
-                  setLoginPass("123");
-                  setShowGooglePickerModal(false);
-                }}
-                className="w-full p-2.5 rounded-2xl border border-slate-200 hover:border-[#15803d] hover:bg-emerald-50 flex items-center gap-3 text-left transition"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">A</div>
-                <div className="flex-1">
-                  <strong className="block text-xs text-slate-800">Arif Prasetyo (Operator)</strong>
-                  <span className="text-[10px] text-slate-400">arifprasetyo1543@gmail.com</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => {
-                  setLoginEmail("sdn3nogoraji@gmail.com");
-                  setLoginPass("123");
-                  setShowGooglePickerModal(false);
-                }}
-                className="w-full p-2.5 rounded-2xl border border-slate-200 hover:border-[#15803d] hover:bg-emerald-50 flex items-center gap-3 text-left transition"
-              >
-                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">K</div>
-                <div className="flex-1">
-                  <strong className="block text-xs text-slate-800">Kasmin, S.Pd., M.M. (Kepsek)</strong>
-                  <span className="text-[10px] text-slate-400">sdn3nogoraji@gmail.com</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+      await pushVaultToDrive(currentUser, vault);
+      showToast("Kop surat berhasil diperbarui di Google Drive!");
+    });
+
+    document.getElementById("btnOpenA4Modal").addEventListener("click", () => {
+      const vault = getUserVault();
+      const kop = vault?.kop || DEFAULT_KOP;
+      const jenis = document.getElementById("selFormatSurat").value;
+      const fullNo = getFullNomorSurat();
+
+      document.getElementById("printLogoKop").src = kop.logoUrl || DEFAULT_KOP.logoUrl;
+      document.getElementById("printKopBaris1").innerText = kop.baris1 || "";
+      document.getElementById("printKopBaris2").innerText = kop.baris2 || "";
+      document.getElementById("printKopNama").innerText = kop.namaSekolah || "";
+      document.getElementById("printKopAlamat").innerText = kop.alamat || "";
+      document.getElementById("printKopKontak").innerText = kop.kontak || "";
+      document.getElementById("printNomorSurat").innerText = fullNo;
+      document.getElementById("printStampSekolah").innerText = `★ ${kop.namaSekolah || 'SEKOLAH'} ★`;
+      document.getElementById("printTempat").innerText = document.getElementById("docTempat").value || "Nogoraji";
+      document.getElementById("printTanggal").innerText = document.getElementById("docTanggal").value || "20 Oktober 2026";
+
+      const selPemIdx = document.getElementById("selPenandatangan").value;
+      const pemberi = vault?.pegawai[selPemIdx] || { nama: "................................................", nip: "-", jabatan: "Kepala Sekolah" };
+      document.getElementById("printNamaTtd").innerText = pemberi.nama;
+      document.getElementById("printNipTtd").innerText = `NIP. ${pemberi.nip}`;
+      document.getElementById("printJabatanTtd").innerText = `${pemberi.jabatan},`;
+
+      const bodyEl = document.getElementById("printBodySurat");
+      const titleEl = document.getElementById("printJudulSurat");
+
+      if (jenis === "spt") {
+        titleEl.innerText = "SURAT PERINTAH TUGAS";
+        const selPenIdx = document.getElementById("selPenerima").value;
+        const penerima = vault?.pegawai[selPenIdx] || { nama: "................................................", nip: "-", gol: "-", jabatan: "Pegawai Penerima Tugas" };
+        const keperluan = document.getElementById("sptKeperluan").value || "................................................";
+        const tglBerangkat = document.getElementById("sptTglBerangkat").value || "";
+        const tglKembali = document.getElementById("sptTglKembali").value || "";
+        const tujuan = document.getElementById("sptTujuan").value || "................................................";
+
+        bodyEl.innerHTML = `
+          <p>Yang bertanda tangan di bawah ini:</p>
+          <table class="w-full text-[10pt]">
+            <tr><td width="140">Nama</td><td width="10">:</td><td><strong>${pemberi.nama}</strong></td></tr>
+            <tr><td>NIP</td><td>:</td><td>${pemberi.nip}</td></tr>
+            <tr><td>Pangkat / Gol.</td><td>:</td><td>${pemberi.gol || '-'}</td></tr>
+            <tr><td>Jabatan</td><td>:</td><td>${pemberi.jabatan}</td></tr>
+          </table>
+          <p class="text-center font-bold mt-2">MEMBERIKAN TUGAS KEPADA:</p>
+          <table class="w-full text-[10pt]">
+            <tr><td width="140">Nama</td><td width="10">:</td><td><strong>${penerima.nama}</strong></td></tr>
+            <tr><td>NIP</td><td>:</td><td>${penerima.nip}</td></tr>
+            <tr><td>Pangkat / Gol.</td><td>:</td><td>${penerima.gol || '-'}</td></tr>
+            <tr><td>Jabatan</td><td>:</td><td>${penerima.jabatan}</td></tr>
+          </table>
+          <p class="mt-2">Untuk melaksanakan tugas dengan ketentuan sebagai berikut:</p>
+          <table class="w-full text-[10pt]">
+            <tr><td width="140">Maksud / Keperluan</td><td width="10">:</td><td>${keperluan}</td></tr>
+            <tr><td>Hari, Tanggal</td><td>:</td><td>${tglBerangkat} s.d. ${tglKembali}</td></tr>
+            <tr><td>Tujuan / Tempat</td><td>:</td><td>${tujuan}</td></tr>
+          </table>
+          <p class="indent-7 mt-2">Demikian Surat Perintah Tugas ini dikeluarkan untuk dapat dilaksanakan sebaik-baiknya dengan penuh rasa tanggung jawab.</p>
+        `;
+      } else if (jenis === "sk_aktif") {
+        titleEl.innerText = "SURAT KETERANGAN SISWA AKTIF";
+        const namaS = document.getElementById("skNamaSiswa").value || "................................................";
+        const nisn = document.getElementById("skNisn").value || "-";
+        const ttl = document.getElementById("skTtl").value || "-";
+        const kls = document.getElementById("skKelas").value || "-";
+        const ortu = document.getElementById("skOrtu").value || "-";
+        const kep = document.getElementById("skKeperluan").value || "Kelengkapan Administrasi Siswa";
+
+        bodyEl.innerHTML = `
+          <p class="indent-7">Kepala Sekolah Dasar Negeri 3 Nogoraji, Kecamatan Buayan, Kabupaten Kebumen, menerangkan dengan sebenarnya bahwa:</p>
+          <table class="w-full text-[10pt] mt-2">
+            <tr><td width="140">Nama Siswa</td><td width="10">:</td><td><strong>${namaS}</strong></td></tr>
+            <tr><td>NISN / NIS</td><td>:</td><td>${nisn}</td></tr>
+            <tr><td>Tempat, Tgl Lahir</td><td>:</td><td>${ttl}</td></tr>
+            <tr><td>Kelas</td><td>:</td><td>${kls}</td></tr>
+            <tr><td>Nama Orang Tua</td><td>:</td><td>${ortu}</td></tr>
+          </table>
+          <p class="indent-7 mt-2">Adalah benar-benar siswa aktif terdaftar pada Tahun Pelajaran 2026/2027 di SD Negeri 3 Nogoraji.</p>
+          <p class="indent-7 mt-1">Surat keterangan ini diterbitkan untuk dipergunakan sebagai: <strong>${kep}</strong>.</p>
+        `;
+      } else {
+        titleEl.innerText = "SURAT UNDANGAN RESMI";
+        const peri = document.getElementById("undanganPerihal").value || "Undangan";
+        const kpd = document.getElementById("undanganKepada").value || "Bapak/Ibu";
+        const tgl = document.getElementById("undanganHariTgl").value || "-";
+        const wkt = document.getElementById("undanganWaktu").value || "-";
+        const tmp = document.getElementById("undanganTempat").value || "-";
+
+        bodyEl.innerHTML = `
+          <p>Kepada Yth.<br/><strong>${kpd}</strong><br/>di Tempat</p>
+          <p class="indent-7 mt-2">Dengan hormat, sehubungan dengan agenda ${peri}, kami mengundang kehadiran Bapak/Ibu pada:</p>
+          <table class="w-full text-[10pt] mt-2">
+            <tr><td width="140">Hari, Tanggal</td><td width="10">:</td><td>${tgl}</td></tr>
+            <tr><td>Waktu</td><td>:</td><td>${wkt}</td></tr>
+            <tr><td>Tempat</td><td>:</td><td>${tmp}</td></tr>
+          </table>
+          <p class="indent-7 mt-2">Mengingat pentingnya agenda ini, dimohon kehadirannya tepat waktu. Atas perhatian dan kerja samanya diucapkan terima kasih.</p>
+        `;
+      }
+
+      const modal = document.getElementById("modalA4Preview");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+
+    document.getElementById("btnPrintA4Direct").addEventListener("click", () => window.print());
+    document.getElementById("btnCloseA4Modal").addEventListener("click", () => {
+      document.getElementById("modalA4Preview").classList.add("hidden");
+      document.getElementById("modalA4Preview").classList.remove("flex");
+    });
+
+    document.querySelectorAll(".nav-item-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-item-btn").forEach(b => {
+          b.className = "nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-slate-400 font-semibold";
+        });
+        btn.className = "nav-item-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition text-[#15803d] font-bold";
+
+        const targetId = btn.getAttribute("data-tab");
+        ["panelSurat", "panelArsip", "panelPegawai", "panelKop", "panelAkun"].forEach(id => {
+          const panel = document.getElementById(id);
+          if (panel) {
+            if (id === targetId) panel.classList.remove("hidden");
+            else panel.classList.add("hidden");
+          }
+        });
+      });
+    });
+
+    document.getElementById("selFormatSurat").addEventListener("change", (e) => {
+      const val = e.target.value;
+      document.getElementById("boxFormSpt").classList.toggle("hidden", val !== "spt");
+      document.getElementById("boxFormSkAktif").classList.toggle("hidden", val !== "sk_aktif");
+      document.getElementById("boxFormUndangan").classList.toggle("hidden", val !== "undangan");
+    });
+
+    document.getElementById("btnMinusUrut").addEventListener("click", () => {
+      const el = document.getElementById("numUrut");
+      let cur = parseInt(el.value, 10) || 100;
+      el.value = Math.max(1, cur - 1);
+      updateNomorJadiDisplay();
+    });
+
+    document.getElementById("btnPlusUrut").addEventListener("click", () => {
+      const el = document.getElementById("numUrut");
+      let cur = parseInt(el.value, 10) || 100;
+      el.value = cur + 1;
+      updateNomorJadiDisplay();
+    });
+
+    ["numKode", "numUrut", "numInstansi", "numBulan", "numTahun"].forEach(id => {
+      document.getElementById(id).addEventListener("input", updateNomorJadiDisplay);
+    });
+
+    document.getElementById("tabBtnLogin").addEventListener("click", () => switchAuthMode("login"));
+    document.getElementById("tabBtnRegister").addEventListener("click", () => switchAuthMode("register"));
+    document.getElementById("btnQuickFillArif").addEventListener("click", () => {
+      selectQuickGoogleAccount("arifprasetyo1543@gmail.com", "123");
+    });
+    document.getElementById("inLoginEmail").addEventListener("input", checkEmail2FaRequirement);
+
+    document.getElementById("btnToggleEye").addEventListener("click", () => {
+      const passIn = document.getElementById("inLoginPass");
+      const eyeI = document.getElementById("eyeIcon");
+      if (passIn.type === "password") {
+        passIn.type = "text";
+        eyeI.className = "fa-solid fa-eye-slash";
+      } else {
+        passIn.type = "password";
+        eyeI.className = "fa-solid fa-eye";
+      }
+    });
+
+    document.getElementById("btnOpenGooglePicker").addEventListener("click", () => {
+      const modal = document.getElementById("modalGooglePicker");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    });
+    document.getElementById("btnCloseGooglePicker").addEventListener("click", () => {
+      const modal = document.getElementById("modalGooglePicker");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    });
+
+    document.getElementById("btnClose2FaModal").addEventListener("click", () => {
+      document.getElementById("modal2FaSetup").classList.add("hidden");
+      document.getElementById("modal2FaSetup").classList.remove("flex");
+    });
+    document.getElementById("btnCancel2FaModal").addEventListener("click", () => {
+      document.getElementById("modal2FaSetup").classList.add("hidden");
+      document.getElementById("modal2FaSetup").classList.remove("flex");
+    });
+
+    document.getElementById("btnCopy2FaSecret").addEventListener("click", () => {
+      const keyIn = document.getElementById("in2FaSecretKey");
+      keyIn.select();
+      document.execCommand("copy");
+      showToast("Kunci rahasia disalin ke clipboard!");
+    });
+
+    document.getElementById("inSearchArsip").addEventListener("input", renderArsipList);
+    document.getElementById("btnManualSync").addEventListener("click", async () => {
+      showToast("Menyinkronkan data Google Drive...");
+      await pullCloudDatabase();
+      showToast("Google Drive telah diperbarui!");
+    });
+
+    window.addEventListener("load", () => {
+      setInterval(() => {
+        const d = new Date();
+        document.getElementById("liveMobileClock").innerText = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }, 1000);
+
+      // Pemulihan Sesi Otomatis
+      const savedUserStr = localStorage.getItem(ACTIVE_SESSION_KEY);
+      if (savedUserStr) {
+        try {
+          const u = JSON.parse(savedUserStr);
+          if (u && u.email) {
+            currentUser = u;
+            document.getElementById("viewAuth").classList.add("hidden");
+            document.getElementById("viewDashboard").classList.remove("hidden");
+            document.getElementById("navBottomBar").classList.remove("hidden");
+            renderActiveVault();
+          }
+        } catch (e) {}
+      }
+
+      pullCloudDatabase();
+    });
+  </script>
+</body>
+</html>
