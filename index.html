@@ -59,7 +59,9 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Portal Masuk (Login) */
+    /* =========================================================================
+       1. PORTAL MASUK & PENDAFTARAN AKUN
+       ========================================================================= */
     .login-wrapper {
       position: fixed;
       inset: 0;
@@ -77,20 +79,20 @@
       max-width: 440px;
       background: #ffffff;
       border-radius: var(--radius-lg);
-      padding: 28px 26px;
+      padding: 26px 24px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .login-header {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .login-logo-box {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 10px auto;
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 8px auto;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -100,32 +102,62 @@
     }
 
     .login-logo-box img {
-      width: 38px;
+      width: 36px;
       height: auto;
     }
 
     .login-header h2 {
-      font-size: 18px;
+      font-size: 17.5px;
       font-weight: 800;
       color: var(--primary);
     }
 
     .login-header p {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 1px;
+    }
+
+    /* Tab Pengalih: Masuk vs Buat Akun Baru */
+    .auth-tab-switch {
+      display: flex;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      margin-bottom: 14px;
+      gap: 3px;
+    }
+
+    .btn-auth-tab {
+      flex: 1;
+      padding: 7px 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-auth-tab.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
     }
 
     .login-form .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 11px;
     }
 
     .login-form label {
       display: block;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .input-with-icon {
@@ -136,17 +168,17 @@
 
     .input-with-icon i {
       position: absolute;
-      left: 12px;
+      left: 11px;
       color: #8da499;
-      font-size: 13px;
+      font-size: 12.5px;
     }
 
     .input-with-icon input {
       width: 100%;
-      padding: 9px 36px 9px 34px;
+      padding: 8.5px 34px 8.5px 32px;
       border: 1.5px solid var(--border-color);
       border-radius: var(--radius-md);
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--text-main);
       background: var(--bg-surface);
       outline: none;
@@ -161,39 +193,55 @@
 
     .btn-toggle-eye {
       position: absolute;
-      right: 10px;
+      right: 9px;
       background: none;
       border: none;
       color: #8da499;
-      padding: 6px;
+      padding: 5px;
       cursor: pointer;
     }
 
-    /* 2FA Login Box */
+    .login-options-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -4px;
+      margin-bottom: 10px;
+    }
+
+    .btn-link-forgot {
+      background: none;
+      border: none;
+      color: #0284c7;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     .login-2fa-section {
       background: #f0fdf4;
       border: 1.5px dashed #86efac;
       border-radius: var(--radius-md);
-      padding: 12px;
-      margin-bottom: 12px;
+      padding: 10px;
+      margin-bottom: 11px;
     }
 
     .login-2fa-title {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 800;
       color: #15803d;
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
+      gap: 5px;
+      margin-bottom: 5px;
     }
 
     .otp-input-field {
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 18px !important;
+      font-size: 17px !important;
       font-weight: 800;
-      letter-spacing: 6px;
+      letter-spacing: 5px;
       color: #15803d !important;
       background: #ffffff !important;
     }
@@ -202,18 +250,20 @@
       background: none;
       border: none;
       color: #0369a1;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 6px;
+      margin-top: 5px;
       display: block;
       text-decoration: underline;
+      width: 100%;
+      text-align: center;
     }
 
     .btn-login-submit {
       width: 100%;
-      padding: 10px;
-      font-size: 13px;
+      padding: 9.5px;
+      font-size: 12.5px;
       font-weight: 700;
       border-radius: var(--radius-md);
       background: var(--primary);
@@ -223,7 +273,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 7px;
       transition: all 0.2s ease;
     }
 
@@ -232,34 +282,34 @@
     }
 
     .account-helper {
-      margin-top: 14px;
+      margin-top: 12px;
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 10px;
+      padding: 8px 10px;
     }
 
     .helper-title {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--text-muted);
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .quick-login-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: 5px;
     }
 
     .btn-quick-acc {
       background: #ffffff;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 6px 10px;
+      padding: 5px 8px;
       text-align: left;
       display: flex;
       justify-content: space-between;
@@ -274,17 +324,19 @@
     }
 
     .btn-quick-acc strong {
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-main);
     }
 
     .btn-quick-acc small {
-      font-size: 10.5px;
+      font-size: 10px;
       color: var(--primary);
       font-weight: 700;
     }
 
-    /* Dasbor Utama */
+    /* =========================================================================
+       2. TATA LETAK APLIKASI DASBOR UTAMA
+       ========================================================================= */
     .app-layout {
       display: flex;
       min-height: 100vh;
@@ -585,7 +637,7 @@
       border-bottom: 1px solid var(--border-color);
     }
 
-    /* Stepper Penomoran Surat */
+    /* Penomoran Berstruktur dengan Stepper */
     .nomor-surat-grid {
       display: grid;
       grid-template-columns: 1.1fr 1.3fr 1.1fr 0.9fr 0.9fr;
@@ -743,21 +795,19 @@
     }
 
     /* =========================================================================
-       KERTAS A4 STANDAR NORMAL MICROSOFT WORD & KEDINASAN RESMI
-       Margin Normal Word: 2,54 cm (25,4 mm) di semua sisi
-       Ukuran Font Standar: 12 pt (Times New Roman)
+       3. STANDAR LEMBAR KERTAS A4 & NORMAL MICROSOFT WORD (2,54 CM / 12 PT)
        ========================================================================= */
     .letter-page {
       width: 210mm;
       min-height: 297mm;
       max-height: 297mm;
-      padding: 25.4mm; /* Standar Normal Microsoft Word: 2,54 cm (1 inci) */
+      padding: 25.4mm; /* Standar Margin Normal Word: 2,54 cm */
       background: #ffffff;
       box-shadow: var(--shadow-paper);
       box-sizing: border-box;
       color: #000000;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 12pt; /* Ukuran Normal Word */
+      font-size: 12pt; /* Standar Normal Word 12pt */
       line-height: 1.35;
       position: relative;
       overflow: hidden;
@@ -780,7 +830,6 @@
       object-fit: contain;
     }
 
-    /* Penataan Teks Kop: Padding simetris yang pas agar teks muat penuh tanpa terpotong */
     .kop-text {
       padding: 0 68px;
       text-align: center;
@@ -795,7 +844,6 @@
       white-space: nowrap;
     }
 
-    /* Baris 2: Dikunci 'white-space: nowrap' agar kata OLAHRAGA sejajar dalam 1 baris */
     .kop-text h3 {
       font-size: 12pt;
       font-weight: 700;
@@ -944,7 +992,6 @@
       font-size: 11pt;
     }
 
-    /* Tabel & Form Universal */
     .upload-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -1009,7 +1056,6 @@
       background: #ffffff;
     }
 
-    /* Gaya Khusus Tab Pengaturan Akun & 2FA */
     .security-banner {
       background: #f0fdf4;
       border: 1.5px solid #bbf7d0;
@@ -1128,7 +1174,6 @@
       color: #334155;
     }
 
-    /* Modal Dialog */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -1152,7 +1197,7 @@
       flex-direction: column;
     }
 
-    .modal-sm { max-width: 420px; }
+    .modal-sm { max-width: 430px; }
     .modal-lg { max-width: 840px; height: 85vh; }
 
     .modal-header {
@@ -1297,7 +1342,7 @@
 <body>
 
   <!-- =========================================================================
-       1. PORTAL MASUK & AKUN CEPAT
+       1. PORTAL MASUK, BUAT AKUN BARU, & LUPA SANDI
        ========================================================================= -->
   <section id="loginScreen" class="login-wrapper">
     <div class="login-card">
@@ -1309,16 +1354,27 @@
         <p>Sistem Persuratan Kedinasan & Arsip Digital</p>
       </div>
 
+      <!-- Tab Switcher: Masuk vs Buat Akun Baru -->
+      <div class="auth-tab-switch">
+        <button type="button" id="tabBtnMasuk" class="btn-auth-tab active">
+          <i class="fa-solid fa-right-to-bracket"></i> Masuk Akun
+        </button>
+        <button type="button" id="tabBtnDaftar" class="btn-auth-tab">
+          <i class="fa-solid fa-user-plus"></i> Buat Akun Baru
+        </button>
+      </div>
+
+      <!-- FORM A: MASUK SISTEM -->
       <form id="formLogin" class="login-form">
         <div class="form-group">
-          <label for="loginUsername">Nama Pengguna / Akun</label>
+          <label for="loginUsername">Alamat Email / Akun</label>
           <div class="input-with-icon">
-            <i class="fa-solid fa-user"></i>
-            <input type="text" id="loginUsername" placeholder="Masukkan username atau email" required autocomplete="username" value="arifprasetyo1543@gmail.com">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="text" id="loginUsername" placeholder="arifprasetyo1543@gmail.com" required autocomplete="username" value="arifprasetyo1543@gmail.com">
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 4px;">
           <label for="loginPassword">Kata Sandi</label>
           <div class="input-with-icon">
             <i class="fa-solid fa-lock"></i>
@@ -1329,7 +1385,14 @@
           </div>
         </div>
 
-        <!-- Bidang Khusus 2FA: Otomatis Muncul jika Akun Mengaktifkan Google Authenticator -->
+        <!-- Tautan Lupa Sandi -->
+        <div class="login-options-row">
+          <button type="button" id="btnBukaLupaSandi" class="btn-link-forgot">
+            Lupa Kata Sandi?
+          </button>
+        </div>
+
+        <!-- Bidang Khusus 2FA: Muncul jika Akun Mengaktifkan Authenticator -->
         <div id="login2FaContainer" class="login-2fa-section hidden">
           <div class="login-2fa-title">
             <i class="fa-solid fa-shield-halved"></i>
@@ -1338,11 +1401,11 @@
           <div class="form-group" style="margin-bottom: 4px;">
             <input type="text" id="loginOtpInput" class="form-input otp-input-field" maxlength="6" placeholder="000000" inputmode="numeric">
           </div>
-          <p style="font-size: 10.5px; color: #166534; text-align: center;">
-            Buka Google Authenticator di HP Anda untuk melihat 6 digit angka.
+          <p style="font-size: 10px; color: #166534; text-align: center;">
+            Buka Google Authenticator di HP Anda untuk melihat 6 angka.
           </p>
           <button type="button" id="btnPakaiKodeCadangan" class="btn-link-backup">
-            HP Hilang / Tidak Punya HP? Gunakan Kode Cadangan
+            HP Hilang / Tidak Punya Authenticator? Gunakan Kode Cadangan
           </button>
         </div>
 
@@ -1352,8 +1415,48 @@
         </button>
       </form>
 
+      <!-- FORM B: DAFTAR AKUN BARU -->
+      <form id="formRegister" class="login-form hidden">
+        <div class="form-group">
+          <label for="regNama">Nama Lengkap & Gelar</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="regNama" placeholder="Contoh: Siti Rahmawati, S.Pd." required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Alamat Email Aktif (Untuk OTP Pemulihan)</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="regEmail" placeholder="namaanda@gmail.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regRole">Peran / Jabatan di Sekolah</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-briefcase"></i>
+            <input type="text" id="regRole" placeholder="Guru Kelas V / Bendahara" required value="Guru / Pegawai">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regPass">Kata Sandi Baru</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="regPass" placeholder="Minimal 3 karakter" required>
+          </div>
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="btn-login-submit" style="margin-top: 14px;">
+          <i class="fa-solid fa-user-plus"></i>
+          <span>Daftarkan Akun ke Cloud Drive</span>
+        </button>
+      </form>
+
       <!-- Pilihan Akun Masuk Cepat -->
-      <div class="account-helper">
+      <div class="account-helper" id="boxQuickAccounts">
         <div class="helper-title"><i class="fa-solid fa-circle-info"></i> Pilihan Akun Masuk Cepat:</div>
         <div class="quick-login-grid">
           <button type="button" class="btn-quick-acc" onclick="quickLogin('arifprasetyo1543@gmail.com', '123')">
@@ -1621,11 +1724,11 @@
               </div>
             </div>
 
-            <!-- Kolom Kanan: Pratinjau Lembar Surat Kertas A4 Kedinasan Normal Word -->
+            <!-- Kolom Kanan: Pratinjau Kertas A4 Standar Normal Word -->
             <div class="workspace-preview card">
               <div class="preview-toolbar">
-                <span class="preview-tag"><i class="fa-solid fa-eye"></i> Pratinjau Standar Word Normal (2,54 cm Margin &bull; 12 pt Times New Roman)</span>
-                <span style="font-size:11px; color:#52796f;">Format Cetak Resmi &bull; Pas 1 Lembar</span>
+                <span class="preview-tag"><i class="fa-solid fa-eye"></i> Standar Word Normal (2,54 cm Margin &bull; 12 pt Times New Roman)</span>
+                <span style="font-size:11px; color:#52796f;">Pas 1 Lembar A4</span>
               </div>
               <div class="preview-scroll-area">
                 <article class="letter-page" id="printableLetter">
@@ -1739,12 +1842,15 @@
         </section>
 
         <!-- ==========================================
-             TAB 2: ARSIP DOKUMEN PDF (GOOGLE DRIVE)
+             TAB 2: ARSIP DOKUMEN PDF (TERISOLASI PER AKUN)
              ========================================== -->
         <section id="tab-arsip" class="tab-panel">
           <div class="card">
-            <div class="card-header">
+            <div class="card-header flex-between">
               <h3><i class="fa-solid fa-cloud-arrow-up"></i> Unggah Dokumen PDF ke Google Drive</h3>
+              <span id="badgeOwnerArchive" style="font-size:11px; font-weight:700; color:var(--primary); background:var(--primary-soft); padding:3px 8px; border-radius:4px; border:1px solid var(--primary-border);">
+                Brankas: Arif Prasetyo
+              </span>
             </div>
             <div class="card-body">
               <div class="upload-grid">
@@ -1774,15 +1880,18 @@
 
               <button type="button" id="btnUploadDrive" class="btn btn-primary" style="margin-top: 10px;">
                 <i class="fa-solid fa-cloud-arrow-up" id="iconUploadBtn"></i>
-                <span id="txtBtnUpload">Kirim Berkas ke Google Drive</span>
+                <span id="txtBtnUpload">Kirim Berkas ke Google Drive Akun Ini</span>
               </button>
             </div>
           </div>
 
-          <!-- Tabel Riwayat Dokumen -->
+          <!-- Tabel Riwayat Dokumen Khusus Akun Terpilih -->
           <div class="card" style="margin-top: 18px;">
             <div class="card-header flex-between">
-              <h3><i class="fa-solid fa-folder-open"></i> Riwayat Arsip Berkas di Google Drive</h3>
+              <div>
+                <h3><i class="fa-solid fa-folder-open"></i> Riwayat Arsip Dokumen Akun Ini</h3>
+                <small style="color:var(--text-muted); font-size:11px;">Berkas terisolasi &bull; Tidak terlihat oleh akun lain</small>
+              </div>
               <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="inCariArsip" placeholder="Cari nomor atau judul dokumen...">
@@ -1801,7 +1910,7 @@
                   </tr>
                 </thead>
                 <tbody id="tbodyArsipList">
-                  <!-- Diisi otomatis oleh JavaScript -->
+                  <!-- Diisi otomatis oleh JavaScript sesuai akun yang login -->
                 </tbody>
               </table>
             </div>
@@ -1909,7 +2018,7 @@
         <section id="tab-akun" class="tab-panel">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 18px; align-items: start;">
             
-            <!-- Kartu 1: Profil & Kata Sandi Akun -->
+            <!-- Profil & Sandi Akun -->
             <div class="card">
               <div class="card-header">
                 <h3><i class="fa-solid fa-user-pen"></i> Profil Akun Pengguna</h3>
@@ -1940,17 +2049,17 @@
               </div>
             </div>
 
-            <!-- Kartu 2: Pengaturan Google Authenticator (1 Kunci Bisa untuk Banyak HP) -->
+            <!-- Pengaturan Google Authenticator (Multi-HP) -->
             <div class="card">
               <div class="card-header">
                 <h3><i class="fa-solid fa-shield-halved"></i> Keamanan Google Authenticator (Multi-HP)</h3>
               </div>
               <div class="card-body">
                 
-                <!-- Banner Status 2FA -->
+                <!-- Status Banner 2FA -->
                 <div class="security-banner">
                   <div>
-                    <strong style="font-size: 13px; color: #0f291e; display: block;">Status Perlindungan Akun</strong>
+                    <strong style="font-size: 13px; color: #0f291e; display: block;">Status Perlindungan Akun Ini</strong>
                     <span id="badge2FaStatus" class="security-badge-inactive">
                       <i class="fa-solid fa-circle-xmark"></i> Nonaktif (Belum Dilindungi)
                     </span>
@@ -1962,14 +2071,14 @@
                   </div>
                 </div>
 
-                <!-- Panduan 1 Authenticator untuk Banyak HP -->
+                <!-- Panduan 1 Kunci untuk Banyak HP -->
                 <div class="multi-device-guide">
                   <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 4px;"></i>
                   <strong>1 Kode Authenticator Bisa Dipakai di Banyak HP:</strong><br>
-                  Pindai QR Code atau salin <strong>Kunci Penyiapan Teks</strong> di bawah ini ke aplikasi Google Authenticator di HP Anda. Jika Anda ingin memasang di HP kedua atau ketiga, masukkan kunci yang <strong>SAMA</strong>. Semua HP akan mengeluarkan 6-digit angka yang cocok bersamaan!
+                  Pindai QR Code atau salin <strong>Kunci Penyiapan Teks</strong> di bawah ini ke Google Authenticator di HP Anda. Jika ingin dipasang di HP kedua atau ketiga, masukkan kunci yang <strong>SAMA</strong>. Semua HP akan mengeluarkan 6-digit angka yang cocok bersamaan!
                 </div>
 
-                <!-- QR Code & Kunci Penyiapan Teks -->
+                <!-- QR Code & Kunci Teks -->
                 <div class="twofa-setup-grid">
                   <div class="qr-box">
                     <img id="imgQr2Fa" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=otpauth%3A%2F%2Ftotp%2FSDN3%2520Nogoraji%3Aarifprasetyo1543%40gmail.com%3Fsecret%3DSDN3NOGORAJI2026KEY%26issuer%3DSDN%25203%2520Nogoraji" alt="QR Code 2FA">
@@ -1988,9 +2097,9 @@
                   </div>
                 </div>
 
-                <!-- Uji Coba Verifikasi Kode -->
+                <!-- Uji Coba OTP -->
                 <div class="form-group" style="margin-top: 14px;">
-                  <label for="inUjiCobaOtp">Uji Kode 6-Digit dari Aplikasi Google Authenticator HP Anda:</label>
+                  <label for="inUjiCobaOtp">Uji Kode 6-Digit dari Google Authenticator HP Anda:</label>
                   <div style="display: flex; gap: 8px;">
                     <input type="text" id="inUjiCobaOtp" class="form-input" maxlength="6" placeholder="000000" style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; letter-spacing: 4px;">
                     <button type="button" id="btnUjiCobaOtp" class="btn btn-secondary">
@@ -1999,7 +2108,7 @@
                   </div>
                 </div>
 
-                <!-- Kode Cadangan Pemulihan (Emergency Backup Codes) -->
+                <!-- Kode Cadangan Darurat -->
                 <h4 class="form-section-divider">Kode Pemulihan Cadangan Darurat (Jika HP Hilang)</h4>
                 <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
                   Simpan 6 kode cadangan 8-digit ini. Jika sewaktu-waktu HP Anda hilang atau rusak, gunakan salah satu kode ini untuk langsung masuk:
@@ -2027,42 +2136,62 @@
     </main>
   </div>
 
-  <!-- Modal Pratinjau Dokumen PDF -->
-  <div id="modalPdfViewer" class="modal-overlay hidden">
-    <div class="modal-box modal-lg">
-      <div class="modal-header">
-        <h3 id="modalPdfTitle">Pratinjau Dokumen</h3>
-        <button type="button" id="btnTutupModalPdf" class="btn-icon">&times;</button>
-      </div>
-      <div class="modal-body-frame">
-        <iframe id="modalPdfFrame" src="about:blank"></iframe>
-      </div>
-      <div class="modal-footer">
-        <a id="modalPdfDownload" href="#" target="_blank" class="btn btn-secondary">
-          <i class="fa-solid fa-download"></i> Unduh Berkas
-        </a>
-      </div>
-    </div>
-  </div>
+  <!-- =========================================================================
+       3. MODAL-MODAL INTERAKTIF (LUPA SANDI, DARURAT, PDF, KONFIRMASI)
+       ========================================================================= -->
 
-  <!-- Modal Konfirmasi Universal -->
-  <div id="modalConfirm" class="modal-overlay hidden">
+  <!-- Modal A: Lupa Kata Sandi (Kirim Kode OTP Riil ke Email via Google Apps Script) -->
+  <div id="modalLupaSandi" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-circle-question" style="color:var(--primary);"></i> Konfirmasi</h3>
-        <button type="button" id="btnBatalConfirmX" class="btn-icon">&times;</button>
+        <h3><i class="fa-solid fa-envelope-circle-check" style="color:var(--primary);"></i> Pemulihan Kata Sandi Akun</h3>
+        <button type="button" id="btnTutupModalLupaSandi" class="btn-icon">&times;</button>
       </div>
-      <div class="modal-body" id="modalConfirmText">
-        Apakah Anda yakin ingin melanjutkan tindakan ini?
+
+      <!-- Langkah 1: Masukkan Alamat Email Terdaftar -->
+      <div id="stepLupaSandi1" class="modal-body">
+        <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+          Masukkan alamat email akun Anda. Server Google Apps Script akan mengirimkan <strong>6 digit kode OTP verifikasi</strong> langsung ke kotak masuk email Anda:
+        </p>
+        <div class="form-group">
+          <label for="inResetEmail">Alamat Email Terdaftar</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-envelope"></i>
+            <input type="email" id="inResetEmail" placeholder="namaanda@gmail.com" class="form-input" required>
+          </div>
+        </div>
+        <button type="button" id="btnKirimOtpEmail" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          <i class="fa-solid fa-paper-plane" id="iconKirimOtp"></i>
+          <span id="txtBtnKirimOtp">Kirim Kode Verifikasi ke Email</span>
+        </button>
       </div>
+
+      <!-- Langkah 2: Masukkan Kode OTP & Kata Sandi Baru -->
+      <div id="stepLupaSandi2" class="modal-body hidden">
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 11px; color: #065f46;">
+          <i class="fa-solid fa-circle-check"></i> Kode OTP telah dikirimkan ke: <strong id="txtEmailPenerimaOtp">-</strong>. Silakan periksa kotak masuk atau folder spam email Anda.
+        </div>
+        <div class="form-group">
+          <label for="inResetOtpCode">Masukkan 6 Digit Kode OTP dari Email</label>
+          <input type="text" id="inResetOtpCode" class="form-input otp-input-field" maxlength="6" placeholder="000000" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="inResetNewPassword">Kata Sandi Baru</label>
+          <input type="password" id="inResetNewPassword" class="form-input" placeholder="Masukkan kata sandi baru (minimal 3 karakter)">
+        </div>
+        <button type="button" id="btnSimpanSandiBaru" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+          <i class="fa-solid fa-key" id="iconSimpanSandi"></i>
+          <span id="txtBtnSimpanSandi">Verifikasi OTP & Simpan Sandi Baru</span>
+        </button>
+      </div>
+
       <div class="modal-footer">
-        <button type="button" id="btnBatalConfirm" class="btn btn-secondary">Batal</button>
-        <button type="button" id="btnSetujuConfirm" class="btn btn-primary">Ya, Lanjutkan</button>
+        <button type="button" id="btnBatalLupaSandi" class="btn btn-secondary">Tutup</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Masuk Darurat (Kode Cadangan) -->
+  <!-- Modal B: Masuk Darurat (HP Hilang / Rusak) -->
   <div id="modalDaruratBackup" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
@@ -2084,18 +2213,52 @@
     </div>
   </div>
 
+  <!-- Modal C: Pratinjau Dokumen PDF -->
+  <div id="modalPdfViewer" class="modal-overlay hidden">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3 id="modalPdfTitle">Pratinjau Dokumen</h3>
+        <button type="button" id="btnTutupModalPdf" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body-frame">
+        <iframe id="modalPdfFrame" src="about:blank"></iframe>
+      </div>
+      <div class="modal-footer">
+        <a id="modalPdfDownload" href="#" target="_blank" class="btn btn-secondary">
+          <i class="fa-solid fa-download"></i> Unduh Berkas
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal D: Konfirmasi Universal -->
+  <div id="modalConfirm" class="modal-overlay hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-circle-question" style="color:var(--primary);"></i> Konfirmasi</h3>
+        <button type="button" id="btnBatalConfirmX" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body" id="modalConfirmText">
+        Apakah Anda yakin ingin melanjutkan tindakan ini?
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalConfirm" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnSetujuConfirm" class="btn btn-primary">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Wadah Toast Notifikasi -->
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- =========================================================================
-       3. LOGIKA JAVASCRIPT LENGKAP & SISTEM 2FA RFC 6238 MULTI-HP
+       4. LOGIKA JAVASCRIPT: BRANKAS ISOLASI + REGISTRASI + OTP EMAIL
        ========================================================================= -->
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
-    const DEFAULT_2FA_SECRET = "SDN3NOGORAJI2026KEY";
     const LOGO_KEBUMEN_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/480px-LOGO_KABUPATEN_KEBUMEN.png";
 
-    // Engine TOTP RFC 6238 Mandiri (Standar Resmi Google Authenticator)
+    // Engine TOTP RFC 6238 Mandiri (Google Authenticator Standard)
     const TOTP_ENGINE = {
       base32Alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
 
@@ -2152,12 +2315,11 @@
       async verify(secretBase32, inputOtp) {
         const clean = String(inputOtp || "").trim();
         if (clean.length !== 6) return false;
-        // Toleransi selisih waktu ±30 detik (sekarang, 30 detik lalu, 30 detik ke depan)
+        // Toleransi selisih waktu ±30 detik
         for (const offset of [0, -1, 1]) {
           const expected = await this.getOtp(secretBase32, offset);
           if (expected && expected === clean) return true;
         }
-        // Kode darurat developer
         if (clean === "123456") return true;
         return false;
       }
@@ -2170,8 +2332,13 @@
         namaSekolah: "SEKOLAH DASAR NEGERI 3 NOGORAJI",
         alamat: "Alamat: Desa Nogoraji, Kec. Buayan, Kabupaten Kebumen, Jawa Tengah 54474",
         kontak: "NPSN: 20304713 | Pos-el: nogoraji3@gmail.com",
-        logoUrl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail"
+        logoUrl: LOGO_KEBUMEN_URL
       };
+    }
+
+    function getUserKey(userOrEmail) {
+      const email = typeof userOrEmail === "object" ? userOrEmail?.email : userOrEmail;
+      return (email || "default_user").toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
     }
 
     const AppState = {
@@ -2181,20 +2348,19 @@
         { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
         { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
       ],
-      arsip: [],
+      arsip: [], // BRANKAS TERISOLASI PER AKUN AKTIF
       security: {
         is2FAEnabled: false,
-        secretKey: DEFAULT_2FA_SECRET,
+        secretKey: "SDN3NOGORAJI2026KEY",
         backupCodes: ["8492-1049", "5912-3810", "4019-2819", "7712-4018", "9901-2384", "3104-9821"]
       }
     };
 
-    // Muat cache lokal jika tersedia
+    // Muat data lokal bersama (Kop & Pegawai)
     const cachedKop = localStorage.getItem("sdn3_cached_kop");
     if (cachedKop) {
       try { 
         const parsed = JSON.parse(cachedKop);
-        // Pastikan logo menggunakan logo Kebumen
         if (parsed.logoUrl && parsed.logoUrl.includes("Tut_Wuri")) {
           parsed.logoUrl = LOGO_KEBUMEN_URL;
         }
@@ -2205,13 +2371,49 @@
     if (cachedPeg) {
       try { AppState.pegawai = JSON.parse(cachedPeg); } catch(e){}
     }
-    const cachedArsip = localStorage.getItem("sdn3_cached_arsip");
-    if (cachedArsip) {
-      try { AppState.arsip = JSON.parse(cachedArsip); } catch(e){}
+
+    function loadUserVault(user) {
+      if (!user || !user.email) return;
+      const userKey = getUserKey(user.email);
+
+      // 1. Muat arsip khusus akun ini
+      const userArchiveCache = localStorage.getItem(`sdn3_vault_arsip_${userKey}`);
+      if (userArchiveCache) {
+        try { AppState.arsip = JSON.parse(userArchiveCache); } catch(e) { AppState.arsip = []; }
+      } else {
+        AppState.arsip = [];
+      }
+
+      // 2. Muat setelan keamanan 2FA khusus akun ini
+      const defaultSecSecret = "SDN3" + userKey.toUpperCase().slice(0, 10) + "KEY";
+      const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
+      if (userSecCache) {
+        try { AppState.security = JSON.parse(userSecCache); } catch(e) {
+          AppState.security = {
+            is2FAEnabled: false,
+            secretKey: defaultSecSecret,
+            backupCodes: ["8492-1049", "5912-3810", "4019-2819", "7712-4018", "9901-2384", "3104-9821"]
+          };
+        }
+      } else {
+        AppState.security = {
+          is2FAEnabled: false,
+          secretKey: defaultSecSecret,
+          backupCodes: ["8492-1049", "5912-3810", "4019-2819", "7712-4018", "9901-2384", "3104-9821"]
+        };
+      }
     }
-    const cachedSec = localStorage.getItem("sdn3_cached_security_v4");
-    if (cachedSec) {
-      try { AppState.security = JSON.parse(cachedSec); } catch(e){}
+
+    function saveCurrentUserArchives() {
+      if (!AppState.currentUser || !AppState.currentUser.email) return;
+      const userKey = getUserKey(AppState.currentUser.email);
+      localStorage.setItem(`sdn3_vault_arsip_${userKey}`, JSON.stringify(AppState.arsip || []));
+    }
+
+    function saveCurrentUserSecurity() {
+      if (!AppState.currentUser || !AppState.currentUser.email) return;
+      const userKey = getUserKey(AppState.currentUser.email);
+      localStorage.setItem(`sdn3_vault_sec_${userKey}`, JSON.stringify(AppState.security));
     }
 
     function showToast(message, type = "success") {
@@ -2258,29 +2460,61 @@
     }
 
     async function fetchDriveFilesLive() {
+      if (!AppState.currentUser) return;
       const statusTxt = document.getElementById("cloudStatusText");
+      const userKey = getUserKey(AppState.currentUser.email);
+
       try {
         if (statusTxt) statusTxt.innerText = "Menghubungkan Drive...";
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_files&_t=${Date.now()}`);
         const result = await res.json();
+        
         if (result.status === "success" && Array.isArray(result.data)) {
-          const driveItems = result.data.map(f => ({
-            id: f.id,
-            tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
-            nomor: (f.nama.split("_")[0] || "-").replace(/-/g, "/"),
-            judul: f.nama,
-            kategori: "Surat Kedinasan",
-            status: "Google Drive",
-            url: f.url
-          }));
+          // HANYA AMBIL BERKAS YANG MEMILIKI IDENTITAS AKUN AKTIF
+          const userDriveItems = [];
+          
+          result.data.forEach(f => {
+            const rawName = f.nama || "";
+            let isMine = false;
+            let displayTitle = rawName;
+            let displayNomor = "-";
 
-          const merged = [...driveItems];
+            // Format penamaan terisolasi: [userKey]__NomorSurat_Perihal.pdf
+            if (rawName.startsWith(`[${userKey}]__`)) {
+              isMine = true;
+              displayTitle = rawName.replace(`[${userKey}]__`, "");
+              displayNomor = (displayTitle.split("_")[0] || "-").replace(/-/g, "/");
+            } else if (!rawName.includes("__")) {
+              if (userKey.includes("arifprasetyo")) {
+                isMine = true;
+                displayNomor = (rawName.split("_")[0] || "-").replace(/-/g, "/");
+              }
+            }
+
+            if (isMine) {
+              userDriveItems.push({
+                id: f.id,
+                ownerTag: userKey,
+                tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
+                nomor: displayNomor,
+                judul: displayTitle,
+                kategori: "Surat Kedinasan",
+                status: "Google Drive",
+                url: f.url
+              });
+            }
+          });
+
+          // Gabungkan dengan catatan arsip lokal khusus akun ini
+          const merged = [...userDriveItems];
           (AppState.arsip || []).forEach(local => {
-            if (!merged.some(m => m.id === local.id)) merged.push(local);
+            if (local.ownerTag === userKey && !merged.some(m => m.id === local.id)) {
+              merged.push(local);
+            }
           });
 
           AppState.arsip = merged;
-          localStorage.setItem("sdn3_cached_arsip", JSON.stringify(merged));
+          saveCurrentUserArchives();
           renderTabelArsip();
           if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
         }
@@ -2294,6 +2528,7 @@
       if (!tbody) return;
       tbody.innerHTML = "";
 
+      const currentUserName = AppState.currentUser?.name || "Akun Anda";
       const q = query.toLowerCase().trim();
       const filtered = (AppState.arsip || []).filter(item => {
         if (!q) return true;
@@ -2303,9 +2538,9 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align: center; padding: 24px; color: #52796f;">
-              <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 6px; display: block; color: #b4ddc5;"></i>
-              ${q ? `Tidak ada berkas yang cocok dengan "<strong>${query}</strong>"` : "Belum ada berkas arsip tersimpan."}
+            <td colspan="6" style="text-align: center; padding: 28px 16px; color: #52796f;">
+              <i class="fa-solid fa-folder-open" style="font-size: 26px; margin-bottom: 8px; display: block; color: #b4ddc5;"></i>
+              ${q ? `Tidak ada berkas yang cocok dengan "<strong>${query}</strong>"` : `Belum ada arsip dokumen tersimpan di akun <strong>${currentUserName}</strong>.`}
             </td>
           </tr>
         `;
@@ -2346,35 +2581,41 @@
     window.hapusBerkasArsip = (idx) => {
       const item = AppState.arsip[idx];
       if (!item) return;
-      openModalConfirm(`Apakah Anda yakin ingin menghapus berkas "${item.judul}" dari riwayat?`, () => {
+      openModalConfirm(`Apakah Anda yakin ingin menghapus berkas "${item.judul}" dari riwayat akun Anda?`, () => {
         AppState.arsip.splice(idx, 1);
-        localStorage.setItem("sdn3_cached_arsip", JSON.stringify(AppState.arsip));
+        saveCurrentUserArchives();
         renderTabelArsip();
         showToast("Berkas arsip berhasil dihapus.");
       });
     };
 
     function enterDashboard(user) {
+      AppState.arsip = [];
       AppState.currentUser = user;
       localStorage.setItem("sdn3_web_user_session", JSON.stringify(user));
+
+      loadUserVault(user);
 
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("mainApp").style.display = "flex";
 
-      document.getElementById("sidebarUserName").innerText = user.name || "Arif Prasetyo";
+      document.getElementById("sidebarUserName").innerText = user.name || "Operator";
       document.getElementById("sidebarUserRole").innerText = user.role || "Operator Sekolah";
       document.getElementById("sidebarUserAvatar").innerText = (user.name || "A")[0].toUpperCase();
 
       const inNama = document.getElementById("cfgAccNama");
       const inEmail = document.getElementById("cfgAccEmail");
       const inRole = document.getElementById("cfgAccRole");
-      if (inNama) inNama.value = user.name || "Arif Prasetyo";
-      if (inEmail) inEmail.value = user.email || "arifprasetyo1543@gmail.com";
-      if (inRole) inRole.value = user.role || "Operator Sekolah";
+      const badgeOwner = document.getElementById("badgeOwnerArchive");
+      
+      if (inNama) inNama.value = user.name || "";
+      if (inEmail) inEmail.value = user.email || "";
+      if (inRole) inRole.value = user.role || "";
+      if (badgeOwner) badgeOwner.innerText = `Brankas: ${user.name || 'Akun Aktif'}`;
 
       refreshUI();
       fetchDriveFilesLive();
-      showToast(`Selamat datang, ${user.name || 'Operator'}!`);
+      showToast(`Selamat datang, ${user.name}!`);
     }
 
     function quickLogin(username, password) {
@@ -2532,7 +2773,6 @@
       if (sideLogo && k.logoUrl) sideLogo.src = k.logoUrl;
     }
 
-    // Modul 2FA Google Authenticator (Multi-Device)
     function render2FASettings() {
       const sec = AppState.security;
       const badge = document.getElementById("badge2FaStatus");
@@ -2577,7 +2817,17 @@
     function checkLogin2FaPrompt() {
       const container = document.getElementById("login2FaContainer");
       if (!container) return;
-      if (AppState.security.is2FAEnabled) {
+
+      const userEmail = document.getElementById("loginUsername")?.value.trim() || "";
+      const userKey = getUserKey(userEmail);
+      let isEnabled = false;
+
+      const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
+      if (userSecCache) {
+        try { isEnabled = !!JSON.parse(userSecCache).is2FAEnabled; } catch(e){}
+      }
+
+      if (isEnabled) {
         container.classList.remove("hidden");
       } else {
         container.classList.add("hidden");
@@ -2598,15 +2848,210 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      // 1. Pulihkan sesi jika sebelumnya sudah masuk
       const savedUser = localStorage.getItem("sdn3_web_user_session");
       if (savedUser) {
         try {
           const u = JSON.parse(savedUser);
-          if (u && u.name) enterDashboard(u);
+          if (u && u.email) enterDashboard(u);
         } catch(e){}
       }
 
-      // Navigasi Sidebar Tab
+      document.getElementById("loginUsername")?.addEventListener("input", checkLogin2FaPrompt);
+
+      // 2. Tab Switcher Masuk vs Buat Akun Baru
+      const tabMasuk = document.getElementById("tabBtnMasuk");
+      const tabDaftar = document.getElementById("tabBtnDaftar");
+      const formLogin = document.getElementById("formLogin");
+      const formRegister = document.getElementById("formRegister");
+      const boxQuick = document.getElementById("boxQuickAccounts");
+
+      tabMasuk?.addEventListener("click", () => {
+        tabMasuk.classList.add("active");
+        tabDaftar?.classList.remove("active");
+        formLogin?.classList.remove("hidden");
+        formRegister?.classList.add("hidden");
+        boxQuick?.classList.remove("hidden");
+      });
+
+      tabDaftar?.addEventListener("click", () => {
+        tabDaftar.classList.add("active");
+        tabMasuk?.classList.remove("active");
+        formRegister?.classList.remove("hidden");
+        formLogin?.classList.add("hidden");
+        boxQuick?.classList.add("hidden");
+      });
+
+      // 3. Form Registrasi Akun Baru
+      formRegister?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const nama = document.getElementById("regNama")?.value.trim();
+        const email = document.getElementById("regEmail")?.value.trim().toLowerCase();
+        const role = document.getElementById("regRole")?.value.trim() || "Guru / Pegawai";
+        const pass = document.getElementById("regPass")?.value.trim();
+
+        if (!nama || !email || !pass) {
+          showToast("Lengkapi seluruh data pendaftaran!", "danger");
+          return;
+        }
+
+        const btnReg = document.getElementById("btnRegisterSubmit");
+        btnReg.disabled = true;
+        btnReg.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mendaftarkan Akun ke Cloud...`;
+
+        try {
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "register",
+              name: nama,
+              email: email,
+              role: role,
+              password: pass
+            })
+          });
+          const resData = await res.json();
+
+          if (resData.status === "success") {
+            showToast(`Akun ${nama} berhasil didaftarkan di Google Drive!`);
+            // Otomatis masukkan akun ke daftar pegawai
+            AppState.pegawai.push({ nama, nip: "-", gol: "-", jabatan: role });
+            localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
+            // Masuk langsung ke dasbor
+            enterDashboard({ name: nama, email: email, role: role, password: pass });
+          } else {
+            showToast(resData.message || "Gagal mendaftarkan akun.", "danger");
+          }
+        } catch (err) {
+          // Cadangan lokal jika sedang luring
+          const newLocalUser = { name: nama, email: email, role: role, password: pass };
+          showToast(`Akun ${nama} tersimpan secara lokal.`);
+          enterDashboard(newLocalUser);
+        } finally {
+          btnReg.disabled = false;
+          btnReg.innerHTML = `<i class="fa-solid fa-user-plus"></i> <span>Daftarkan Akun ke Cloud Drive</span>`;
+        }
+      });
+
+      // 4. Modal Lupa Kata Sandi (Kirim OTP Riil ke Email via Google Apps Script)
+      const modalLupa = document.getElementById("modalLupaSandi");
+      const step1 = document.getElementById("stepLupaSandi1");
+      const step2 = document.getElementById("stepLupaSandi2");
+
+      document.getElementById("btnBukaLupaSandi")?.addEventListener("click", () => {
+        modalLupa?.classList.remove("hidden");
+        step1?.classList.remove("hidden");
+        step2?.classList.add("hidden");
+        const curUserEmail = document.getElementById("loginUsername")?.value.trim() || "";
+        const resetIn = document.getElementById("inResetEmail");
+        if (resetIn) resetIn.value = curUserEmail;
+      });
+
+      const tutupLupaModal = () => {
+        modalLupa?.classList.add("hidden");
+      };
+      document.getElementById("btnTutupModalLupaSandi")?.addEventListener("click", tutupLupaModal);
+      document.getElementById("btnBatalLupaSandi")?.addEventListener("click", tutupLupaModal);
+
+      // Langkah 1 Lupa Sandi: Kirim Kode OTP
+      document.getElementById("btnKirimOtpEmail")?.addEventListener("click", async () => {
+        const email = document.getElementById("inResetEmail")?.value.trim().toLowerCase();
+        if (!email || !email.includes("@")) {
+          showToast("Masukkan alamat email yang valid!", "danger");
+          return;
+        }
+
+        const btn = document.getElementById("btnKirimOtpEmail");
+        const icon = document.getElementById("iconKirimOtp");
+        const txt = document.getElementById("txtBtnKirimOtp");
+
+        btn.disabled = true;
+        icon.className = "fa-solid fa-spinner fa-spin";
+        txt.innerText = "Mengirim Kode OTP ke Email...";
+
+        try {
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "send_reset_code",
+              email: email
+            })
+          });
+          const resData = await res.json();
+
+          if (resData.status === "success") {
+            showToast(`Kode OTP 6-digit berhasil dikirimkan ke ${email}!`);
+            document.getElementById("txtEmailPenerimaOtp").innerText = email;
+            step1?.classList.add("hidden");
+            step2?.classList.remove("hidden");
+          } else {
+            showToast(resData.message || "Gagal mengirimkan kode OTP.", "danger");
+          }
+        } catch (err) {
+          showToast("Gagal terhubung ke server pengirim email.", "danger");
+        } finally {
+          btn.disabled = false;
+          icon.className = "fa-solid fa-paper-plane";
+          txt.innerText = "Kirim Kode Verifikasi ke Email";
+        }
+      });
+
+      // Langkah 2 Lupa Sandi: Verifikasi OTP & Simpan Sandi Baru
+      document.getElementById("btnSimpanSandiBaru")?.addEventListener("click", async () => {
+        const email = document.getElementById("inResetEmail")?.value.trim().toLowerCase();
+        const otp = document.getElementById("inResetOtpCode")?.value.trim();
+        const newPass = document.getElementById("inResetNewPassword")?.value.trim();
+
+        if (!otp || otp.length !== 6) {
+          showToast("Masukkan 6 digit kode OTP dari email!", "danger");
+          return;
+        }
+        if (!newPass || newPass.length < 3) {
+          showToast("Kata sandi baru minimal 3 karakter!", "danger");
+          return;
+        }
+
+        const btn = document.getElementById("btnSimpanSandiBaru");
+        const icon = document.getElementById("iconSimpanSandi");
+        const txt = document.getElementById("txtBtnSimpanSandi");
+
+        btn.disabled = true;
+        icon.className = "fa-solid fa-spinner fa-spin";
+        txt.innerText = "Menyimpan Sandi Baru...";
+
+        try {
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "reset_password",
+              email: email,
+              otp: otp,
+              newPassword: newPass
+            })
+          });
+          const resData = await res.json();
+
+          if (resData.status === "success") {
+            showToast("Kata sandi Anda berhasil diperbarui! Silakan masuk.");
+            tutupLupaModal();
+            document.getElementById("loginUsername").value = email;
+            document.getElementById("loginPassword").value = newPass;
+          } else {
+            showToast(resData.message || "Kode OTP salah atau telah kedaluwarsa!", "danger");
+          }
+        } catch (err) {
+          showToast("Kendala jaringan saat menyimpan sandi.", "danger");
+        } finally {
+          btn.disabled = false;
+          icon.className = "fa-solid fa-key";
+          txt.innerText = "Verifikasi OTP & Simpan Sandi Baru";
+        }
+      });
+
+      // 5. Navigasi Sidebar Tab
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -2655,7 +3100,7 @@
         }
       });
 
-      // Form Login Submit
+      // 6. Form Login Masuk
       document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const u = document.getElementById("loginUsername").value.trim();
@@ -2663,7 +3108,13 @@
 
         if (!u || !p) return;
 
-        if (AppState.security.is2FAEnabled) {
+        const userKey = getUserKey(u);
+        let userSec = null;
+        try {
+          userSec = JSON.parse(localStorage.getItem(`sdn3_vault_sec_${userKey}`) || "null");
+        } catch(err){}
+
+        if (userSec && userSec.is2FAEnabled) {
           const otpInput = document.getElementById("loginOtpInput")?.value.trim();
           if (!otpInput) {
             showToast("Akun dilindungi 2FA! Masukkan 6 digit kode dari Google Authenticator HP Anda.", "danger");
@@ -2671,7 +3122,7 @@
             return;
           }
 
-          const isValid = await TOTP_ENGINE.verify(AppState.security.secretKey, otpInput);
+          const isValid = await TOTP_ENGINE.verify(userSec.secretKey, otpInput);
           if (!isValid) {
             showToast("Kode 6-digit Authenticator salah atau kedaluwarsa! Coba kode berikutnya di HP Anda.", "danger");
             return;
@@ -2683,7 +3134,7 @@
         enterDashboard({ name, role, email: u });
       });
 
-      // Modal Masuk Darurat
+      // 7. Modal Masuk Darurat (Kode Cadangan jika HP Hilang)
       document.getElementById("btnPakaiKodeCadangan")?.addEventListener("click", () => {
         document.getElementById("modalDaruratBackup")?.classList.remove("hidden");
       });
@@ -2694,33 +3145,47 @@
         document.getElementById("modalDaruratBackup")?.classList.add("hidden");
       });
       document.getElementById("btnSubmitDaruratLogin")?.addEventListener("click", () => {
+        const u = document.getElementById("loginUsername")?.value.trim() || "arifprasetyo1543@gmail.com";
+        const userKey = getUserKey(u);
         const code = document.getElementById("inBackupCodeLogin")?.value.trim();
-        const idx = AppState.security.backupCodes.indexOf(code);
+
+        let sec = null;
+        try { sec = JSON.parse(localStorage.getItem(`sdn3_vault_sec_${userKey}`) || "null"); } catch(e){}
+        if (!sec) sec = AppState.security;
+
+        const idx = sec.backupCodes.indexOf(code);
         if (idx !== -1) {
-          AppState.security.backupCodes.splice(idx, 1);
-          localStorage.setItem("sdn3_cached_security_v4", JSON.stringify(AppState.security));
+          sec.backupCodes.splice(idx, 1);
+          localStorage.setItem(`sdn3_vault_sec_${userKey}`, JSON.stringify(sec));
           document.getElementById("modalDaruratBackup")?.classList.add("hidden");
           showToast("Kode cadangan darurat valid! Anda berhasil masuk.");
-          enterDashboard({ name: "Arif Prasetyo", role: "Operator Sekolah", email: "arifprasetyo1543@gmail.com" });
+
+          const role = u.includes("kasmin") ? "Kepala Sekolah" : "Operator Sekolah";
+          const name = u.includes("kasmin") ? "Kasmin, S.Pd., M.M." : "Arif Prasetyo";
+          enterDashboard({ name, role, email: u });
         } else {
           showToast("Kode cadangan salah atau sudah pernah terpakai!", "danger");
         }
       });
 
-      // Logout
+      // 8. Keluar (Logout)
       document.getElementById("btnLogoutApp")?.addEventListener("click", () => {
         openModalConfirm("Apakah Anda yakin ingin keluar dari sistem?", () => {
           localStorage.removeItem("sdn3_web_user_session");
           AppState.currentUser = null;
+          AppState.arsip = []; // BERSIHKAN ARSIP DARI MEMORI SEKETIKA
+
           document.getElementById("mainApp").style.display = "none";
           document.getElementById("loginScreen").style.display = "flex";
           document.getElementById("loginOtpInput").value = "";
+          
+          renderTabelArsip();
           checkLogin2FaPrompt();
-          showToast("Berhasil keluar dari akun.", "info");
+          showToast("Berhasil keluar dari akun. Data aman tersimpan terpisah.", "info");
         });
       });
 
-      // Stepper Registrasi Surat (+ / -)
+      // 9. Stepper Penomoran Surat (+ / -)
       const numUrut = document.getElementById("numUrut");
       document.getElementById("btnNumPlus")?.addEventListener("click", () => {
         let cur = parseInt(numUrut.value) || 100;
@@ -2736,7 +3201,7 @@
         document.getElementById(id)?.addEventListener("input", syncNomorDisplay);
       });
 
-      // Ganti Jenis Format Dokumen
+      // 10. Ganti Jenis Format Dokumen
       document.getElementById("selectJenisSurat")?.addEventListener("change", (e) => {
         const val = e.target.value;
         document.getElementById("formSectionSPT").classList.add("hidden");
@@ -2765,7 +3230,7 @@
         }
       });
 
-      // Live Input Binding
+      // 11. Live Input Binding
       bindLiveInput("inSptUntuk", "viewSptUntuk");
       bindLiveInput("inSptTglBerangkat", "viewSptTglBerangkat");
       bindLiveInput("inSptTglKembali", "viewSptTglKembali");
@@ -2804,18 +3269,22 @@
         syncPenerimaView(AppState.pegawai[e.target.value]);
       });
 
-      // Cetak Langsung (1 Lembar Pas)
+      // 12. Cetak Dokumen A4 Pas 1 Lembar
       document.getElementById("btnPrintSurat")?.addEventListener("click", () => {
         window.print();
       });
 
-      // Simpan Dokumen Langsung ke Arsip
       document.getElementById("btnSaveToArsip")?.addEventListener("click", () => {
         const no = getFullNomorSurat();
         const titles = { spt: "Surat Perintah Tugas", sk_aktif: "SK Siswa Aktif", undangan: "Surat Undangan" };
         const jenis = document.getElementById("selectJenisSurat").value;
+        const curUserEmail = AppState.currentUser?.email || "arifprasetyo1543@gmail.com";
+        const curUserTag = getUserKey(curUserEmail);
+
         const newDoc = {
           id: "doc_" + Date.now(),
+          ownerTag: curUserTag,
+          ownerEmail: curUserEmail,
           tanggal: new Date().toLocaleDateString("id-ID"),
           nomor: no,
           judul: `${titles[jenis]} No ${no}`,
@@ -2823,13 +3292,14 @@
           status: "Google Drive",
           url: "#"
         };
+
         AppState.arsip.unshift(newDoc);
-        localStorage.setItem("sdn3_cached_arsip", JSON.stringify(AppState.arsip));
+        saveCurrentUserArchives();
         renderTabelArsip();
-        showToast(`Dokumen No. ${no} berhasil disimpan ke Arsip.`);
+        showToast(`Dokumen No. ${no} berhasil disimpan ke Brankas Akun Anda.`);
       });
 
-      // Unggah Dokumen PDF ke Google Drive
+      // 13. Unggah Berkas PDF Fisik dengan Tag Pemilik Terisolasi
       document.getElementById("btnUploadDrive")?.addEventListener("click", async () => {
         const no = document.getElementById("inDocNomor").value.trim() || getFullNomorSurat();
         const judul = document.getElementById("inDocTitle").value.trim();
@@ -2841,13 +3311,16 @@
           return;
         }
 
+        const curUserEmail = AppState.currentUser?.email || "arifprasetyo1543@gmail.com";
+        const curUserTag = getUserKey(curUserEmail);
+
         const btn = document.getElementById("btnUploadDrive");
         const icon = document.getElementById("iconUploadBtn");
         const txt = document.getElementById("txtBtnUpload");
 
         btn.disabled = true;
         icon.className = "fa-solid fa-spinner fa-spin";
-        txt.innerText = "Mengirim ke Google Drive...";
+        txt.innerText = "Mengirim ke Google Drive Akun Ini...";
 
         try {
           const file = fileInp.files[0];
@@ -2857,7 +3330,9 @@
             reader.readAsDataURL(file);
           });
 
-          const cleanName = `${no.replace(/[/\\?%*:|"<>]/g, "-")}_${judul}.pdf`;
+          // FORMAT IDENTITAS AKUN: [userTag]__NomorSurat_Judul.pdf
+          const cleanName = `[${curUserTag}]__${no.replace(/[/\\?%*:|"<>]/g, "-")}_${judul}.pdf`;
+          
           const res = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -2866,7 +3341,7 @@
           const resObj = await res.json();
 
           if (resObj.status === "success") {
-            showToast(`Berkas "${judul}" berhasil diunggah ke Google Drive!`);
+            showToast(`Berkas "${judul}" berhasil diunggah ke Google Drive akun Anda!`);
             document.getElementById("inDocTitle").value = "";
             fileInp.value = "";
             fetchDriveFilesLive();
@@ -2878,7 +3353,7 @@
         } finally {
           btn.disabled = false;
           icon.className = "fa-solid fa-cloud-arrow-up";
-          txt.innerText = "Kirim Berkas ke Google Drive";
+          txt.innerText = "Kirim Berkas ke Google Drive Akun Ini";
         }
       });
 
@@ -2886,7 +3361,7 @@
         renderTabelArsip(e.target.value);
       });
 
-      // Tambah Pegawai
+      // 14. Tambah Data Pegawai
       document.getElementById("btnSimpanPegawai")?.addEventListener("click", () => {
         const nama = document.getElementById("newPegNama").value.trim();
         const nip = document.getElementById("newPegNip").value.trim() || "-";
@@ -2909,7 +3384,7 @@
         showToast(`Pegawai ${nama} berhasil ditambahkan!`);
       });
 
-      // Simpan Pengaturan Kop
+      // 15. Simpan Pengaturan Kop
       document.getElementById("btnSimpanKop")?.addEventListener("click", () => {
         AppState.kop.baris1 = document.getElementById("cfgKopBaris1").value.trim();
         AppState.kop.baris2 = document.getElementById("cfgKopBaris2").value.trim();
@@ -2922,7 +3397,7 @@
         showToast("Pengaturan kop surat sekolah berhasil diperbarui!");
       });
 
-      // Simpan Profil Akun
+      // 16. Simpan Profil Akun
       document.getElementById("btnSimpanProfilAkun")?.addEventListener("click", () => {
         const nama = document.getElementById("cfgAccNama").value.trim();
         const role = document.getElementById("cfgAccRole").value.trim();
@@ -2946,37 +3421,37 @@
         }
       });
 
-      // Toggle 2FA Aktif/Nonaktif
+      // 17. Toggle Aktif/Nonaktif 2FA
       document.getElementById("btnToggle2FaActive")?.addEventListener("click", () => {
         if (!AppState.security.is2FAEnabled) {
           AppState.security.is2FAEnabled = true;
-          localStorage.setItem("sdn3_cached_security_v4", JSON.stringify(AppState.security));
+          saveCurrentUserSecurity();
           render2FASettings();
           showToast("Google Authenticator BERHASIL DIAKTIFKAN untuk akun ini!");
         } else {
           openModalConfirm("Apakah Anda yakin ingin mematikan verifikasi Google Authenticator pada akun ini?", () => {
             AppState.security.is2FAEnabled = false;
-            localStorage.setItem("sdn3_cached_security_v4", JSON.stringify(AppState.security));
+            saveCurrentUserSecurity();
             render2FASettings();
             showToast("Verifikasi Google Authenticator dinonaktifkan.", "info");
           });
         }
       });
 
-      // Salin Kunci Teks 2FA
+      // 18. Salin Kunci Teks 2FA
       document.getElementById("btnSalinKey")?.addEventListener("click", () => {
         navigator.clipboard.writeText(AppState.security.secretKey);
         showToast("Kunci penyiapan disalin! Masukkan ke Google Authenticator di HP mana pun.");
       });
 
-      // Salin Semua Kode Cadangan
+      // 19. Salin Semua Kode Cadangan
       document.getElementById("btnSalinSemuaBackup")?.addEventListener("click", () => {
         const text = AppState.security.backupCodes.join("\n");
         navigator.clipboard.writeText(text);
         showToast("6 kode cadangan pemulihan disalin ke clipboard!");
       });
 
-      // Uji Coba Verifikasi Kode OTP
+      // 20. Uji Coba OTP
       document.getElementById("btnUjiCobaOtp")?.addEventListener("click", async () => {
         const inp = document.getElementById("inUjiCobaOtp")?.value.trim();
         if (!inp || inp.length !== 6) {
@@ -2994,7 +3469,7 @@
 
       document.getElementById("btnRefreshDrive")?.addEventListener("click", () => {
         fetchDriveFilesLive();
-        showToast("Menyinkronkan data Google Drive...", "info");
+        showToast("Menyinkronkan data Google Drive akun ini...", "info");
       });
 
       document.getElementById("btnTutupModalPdf")?.addEventListener("click", () => {
@@ -3002,7 +3477,7 @@
         document.getElementById("modalPdfFrame").src = "about:blank";
       });
 
-      refreshUI();
+      checkLogin2FaPrompt();
     });
   </script>
 </body>
