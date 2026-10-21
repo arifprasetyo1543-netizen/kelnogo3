@@ -1265,7 +1265,7 @@
     }
 
     .modal-sm { 
-      max-width: 410px; 
+      max-width: 420px; 
     }
     
     .modal-lg { 
@@ -1361,7 +1361,7 @@
     .hidden { display: none !important; }
 
     /* =========================================================================
-       5. MEDIA QUERIES RESPONTIF KHUSUS ANDROID (LAYAR HP)
+       5. MEDIA QUERIES RESPONSIF KHUSUS ANDROID (LAYAR HP)
        ========================================================================= */
     @media (max-width: 992px) {
       .surat-workspace {
@@ -2072,7 +2072,7 @@
               <div class="upload-grid">
                 <div class="form-group">
                   <label for="newPegNama">Nama Lengkap & Gelar</label>
-                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Kasmin, S.Pd., M.M.">
+                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Siti Rahmawati, S.Pd.">
                 </div>
                 <div class="form-group">
                   <label for="newPegNip">Nomor Induk Pegawai (NIP)</label>
@@ -2084,7 +2084,7 @@
                 </div>
                 <div class="form-group">
                   <label for="newPegJabatan">Jabatan di Sekolah</label>
-                  <input type="text" id="newPegJabatan" class="form-input" placeholder="Kepala Sekolah / Guru Kelas">
+                  <input type="text" id="newPegJabatan" class="form-input" placeholder="Guru Kelas / Bendahara Sekolah">
                 </div>
               </div>
               <button type="button" id="btnSimpanPegawai" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
@@ -2381,6 +2381,41 @@
       <div class="modal-footer">
         <button type="button" id="btnBatalConfirm" class="btn btn-secondary">Batal</button>
         <button type="button" id="btnSetujuConfirm" class="btn btn-primary">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal E: Edit Data Pegawai / Guru (TERPUSAT DI HP & DESKTOP) -->
+  <div id="modalEditPegawai" class="modal-overlay hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Edit Identitas Pegawai</h3>
+        <button type="button" id="btnTutupModalEditPeg" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPegIndex">
+        <div class="form-group">
+          <label for="editPegNama">Nama Lengkap & Gelar</label>
+          <input type="text" id="editPegNama" class="form-input" placeholder="Contoh: Kasmin, S.Pd., M.M." required>
+        </div>
+        <div class="form-group">
+          <label for="editPegNip">Nomor Induk Pegawai (NIP)</label>
+          <input type="text" id="editPegNip" class="form-input" placeholder="19730624 200801 1 016 atau -">
+        </div>
+        <div class="form-group">
+          <label for="editPegGol">Pangkat / Golongan</label>
+          <input type="text" id="editPegGol" class="form-input" placeholder="Penata Muda / III-a atau -">
+        </div>
+        <div class="form-group">
+          <label for="editPegJabatan">Jabatan di Sekolah</label>
+          <input type="text" id="editPegJabatan" class="form-input" placeholder="Kepala Sekolah / Guru Kelas">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalEditPeg" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnSimpanEditPeg" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan
+        </button>
       </div>
     </div>
   </div>
@@ -2793,6 +2828,9 @@
       const selPen = document.getElementById("selectPenerimaTugas");
       if (!selTtd || !selPen) return;
 
+      const prevTtdIdx = selTtd.selectedIndex >= 0 ? selTtd.selectedIndex : 0;
+      const prevPenIdx = selPen.selectedIndex >= 0 ? selPen.selectedIndex : 1;
+
       selTtd.innerHTML = "";
       selPen.innerHTML = "";
 
@@ -2808,10 +2846,16 @@
         selPen.appendChild(opt2);
       });
 
-      if (AppState.pegawai.length > 0) selTtd.selectedIndex = 0;
-      if (AppState.pegawai.length > 1) selPen.selectedIndex = 1;
+      if (AppState.pegawai.length > 0) {
+        selTtd.selectedIndex = Math.min(prevTtdIdx, AppState.pegawai.length - 1);
+      }
+      if (AppState.pegawai.length > 1) {
+        selPen.selectedIndex = Math.min(prevPenIdx, AppState.pegawai.length - 1);
+      } else if (AppState.pegawai.length === 1) {
+        selPen.selectedIndex = 0;
+      }
 
-      syncPenandatanganView(AppState.pegawai[0]);
+      syncPenandatanganView(AppState.pegawai[selTtd.selectedIndex] || AppState.pegawai[0]);
       syncPenerimaView(AppState.pegawai[selPen.selectedIndex] || AppState.pegawai[0]);
     }
 
@@ -2854,7 +2898,10 @@
           <td>${p.nip || "-"}</td>
           <td>${p.gol || "-"}</td>
           <td>${p.jabatan || "-"}</td>
-          <td>
+          <td style="white-space:nowrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="editPegawai(${idx})" style="color:var(--primary); margin-right:4px;" title="Edit Pegawai">
+              <i class="fa-solid fa-pen-to-square"></i> <span class="hide-mobile">Edit</span>
+            </button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="hapusPegawai(${idx})" style="color:var(--danger);" title="Hapus Pegawai">
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -2863,6 +2910,19 @@
         tbody.appendChild(tr);
       });
     }
+
+    window.editPegawai = (idx) => {
+      const p = AppState.pegawai[idx];
+      if (!p) return;
+
+      document.getElementById("editPegIndex").value = idx;
+      document.getElementById("editPegNama").value = p.nama || "";
+      document.getElementById("editPegNip").value = p.nip && p.nip !== "-" ? p.nip : "";
+      document.getElementById("editPegGol").value = p.gol && p.gol !== "-" ? p.gol : "";
+      document.getElementById("editPegJabatan").value = p.jabatan && p.jabatan !== "-" ? p.jabatan : "";
+
+      document.getElementById("modalEditPegawai")?.classList.remove("hidden");
+    };
 
     window.hapusPegawai = (idx) => {
       if (AppState.pegawai.length <= 1) {
@@ -3517,6 +3577,36 @@
         document.getElementById("newPegGol").value = "";
         document.getElementById("newPegJabatan").value = "";
         showToast(`Pegawai ${nama} berhasil ditambahkan!`);
+      });
+
+      // Modal Edit Data Pegawai
+      const modalEditPeg = document.getElementById("modalEditPegawai");
+      const tutupEditModal = () => {
+        modalEditPeg?.classList.add("hidden");
+      };
+
+      document.getElementById("btnTutupModalEditPeg")?.addEventListener("click", tutupEditModal);
+      document.getElementById("btnBatalEditPeg")?.addEventListener("click", tutupEditModal);
+
+      document.getElementById("btnSimpanEditPeg")?.addEventListener("click", () => {
+        const idx = parseInt(document.getElementById("editPegIndex").value, 10);
+        const nama = document.getElementById("editPegNama").value.trim();
+        const nip = document.getElementById("editPegNip").value.trim() || "-";
+        const gol = document.getElementById("editPegGol").value.trim() || "-";
+        const jab = document.getElementById("editPegJabatan").value.trim() || "Guru / Tenaga Pendidik";
+
+        if (!nama) {
+          showToast("Nama lengkap pegawai wajib diisi!", "danger");
+          return;
+        }
+
+        if (AppState.pegawai[idx]) {
+          AppState.pegawai[idx] = { nama, nip, gol, jabatan: jab };
+          localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
+          refreshUI();
+          tutupEditModal();
+          showToast(`Data pegawai ${nama} berhasil diperbarui!`);
+        }
       });
 
       // Simpan Pengaturan Kop
