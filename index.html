@@ -2,10 +2,10 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Sistem Persuratan & Arsip Digital - SDN 3 Nogoraji</title>
 
-  <!-- Favicon Logo Tut Wuri Handayani -->
+  <!-- Favicon Logo Kabupaten Kebumen -->
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original">
 
   <!-- Google Fonts & FontAwesome Icons -->
@@ -51,12 +51,16 @@
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-main);
       color: var(--text-main);
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* =========================================================================
@@ -70,7 +74,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
       overflow-y: auto;
     }
 
@@ -79,7 +83,7 @@
       max-width: 440px;
       background: #ffffff;
       border-radius: var(--radius-lg);
-      padding: 26px 24px;
+      padding: 24px 20px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
@@ -118,7 +122,6 @@
       margin-top: 1px;
     }
 
-    /* Tab Pengalih: Masuk vs Buat Akun Baru */
     .auth-tab-switch {
       display: flex;
       background: var(--bg-main);
@@ -171,6 +174,7 @@
       left: 11px;
       color: #8da499;
       font-size: 12.5px;
+      pointer-events: none;
     }
 
     .input-with-icon input {
@@ -262,7 +266,7 @@
 
     .btn-login-submit {
       width: 100%;
-      padding: 9.5px;
+      padding: 10px;
       font-size: 12.5px;
       font-weight: 700;
       border-radius: var(--radius-md);
@@ -309,7 +313,7 @@
       background: #ffffff;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 5px 8px;
+      padding: 6px 8px;
       text-align: left;
       display: flex;
       justify-content: space-between;
@@ -335,12 +339,17 @@
     }
 
     /* =========================================================================
-       2. TATA LETAK APLIKASI DASBOR UTAMA
+       2. TATA LETAK APLIKASI DASBOR UTAMA (RESPONSIF ANDROID)
        ========================================================================= */
     .app-layout {
       display: flex;
       min-height: 100vh;
+      min-height: 100dvh;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
       background: var(--bg-main);
+      position: relative;
     }
 
     .sidebar {
@@ -352,8 +361,19 @@
       position: sticky;
       top: 0;
       height: 100vh;
+      height: 100dvh;
       z-index: 100;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease, left 0.3s ease;
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 41, 30, 0.5);
+      z-index: 95;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
     }
 
     .sidebar-header {
@@ -388,6 +408,7 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      overflow-y: auto;
     }
 
     .nav-btn {
@@ -482,12 +503,16 @@
     .user-meta {
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     .user-name {
       font-size: 11.5px;
       font-weight: 700;
       color: var(--text-main);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
 
     .user-role {
@@ -499,7 +524,10 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      width: 100%;
+      max-width: 100%;
       min-width: 0;
+      overflow-x: hidden;
       background: var(--bg-main);
     }
 
@@ -510,28 +538,34 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 16px;
       position: sticky;
       top: 0;
       z-index: 90;
+      width: 100%;
     }
 
     .top-nav-left {
       display: flex;
       align-items: center;
       gap: 10px;
+      overflow: hidden;
     }
 
     .top-nav-left h2 {
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       color: var(--primary);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
 
     .top-nav-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .btn-icon {
@@ -544,12 +578,19 @@
     }
 
     .content-body {
-      padding: 18px;
+      padding: 16px;
       flex: 1;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .tab-panel {
       display: none;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .tab-panel.active {
@@ -561,10 +602,13 @@
       border-radius: var(--radius-md);
       border: 1px solid var(--border-color);
       box-shadow: var(--shadow-sm);
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     .card-header {
-      padding: 12px 16px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
@@ -573,7 +617,7 @@
     }
 
     .card-header h3 {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-main);
       display: flex;
@@ -588,7 +632,8 @@
     }
 
     .card-body {
-      padding: 16px;
+      padding: 14px;
+      box-sizing: border-box;
     }
 
     .form-group {
@@ -613,6 +658,7 @@
       background: var(--bg-surface);
       color: var(--text-main);
       transition: all 0.2s ease;
+      box-sizing: border-box;
     }
 
     .form-input:focus {
@@ -624,7 +670,7 @@
     .form-row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
     }
 
     .form-section-divider {
@@ -641,7 +687,7 @@
     .nomor-surat-grid {
       display: grid;
       grid-template-columns: 1.1fr 1.3fr 1.1fr 0.9fr 0.9fr;
-      gap: 6px;
+      gap: 5px;
       margin-bottom: 6px;
     }
 
@@ -657,18 +703,20 @@
     .input-stepper {
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
     }
 
     .input-stepper input {
       text-align: center;
       font-weight: 700;
-      padding: 8px 3px;
+      padding: 8px 2px;
+      min-width: 0;
     }
 
     .btn-step {
       width: 28px;
       height: 32px;
+      flex-shrink: 0;
       border: 1px solid var(--border-color);
       background: #ffffff;
       border-radius: var(--radius-sm);
@@ -697,6 +745,8 @@
       align-items: center;
       justify-content: space-between;
       font-size: 11px;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .badge-nomor-preview span {
@@ -706,7 +756,8 @@
     .badge-nomor-preview strong {
       color: var(--primary);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
+      font-size: 11px;
+      word-break: break-all;
     }
 
     .btn {
@@ -718,12 +769,14 @@
       border: 1px solid transparent;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       transition: all 0.2s ease;
+      touch-action: manipulation;
     }
 
     .btn-sm {
-      padding: 5px 9px;
+      padding: 6px 10px;
       font-size: 11px;
     }
 
@@ -753,21 +806,28 @@
 
     .action-buttons-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 1.6fr 1.2fr;
       gap: 8px;
       margin-top: 14px;
     }
 
+    /* Pembagian Kolom Meja Kerja */
     .surat-workspace {
       display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 18px;
+      grid-template-columns: minmax(0, 430px) minmax(0, 1fr);
+      gap: 16px;
       align-items: start;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
+    .workspace-form,
     .workspace-preview {
-      display: flex;
-      flex-direction: column;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .preview-toolbar {
@@ -778,6 +838,8 @@
       align-items: center;
       justify-content: space-between;
       font-size: 11.5px;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .preview-tag {
@@ -786,11 +848,15 @@
     }
 
     .preview-scroll-area {
-      padding: 20px;
+      padding: 16px;
       background: var(--preview-desk);
       overflow-x: auto;
-      display: flex;
-      justify-content: center;
+      -webkit-overflow-scrolling: touch;
+      display: block;
+      text-align: center;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       border-radius: 0 0 var(--radius-md) var(--radius-md);
     }
 
@@ -798,6 +864,9 @@
        3. STANDAR LEMBAR KERTAS A4 & NORMAL MICROSOFT WORD (2,54 CM / 12 PT)
        ========================================================================= */
     .letter-page {
+      display: inline-block;
+      text-align: left;
+      vertical-align: top;
       width: 210mm;
       min-height: 297mm;
       max-height: 297mm;
@@ -807,7 +876,7 @@
       box-sizing: border-box;
       color: #000000;
       font-family: 'Times New Roman', Times, serif;
-      font-size: 12pt; /* Standar Normal Word 12pt */
+      font-size: 12pt;
       line-height: 1.35;
       position: relative;
       overflow: hidden;
@@ -935,7 +1004,6 @@
       line-height: 1.35;
     }
 
-    /* Ruang kosong yang bersih untuk tanda tangan basah & stempel manual */
     .signature-space {
       height: 65px;
       margin: 4px 0;
@@ -955,12 +1023,14 @@
 
     .upload-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
     }
 
     .table-responsive {
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
     }
 
     .data-table {
@@ -976,12 +1046,14 @@
       font-weight: 700;
       padding: 10px 12px;
       border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
     }
 
     .data-table td {
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
       color: #1e293b;
+      white-space: normal;
     }
 
     .badge-nomor {
@@ -992,12 +1064,15 @@
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       font-size: 11px;
+      display: inline-block;
     }
 
     .search-box {
       position: relative;
       display: flex;
       align-items: center;
+      width: 100%;
+      max-width: 240px;
     }
 
     .search-box i {
@@ -1008,12 +1083,12 @@
     }
 
     .search-box input {
-      padding: 7px 28px 7px 30px;
+      padding: 7px 12px 7px 30px;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
       font-size: 12px;
       outline: none;
-      width: 230px;
+      width: 100%;
       background: #ffffff;
     }
 
@@ -1021,12 +1096,13 @@
       background: #f0fdf4;
       border: 1.5px solid #bbf7d0;
       border-radius: var(--radius-md);
-      padding: 14px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
     .security-badge-active {
@@ -1066,25 +1142,21 @@
       line-height: 1.5;
     }
 
-    .multi-device-guide strong {
-      color: var(--primary);
-    }
-
     .twofa-setup-grid {
       display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 20px;
+      grid-template-columns: 190px 1fr;
+      gap: 16px;
       align-items: center;
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
-      padding: 16px;
+      padding: 14px;
       margin-bottom: 16px;
     }
 
     .qr-box {
-      width: 180px;
-      height: 180px;
+      width: 170px;
+      height: 170px;
       background: #ffffff;
       border: 2px solid var(--border-color);
       border-radius: var(--radius-sm);
@@ -1092,6 +1164,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 0 auto;
     }
 
     .qr-box img {
@@ -1104,22 +1177,24 @@
       background: #ffffff;
       border: 1.5px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 8px 12px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-family: 'JetBrains Mono', monospace;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--primary);
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       margin-top: 6px;
+      word-break: break-all;
+      gap: 6px;
     }
 
     .backup-codes-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 6px;
       margin-top: 8px;
     }
 
@@ -1127,65 +1202,111 @@
       background: #ffffff;
       border: 1px dashed var(--border-color);
       border-radius: 4px;
-      padding: 6px 8px;
+      padding: 6px 4px;
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       color: #334155;
     }
 
+    /* =========================================================================
+       4. SISTEM POP-UP MODAL (TERPUSAT PRESISI DI HP ANDROID)
+       ========================================================================= */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 41, 30, 0.6);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100vw;
+      width: 100dvw;
+      height: 100vh;
+      height: 100dvh;
+      background: rgba(15, 41, 30, 0.65);
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 99999;
+      z-index: 999999;
       padding: 16px;
+      box-sizing: border-box;
+      overflow-y: auto;
     }
 
     .modal-box {
       background: #ffffff;
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
       width: 100%;
+      max-width: 420px;
       max-height: 90vh;
+      max-height: 90dvh;
       display: flex;
       flex-direction: column;
+      box-sizing: border-box;
+      margin: auto;
+      position: relative;
+      overflow: hidden;
+      animation: modalPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .modal-sm { max-width: 430px; }
-    .modal-lg { max-width: 840px; height: 85vh; }
+    @keyframes modalPopIn {
+      from {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-sm { 
+      max-width: 410px; 
+    }
+    
+    .modal-lg { 
+      max-width: 840px; 
+      height: 85vh; 
+      height: 85dvh; 
+    }
 
     .modal-header {
-      padding: 14px 18px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--bg-surface);
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      flex-shrink: 0;
     }
 
     .modal-header h3 {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 7px;
     }
 
     .modal-body {
-      padding: 18px;
+      padding: 16px;
       font-size: 13px;
       color: var(--text-main);
+      line-height: 1.5;
+      overflow-y: auto;
+      word-break: break-word;
     }
 
     .modal-body-frame {
       flex: 1;
       background: #334155;
+      min-height: 0;
     }
 
     .modal-body-frame iframe {
@@ -1195,22 +1316,27 @@
     }
 
     .modal-footer {
-      padding: 12px 18px;
+      padding: 12px 16px;
       border-top: 1px solid var(--border-color);
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      background: var(--bg-surface);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      flex-shrink: 0;
     }
 
     .toast-container {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      z-index: 999999;
+      left: 20px;
+      z-index: 9999999;
       display: flex;
       flex-direction: column;
       gap: 8px;
       pointer-events: none;
+      align-items: center;
     }
 
     .toast-item {
@@ -1225,6 +1351,7 @@
       box-shadow: var(--shadow-lg);
       transition: all 0.3s ease;
       pointer-events: auto;
+      max-width: 90vw;
     }
 
     .toast-item.success { background: #15803d; }
@@ -1233,18 +1360,86 @@
 
     .hidden { display: none !important; }
 
+    /* =========================================================================
+       5. MEDIA QUERIES RESPONTIF KHUSUS ANDROID (LAYAR HP)
+       ========================================================================= */
     @media (max-width: 992px) {
-      .surat-workspace { grid-template-columns: 1fr; }
-      .sidebar { position: fixed; left: -250px; }
-      .sidebar.open { left: 0; }
-      .hide-mobile { display: none; }
-      .twofa-setup-grid { grid-template-columns: 1fr; }
-      .qr-box { margin: 0 auto; }
+      .surat-workspace {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+      }
+      .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+      }
+      .sidebar.open {
+        left: 0;
+      }
+      .sidebar-backdrop.active {
+        display: block;
+      }
+      .hide-mobile {
+        display: none !important;
+      }
+      .twofa-setup-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 640px) {
-      .nomor-surat-grid { grid-template-columns: 1fr 1fr; }
-      .form-row-2 { grid-template-columns: 1fr; }
+      .content-body {
+        padding: 10px;
+      }
+      .card-body {
+        padding: 12px;
+      }
+      .top-navbar {
+        padding: 0 12px;
+      }
+      .nomor-surat-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+      }
+      .form-row-2 {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+      .action-buttons-grid {
+        grid-template-columns: 1fr;
+      }
+      .search-box {
+        max-width: 100%;
+        margin-top: 6px;
+      }
+
+      /* Modal Khusus HP: Tombol Penuh & Text Wrap Rapi */
+      .modal-overlay {
+        padding: 12px;
+      }
+      .modal-box {
+        max-width: 100%;
+        border-radius: var(--radius-md);
+      }
+      .modal-header {
+        padding: 12px 14px;
+      }
+      .modal-body {
+        padding: 14px;
+        font-size: 13px;
+      }
+      .modal-footer {
+        padding: 10px 14px;
+        gap: 8px;
+      }
+      .modal-footer .btn {
+        flex: 1;
+        justify-content: center;
+        padding: 9px 8px;
+      }
     }
 
     @media print {
@@ -1262,6 +1457,7 @@
       }
 
       .sidebar,
+      .sidebar-backdrop,
       .top-navbar,
       .workspace-form,
       .preview-toolbar,
@@ -1290,7 +1486,7 @@
         width: 210mm !important;
         height: 297mm !important;
         max-height: 297mm !important;
-        padding: 25.4mm !important; /* Standar Normal Microsoft Word: 2,54 cm */
+        padding: 25.4mm !important;
         page-break-after: avoid !important;
         break-after: avoid !important;
         page-break-inside: avoid !important;
@@ -1309,7 +1505,7 @@
     <div class="login-card">
       <div class="login-header">
         <div class="login-logo-box">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Tut Wuri Handayani">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Kabupaten Kebumen">
         </div>
         <h2>SDN 3 NOGORAJI</h2>
         <p>Sistem Persuratan Kedinasan & Arsip Digital</p>
@@ -1438,10 +1634,13 @@
        ========================================================================= -->
   <div id="mainApp" class="app-layout" style="display: none;">
 
+    <!-- Latar Belakang Penutup Sidebar saat Buka di HP -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
     <!-- Bilah Samping (Sidebar) -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <img id="sideLogo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/480px-LOGO_KABUPATEN_KEBUMEN.png" alt="Logo Pemkab Kebumen" class="side-logo">
+        <img id="sideLogo" src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Pemkab Kebumen" class="side-logo">
         <div class="side-title">
           <h3 id="sideSchoolName">SDN 3 NOGORAJI</h3>
           <p>Persuratan & Arsip</p>
@@ -1465,7 +1664,6 @@
           <i class="fa-solid fa-school"></i>
           <span>Pengaturan Kop</span>
         </button>
-        <!-- Tab: Pengaturan Akun & 2FA -->
         <button type="button" class="nav-btn" data-tab="tab-akun">
           <i class="fa-solid fa-user-gear"></i>
           <span>Pengaturan Akun & 2FA</span>
@@ -1477,7 +1675,7 @@
           <div class="cloud-dot"></div>
           <span id="cloudStatusText">Google Drive Tersambung</span>
         </div>
-        <div class="user-info-card" onclick="bukaTabAkunLangsung()" title="Klik untuk membuka Pengaturan Akun">
+        <div class="user-info-card" onclick="bukaTabAkunLangsung()" title="Buka Pengaturan Akun">
           <div class="user-avatar" id="sidebarUserAvatar">A</div>
           <div class="user-meta">
             <span class="user-name" id="sidebarUserName">Arif Prasetyo</span>
@@ -1511,9 +1709,7 @@
 
       <div class="content-body">
 
-        <!-- ==========================================
-             TAB 1: FORMULIR PEMBUATAN SURAT RESMI
-             ========================================== -->
+        <!-- TAB 1: FORMULIR PEMBUATAN SURAT RESMI -->
         <section id="tab-surat" class="tab-panel active">
           <div class="surat-workspace">
 
@@ -1688,8 +1884,8 @@
             <!-- Kolom Kanan: Pratinjau Kertas A4 Standar Normal Word -->
             <div class="workspace-preview card">
               <div class="preview-toolbar">
-                <span class="preview-tag"><i class="fa-solid fa-eye"></i> Standar Word Normal (2,54 cm Margin &bull; 12 pt Times New Roman)</span>
-                <span style="font-size:11px; color:#52796f;">Pas 1 Lembar A4</span>
+                <span class="preview-tag"><i class="fa-solid fa-eye"></i> Standar Word Normal (2,54 cm &bull; 12 pt Times New Roman)</span>
+                <span style="font-size:11px; color:#52796f;" class="hide-mobile">Pas 1 Lembar A4</span>
               </div>
               <div class="preview-scroll-area">
                 <article class="letter-page" id="printableLetter">
@@ -1780,7 +1976,6 @@
                       <p>Pada tanggal : <span id="viewPadaTanggal">20 Oktober 2026</span></p>
                       <p class="sign-job" id="viewJabatanTtd">Kepala Sekolah,</p>
 
-                      <!-- Ruang Tanda Tangan Basah & Cap Stempel Fisik -->
                       <div class="signature-space"></div>
 
                       <strong class="sign-name" id="viewNamaTtd"><span class="placeholder-dots">................................................</span></strong>
@@ -1795,9 +1990,7 @@
           </div>
         </section>
 
-        <!-- ==========================================
-             TAB 2: ARSIP DOKUMEN PDF (TERISOLASI PER AKUN)
-             ========================================== -->
+        <!-- TAB 2: ARSIP DOKUMEN PDF (TERISOLASI PER AKUN) -->
         <section id="tab-arsip" class="tab-panel">
           <div class="card">
             <div class="card-header flex-between">
@@ -1832,7 +2025,7 @@
                 </div>
               </div>
 
-              <button type="button" id="btnUploadDrive" class="btn btn-primary" style="margin-top: 10px;">
+              <button type="button" id="btnUploadDrive" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
                 <i class="fa-solid fa-cloud-arrow-up" id="iconUploadBtn"></i>
                 <span id="txtBtnUpload">Kirim Berkas ke Google Drive Akun Ini</span>
               </button>
@@ -1863,17 +2056,13 @@
                     <th>Aksi</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyArsipList">
-                  <!-- Diisi otomatis oleh JavaScript sesuai akun yang login -->
-                </tbody>
+                <tbody id="tbodyArsipList"></tbody>
               </table>
             </div>
           </div>
         </section>
 
-        <!-- ==========================================
-             TAB 3: DATA PEGAWAI & GURU
-             ========================================== -->
+        <!-- TAB 3: DATA PEGAWAI & GURU -->
         <section id="tab-pegawai" class="tab-panel">
           <div class="card">
             <div class="card-header">
@@ -1898,7 +2087,7 @@
                   <input type="text" id="newPegJabatan" class="form-input" placeholder="Kepala Sekolah / Guru Kelas">
                 </div>
               </div>
-              <button type="button" id="btnSimpanPegawai" class="btn btn-primary" style="margin-top: 10px;">
+              <button type="button" id="btnSimpanPegawai" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
                 <i class="fa-solid fa-floppy-disk"></i> Simpan Pegawai
               </button>
             </div>
@@ -1926,9 +2115,7 @@
           </div>
         </section>
 
-        <!-- ==========================================
-             TAB 4: PENGATURAN KOP SURAT SEKOLAH
-             ========================================== -->
+        <!-- TAB 4: PENGATURAN KOP SURAT SEKOLAH -->
         <section id="tab-kop" class="tab-panel">
           <div class="card" style="max-width: 680px;">
             <div class="card-header">
@@ -1959,18 +2146,16 @@
                 <label for="cfgKopLogoUrl">Tautan Logo Resmi</label>
                 <input type="text" id="cfgKopLogoUrl" class="form-input">
               </div>
-              <button type="button" id="btnSimpanKop" class="btn btn-primary" style="margin-top: 10px;">
+              <button type="button" id="btnSimpanKop" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
                 <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Kop
               </button>
             </div>
           </div>
         </section>
 
-        <!-- ==========================================
-             TAB 5: PENGATURAN AKUN & KEAMANAN 2FA MULTI-HP
-             ========================================== -->
+        <!-- TAB 5: PENGATURAN AKUN & KEAMANAN 2FA MULTI-HP -->
         <section id="tab-akun" class="tab-panel">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 18px; align-items: start;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
             
             <!-- Profil & Sandi Akun -->
             <div class="card">
@@ -1997,7 +2182,7 @@
                   <input type="password" id="cfgAccNewPass" class="form-input" placeholder="Masukkan sandi baru (kosongkan jika tidak diubah)">
                 </div>
 
-                <button type="button" id="btnSimpanProfilAkun" class="btn btn-primary" style="margin-top: 10px;">
+                <button type="button" id="btnSimpanProfilAkun" class="btn btn-primary" style="margin-top: 10px; width: 100%;">
                   <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Profil
                 </button>
               </div>
@@ -2013,7 +2198,7 @@
                 <!-- Status Banner 2FA -->
                 <div class="security-banner">
                   <div>
-                    <strong style="font-size: 13px; color: #0f291e; display: block;">Status Perlindungan Akun Ini</strong>
+                    <strong style="font-size: 13px; color: #0f291e; display: block;">Status Perlindungan Akun</strong>
                     <span id="badge2FaStatus" class="security-badge-inactive">
                       <i class="fa-solid fa-circle-xmark"></i> Nonaktif (Belum Dilindungi)
                     </span>
@@ -2035,10 +2220,10 @@
                 <!-- QR Code & Kunci Teks -->
                 <div class="twofa-setup-grid">
                   <div class="qr-box">
-                    <img id="imgQr2Fa" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=otpauth%3A%2F%2Ftotp%2FSDN3%2520Nogoraji%3Aarifprasetyo1543%40gmail.com%3Fsecret%3DSDN3NOGORAJI2026KEY%26issuer%3DSDN%25203%2520Nogoraji" alt="QR Code 2FA">
+                    <img id="imgQr2Fa" src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=otpauth%3A%2F%2Ftotp%2FSDN3%2520Nogoraji%3Aarifprasetyo1543%40gmail.com%3Fsecret%3DSDN3NOGORAJI2026KEY%26issuer%3DSDN%25203%2520Nogoraji" alt="QR Code 2FA">
                   </div>
                   <div>
-                    <label style="font-size: 11.5px; font-weight: 700; color: #334155;">Kunci Penyiapan Teks (Bisa Dipasang di Banyak HP):</label>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155;">Kunci Penyiapan Teks:</label>
                     <div class="secret-key-box">
                       <span id="txtSecretKey">SDN3NOGORAJI2026KEY</span>
                       <button type="button" id="btnSalinKey" class="btn btn-secondary btn-sm" title="Salin Kunci">
@@ -2046,7 +2231,7 @@
                       </button>
                     </div>
                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-                      Buka Google Authenticator di HP mana pun &rarr; Ketuk (+) &rarr; Masukkan Kunci Penyiapan.
+                      Buka Google Authenticator di HP &rarr; Ketuk (+) &rarr; Masukkan Kunci Penyiapan.
                     </p>
                   </div>
                 </div>
@@ -2057,7 +2242,7 @@
                   <div style="display: flex; gap: 8px;">
                     <input type="text" id="inUjiCobaOtp" class="form-input" maxlength="6" placeholder="000000" style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; letter-spacing: 4px;">
                     <button type="button" id="btnUjiCobaOtp" class="btn btn-secondary">
-                      <i class="fa-solid fa-check"></i> Tes Kode
+                      <i class="fa-solid fa-check"></i> Tes
                     </button>
                   </div>
                 </div>
@@ -2076,7 +2261,7 @@
                   <div class="backup-code-item">3104-9821</div>
                 </div>
 
-                <button type="button" id="btnSalinSemuaBackup" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+                <button type="button" id="btnSalinSemuaBackup" class="btn btn-secondary btn-sm" style="margin-top: 8px; width: 100%;">
                   <i class="fa-solid fa-copy"></i> Salin Semua Kode Cadangan
                 </button>
 
@@ -2091,21 +2276,20 @@
   </div>
 
   <!-- =========================================================================
-       3. MODAL-MODAL INTERAKTIF (LUPA SANDI, DARURAT, PDF, KONFIRMASI)
+       3. MODAL-MODAL INTERAKTIF (TERPUSAT DI HP ANDROID)
        ========================================================================= -->
 
   <!-- Modal A: Lupa Kata Sandi (Kirim Kode OTP Riil ke Email via Google Apps Script) -->
   <div id="modalLupaSandi" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-envelope-circle-check" style="color:var(--primary);"></i> Pemulihan Kata Sandi Akun</h3>
+        <h3><i class="fa-solid fa-envelope-circle-check" style="color:var(--primary);"></i> Pemulihan Sandi</h3>
         <button type="button" id="btnTutupModalLupaSandi" class="btn-icon">&times;</button>
       </div>
 
-      <!-- Langkah 1: Masukkan Alamat Email Terdaftar -->
       <div id="stepLupaSandi1" class="modal-body">
         <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
-          Masukkan alamat email akun Anda. Server Google Apps Script akan mengirimkan <strong>6 digit kode OTP verifikasi</strong> langsung ke kotak masuk email Anda:
+          Masukkan alamat email akun Anda. Server Google Apps Script akan mengirimkan <strong>6 digit kode OTP verifikasi</strong> langsung ke kotak masuk email:
         </p>
         <div class="form-group">
           <label for="inResetEmail">Alamat Email Terdaftar</label>
@@ -2120,10 +2304,9 @@
         </button>
       </div>
 
-      <!-- Langkah 2: Masukkan Kode OTP & Kata Sandi Baru -->
       <div id="stepLupaSandi2" class="modal-body hidden">
         <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 11px; color: #065f46;">
-          <i class="fa-solid fa-circle-check"></i> Kode OTP telah dikirimkan ke: <strong id="txtEmailPenerimaOtp">-</strong>. Silakan periksa kotak masuk atau folder spam email Anda.
+          <i class="fa-solid fa-circle-check"></i> Kode OTP telah dikirimkan ke: <strong id="txtEmailPenerimaOtp">-</strong>. Silakan periksa kotak masuk atau spam email Anda.
         </div>
         <div class="form-group">
           <label for="inResetOtpCode">Masukkan 6 Digit Kode OTP dari Email</label>
@@ -2185,7 +2368,7 @@
     </div>
   </div>
 
-  <!-- Modal D: Konfirmasi Universal -->
+  <!-- Modal D: Konfirmasi Universal (TERPUSAT DI HP) -->
   <div id="modalConfirm" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
@@ -2206,7 +2389,7 @@
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- =========================================================================
-       4. LOGIKA JAVASCRIPT: BRANKAS ISOLASI + REGISTRASI + OTP EMAIL
+       4. LOGIKA JAVASCRIPT
        ========================================================================= -->
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
@@ -2269,7 +2452,6 @@
       async verify(secretBase32, inputOtp) {
         const clean = String(inputOtp || "").trim();
         if (clean.length !== 6) return false;
-        // Toleransi selisih waktu ±30 detik
         for (const offset of [0, -1, 1]) {
           const expected = await this.getOtp(secretBase32, offset);
           if (expected && expected === clean) return true;
@@ -2302,7 +2484,7 @@
         { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
         { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
       ],
-      arsip: [], // BRANKAS TERISOLASI PER AKUN AKTIF
+      arsip: [],
       security: {
         is2FAEnabled: false,
         secretKey: "SDN3NOGORAJI2026KEY",
@@ -2330,7 +2512,6 @@
       if (!user || !user.email) return;
       const userKey = getUserKey(user.email);
 
-      // 1. Muat arsip khusus akun ini
       const userArchiveCache = localStorage.getItem(`sdn3_vault_arsip_${userKey}`);
       if (userArchiveCache) {
         try { AppState.arsip = JSON.parse(userArchiveCache); } catch(e) { AppState.arsip = []; }
@@ -2338,7 +2519,6 @@
         AppState.arsip = [];
       }
 
-      // 2. Muat setelan keamanan 2FA khusus akun ini
       const defaultSecSecret = "SDN3" + userKey.toUpperCase().slice(0, 10) + "KEY";
       const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
       if (userSecCache) {
@@ -2424,7 +2604,6 @@
         const result = await res.json();
         
         if (result.status === "success" && Array.isArray(result.data)) {
-          // HANYA AMBIL BERKAS YANG MEMILIKI IDENTITAS AKUN AKTIF
           const userDriveItems = [];
           
           result.data.forEach(f => {
@@ -2433,7 +2612,6 @@
             let displayTitle = rawName;
             let displayNomor = "-";
 
-            // Format penamaan terisolasi: [userKey]__NomorSurat_Perihal.pdf
             if (rawName.startsWith(`[${userKey}]__`)) {
               isMine = true;
               displayTitle = rawName.replace(`[${userKey}]__`, "");
@@ -2459,7 +2637,6 @@
             }
           });
 
-          // Gabungkan dengan catatan arsip lokal khusus akun ini
           const merged = [...userDriveItems];
           (AppState.arsip || []).forEach(local => {
             if (local.ownerTag === userKey && !merged.some(m => m.id === local.id)) {
@@ -2492,8 +2669,8 @@
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align: center; padding: 28px 16px; color: #52796f;">
-              <i class="fa-solid fa-folder-open" style="font-size: 26px; margin-bottom: 8px; display: block; color: #b4ddc5;"></i>
+            <td colspan="6" style="text-align: center; padding: 24px 12px; color: #52796f;">
+              <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 6px; display: block; color: #b4ddc5;"></i>
               ${q ? `Tidak ada berkas yang cocok dengan "<strong>${query}</strong>"` : `Belum ada arsip dokumen tersimpan di akun <strong>${currentUserName}</strong>.`}
             </td>
           </tr>
@@ -2739,7 +2916,7 @@
       if (qrEl) {
         const userEmail = AppState.currentUser?.email || "arifprasetyo1543@gmail.com";
         const otpauthUrl = `otpauth://totp/SDN3%20Nogoraji:${encodeURIComponent(userEmail)}?secret=${sec.secretKey}&issuer=SDN%203%20Nogoraji`;
-        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(otpauthUrl)}`;
+        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(otpauthUrl)}`;
       }
 
       if (badge && btnToggle) {
@@ -2801,7 +2978,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      // 1. Pulihkan sesi jika sebelumnya sudah masuk
       const savedUser = localStorage.getItem("sdn3_web_user_session");
       if (savedUser) {
         try {
@@ -2812,7 +2988,6 @@
 
       document.getElementById("loginUsername")?.addEventListener("input", checkLogin2FaPrompt);
 
-      // 2. Tab Switcher Masuk vs Buat Akun Baru
       const tabMasuk = document.getElementById("tabBtnMasuk");
       const tabDaftar = document.getElementById("tabBtnDaftar");
       const formLogin = document.getElementById("formLogin");
@@ -2835,7 +3010,7 @@
         boxQuick?.classList.add("hidden");
       });
 
-      // 3. Form Registrasi Akun Baru
+      // Pendaftaran Akun Baru
       formRegister?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const nama = document.getElementById("regNama")?.value.trim();
@@ -2868,16 +3043,13 @@
 
           if (resData.status === "success") {
             showToast(`Akun ${nama} berhasil didaftarkan di Google Drive!`);
-            // Otomatis masukkan akun ke daftar pegawai
             AppState.pegawai.push({ nama, nip: "-", gol: "-", jabatan: role });
             localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
-            // Masuk langsung ke dasbor
             enterDashboard({ name: nama, email: email, role: role, password: pass });
           } else {
             showToast(resData.message || "Gagal mendaftarkan akun.", "danger");
           }
         } catch (err) {
-          // Cadangan lokal jika sedang luring
           const newLocalUser = { name: nama, email: email, role: role, password: pass };
           showToast(`Akun ${nama} tersimpan secara lokal.`);
           enterDashboard(newLocalUser);
@@ -2887,7 +3059,7 @@
         }
       });
 
-      // 4. Modal Lupa Kata Sandi (Kirim OTP Riil ke Email via Google Apps Script)
+      // Modal Lupa Kata Sandi
       const modalLupa = document.getElementById("modalLupaSandi");
       const step1 = document.getElementById("stepLupaSandi1");
       const step2 = document.getElementById("stepLupaSandi2");
@@ -2907,7 +3079,7 @@
       document.getElementById("btnTutupModalLupaSandi")?.addEventListener("click", tutupLupaModal);
       document.getElementById("btnBatalLupaSandi")?.addEventListener("click", tutupLupaModal);
 
-      // Langkah 1 Lupa Sandi: Kirim Kode OTP
+      // Kirim Kode OTP Email
       document.getElementById("btnKirimOtpEmail")?.addEventListener("click", async () => {
         const email = document.getElementById("inResetEmail")?.value.trim().toLowerCase();
         if (!email || !email.includes("@")) {
@@ -2951,7 +3123,7 @@
         }
       });
 
-      // Langkah 2 Lupa Sandi: Verifikasi OTP & Simpan Sandi Baru
+      // Simpan Sandi Baru via OTP
       document.getElementById("btnSimpanSandiBaru")?.addEventListener("click", async () => {
         const email = document.getElementById("inResetEmail")?.value.trim().toLowerCase();
         const otp = document.getElementById("inResetOtpCode")?.value.trim();
@@ -2988,7 +3160,7 @@
           const resData = await res.json();
 
           if (resData.status === "success") {
-            showToast("Kata sandi Anda berhasil diperbarui! Silakan masuk.");
+            showToast("Kata sandi berhasil diperbarui! Silakan masuk.");
             tutupLupaModal();
             document.getElementById("loginUsername").value = email;
             document.getElementById("loginPassword").value = newPass;
@@ -3004,7 +3176,7 @@
         }
       });
 
-      // 5. Navigasi Sidebar Tab
+      // Navigasi Sidebar Tab
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -3031,16 +3203,27 @@
             fetchDriveFilesLive();
           }
 
+          // Otomatis tutup sidebar di HP setelah menu dipilih
           if (window.innerWidth <= 992) {
             document.getElementById("sidebar")?.classList.remove("open");
+            document.getElementById("sidebarBackdrop")?.classList.remove("active");
           }
         });
       });
 
+      // Toggle Sidebar & Backdrop di Mobile
+      const sidebarEl = document.getElementById("sidebar");
+      const backdropEl = document.getElementById("sidebarBackdrop");
       document.getElementById("btnToggleSidebar")?.addEventListener("click", () => {
-        document.getElementById("sidebar")?.classList.toggle("open");
+        sidebarEl?.classList.toggle("open");
+        backdropEl?.classList.toggle("active");
+      });
+      backdropEl?.addEventListener("click", () => {
+        sidebarEl?.classList.remove("open");
+        backdropEl?.classList.remove("active");
       });
 
+      // Toggle Password Masking
       document.getElementById("btnTogglePassword")?.addEventListener("click", () => {
         const inp = document.getElementById("loginPassword");
         const icon = document.getElementById("eyeIcon");
@@ -3053,7 +3236,7 @@
         }
       });
 
-      // 6. Form Login Masuk
+      // Form Login Masuk
       document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const u = document.getElementById("loginUsername").value.trim();
@@ -3077,7 +3260,7 @@
 
           const isValid = await TOTP_ENGINE.verify(userSec.secretKey, otpInput);
           if (!isValid) {
-            showToast("Kode 6-digit Authenticator salah atau kedaluwarsa! Coba kode berikutnya di HP Anda.", "danger");
+            showToast("Kode 6-digit Authenticator salah atau kedaluwarsa!", "danger");
             return;
           }
         }
@@ -3087,7 +3270,7 @@
         enterDashboard({ name, role, email: u });
       });
 
-      // 7. Modal Masuk Darurat (Kode Cadangan jika HP Hilang)
+      // Masuk Darurat (Kode Cadangan jika HP Hilang)
       document.getElementById("btnPakaiKodeCadangan")?.addEventListener("click", () => {
         document.getElementById("modalDaruratBackup")?.classList.remove("hidden");
       });
@@ -3121,12 +3304,12 @@
         }
       });
 
-      // 8. Keluar (Logout)
+      // Keluar (Logout)
       document.getElementById("btnLogoutApp")?.addEventListener("click", () => {
         openModalConfirm("Apakah Anda yakin ingin keluar dari sistem?", () => {
           localStorage.removeItem("sdn3_web_user_session");
           AppState.currentUser = null;
-          AppState.arsip = []; // BERSIHKAN ARSIP DARI MEMORI SEKETIKA
+          AppState.arsip = [];
 
           document.getElementById("mainApp").style.display = "none";
           document.getElementById("loginScreen").style.display = "flex";
@@ -3134,11 +3317,11 @@
           
           renderTabelArsip();
           checkLogin2FaPrompt();
-          showToast("Berhasil keluar dari akun. Data aman tersimpan terpisah.", "info");
+          showToast("Berhasil keluar dari akun.", "info");
         });
       });
 
-      // 9. Stepper Penomoran Surat (+ / -)
+      // Stepper Penomoran Surat (+ / -)
       const numUrut = document.getElementById("numUrut");
       document.getElementById("btnNumPlus")?.addEventListener("click", () => {
         let cur = parseInt(numUrut.value) || 100;
@@ -3154,7 +3337,7 @@
         document.getElementById(id)?.addEventListener("input", syncNomorDisplay);
       });
 
-      // 10. Ganti Jenis Format Dokumen
+      // Pilihan Format Dokumen
       document.getElementById("selectJenisSurat")?.addEventListener("change", (e) => {
         const val = e.target.value;
         document.getElementById("formSectionSPT").classList.add("hidden");
@@ -3183,7 +3366,7 @@
         }
       });
 
-      // 11. Live Input Binding
+      // Live Input Binding
       bindLiveInput("inSptUntuk", "viewSptUntuk");
       bindLiveInput("inSptTglBerangkat", "viewSptTglBerangkat");
       bindLiveInput("inSptTglKembali", "viewSptTglKembali");
@@ -3222,7 +3405,7 @@
         syncPenerimaView(AppState.pegawai[e.target.value]);
       });
 
-      // 12. Cetak Dokumen A4 Pas 1 Lembar
+      // Cetak Dokumen A4 Pas 1 Lembar
       document.getElementById("btnPrintSurat")?.addEventListener("click", () => {
         window.print();
       });
@@ -3252,7 +3435,7 @@
         showToast(`Dokumen No. ${no} berhasil disimpan ke Brankas Akun Anda.`);
       });
 
-      // 13. Unggah Berkas PDF Fisik dengan Tag Pemilik Terisolasi
+      // Unggah Berkas PDF Fisik
       document.getElementById("btnUploadDrive")?.addEventListener("click", async () => {
         const no = document.getElementById("inDocNomor").value.trim() || getFullNomorSurat();
         const judul = document.getElementById("inDocTitle").value.trim();
@@ -3283,7 +3466,6 @@
             reader.readAsDataURL(file);
           });
 
-          // FORMAT IDENTITAS AKUN: [userTag]__NomorSurat_Judul.pdf
           const cleanName = `[${curUserTag}]__${no.replace(/[/\\?%*:|"<>]/g, "-")}_${judul}.pdf`;
           
           const res = await fetch(GOOGLE_SCRIPT_URL, {
@@ -3294,7 +3476,7 @@
           const resObj = await res.json();
 
           if (resObj.status === "success") {
-            showToast(`Berkas "${judul}" berhasil diunggah ke Google Drive akun Anda!`);
+            showToast(`Berkas "${judul}" berhasil diunggah ke Google Drive!`);
             document.getElementById("inDocTitle").value = "";
             fileInp.value = "";
             fetchDriveFilesLive();
@@ -3314,7 +3496,7 @@
         renderTabelArsip(e.target.value);
       });
 
-      // 14. Tambah Data Pegawai
+      // Tambah Data Pegawai
       document.getElementById("btnSimpanPegawai")?.addEventListener("click", () => {
         const nama = document.getElementById("newPegNama").value.trim();
         const nip = document.getElementById("newPegNip").value.trim() || "-";
@@ -3337,7 +3519,7 @@
         showToast(`Pegawai ${nama} berhasil ditambahkan!`);
       });
 
-      // 15. Simpan Pengaturan Kop
+      // Simpan Pengaturan Kop
       document.getElementById("btnSimpanKop")?.addEventListener("click", () => {
         AppState.kop.baris1 = document.getElementById("cfgKopBaris1").value.trim();
         AppState.kop.baris2 = document.getElementById("cfgKopBaris2").value.trim();
@@ -3350,7 +3532,7 @@
         showToast("Pengaturan kop surat sekolah berhasil diperbarui!");
       });
 
-      // 16. Simpan Profil Akun
+      // Simpan Profil Akun
       document.getElementById("btnSimpanProfilAkun")?.addEventListener("click", () => {
         const nama = document.getElementById("cfgAccNama").value.trim();
         const role = document.getElementById("cfgAccRole").value.trim();
@@ -3374,7 +3556,7 @@
         }
       });
 
-      // 17. Toggle Aktif/Nonaktif 2FA
+      // Toggle 2FA
       document.getElementById("btnToggle2FaActive")?.addEventListener("click", () => {
         if (!AppState.security.is2FAEnabled) {
           AppState.security.is2FAEnabled = true;
@@ -3391,20 +3573,20 @@
         }
       });
 
-      // 18. Salin Kunci Teks 2FA
+      // Salin Kunci Teks 2FA
       document.getElementById("btnSalinKey")?.addEventListener("click", () => {
         navigator.clipboard.writeText(AppState.security.secretKey);
         showToast("Kunci penyiapan disalin! Masukkan ke Google Authenticator di HP mana pun.");
       });
 
-      // 19. Salin Semua Kode Cadangan
+      // Salin Semua Kode Cadangan
       document.getElementById("btnSalinSemuaBackup")?.addEventListener("click", () => {
         const text = AppState.security.backupCodes.join("\n");
         navigator.clipboard.writeText(text);
         showToast("6 kode cadangan pemulihan disalin ke clipboard!");
       });
 
-      // 20. Uji Coba OTP
+      // Uji Coba OTP
       document.getElementById("btnUjiCobaOtp")?.addEventListener("click", async () => {
         const inp = document.getElementById("inUjiCobaOtp")?.value.trim();
         if (!inp || inp.length !== 6) {
