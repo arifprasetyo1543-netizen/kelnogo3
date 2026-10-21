@@ -6,7 +6,7 @@
   <title>Sistem Persuratan & Arsip Digital - SDN 3 Nogoraji</title>
 
   <!-- Favicon Logo Tut Wuri Handayani -->
-  <link rel="icon" type="image/png" href="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail">
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original">
 
   <!-- Google Fonts & FontAwesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -935,49 +935,10 @@
       line-height: 1.35;
     }
 
-    .stamp-and-sig-area {
-      position: relative;
-      height: 56px;
+    /* Ruang kosong yang bersih untuk tanda tangan basah & stempel manual */
+    .signature-space {
+      height: 65px;
       margin: 4px 0;
-    }
-
-    .stamp-round {
-      position: absolute;
-      top: -4px;
-      left: -16px;
-      width: 62px;
-      height: 62px;
-      border: 1.8px dashed #9333ea;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.8;
-      transform: rotate(-10deg);
-      pointer-events: none;
-    }
-
-    .stamp-text-curve {
-      font-size: 5.5px;
-      font-weight: 800;
-      color: #9333ea;
-      text-transform: uppercase;
-      text-align: center;
-    }
-
-    .stamp-core {
-      font-size: 6.5px;
-      font-weight: 900;
-      color: #9333ea;
-      letter-spacing: 0.8px;
-    }
-
-    .svg-ttd {
-      position: absolute;
-      left: 24px;
-      top: 4px;
-      opacity: 0.85;
     }
 
     .sign-name {
@@ -1348,7 +1309,7 @@
     <div class="login-card">
       <div class="login-header">
         <div class="login-logo-box">
-          <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail" alt="Logo Kabupaten Kebumen">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Tut Wuri Handayani">
         </div>
         <h2>SDN 3 NOGORAJI</h2>
         <p>Sistem Persuratan Kedinasan & Arsip Digital</p>
@@ -1421,7 +1382,7 @@
           <label for="regNama">Nama Lengkap & Gelar</label>
           <div class="input-with-icon">
             <i class="fa-solid fa-user"></i>
-            <input type="text" id="regNama" placeholder="Contoh: Arif Prasetyo" required>
+            <input type="text" id="regNama" placeholder="Contoh: Siti Rahmawati, S.Pd." required>
           </div>
         </div>
 
@@ -1463,7 +1424,7 @@
             <strong>Arif Prasetyo (Operator)</strong>
             <small>Klik Masuk &rarr;</small>
           </button>
-          <button type="button" class="btn-quick-acc" onclick="quickLogin('kkasmin547@gmail.com', '123')">
+          <button type="button" class="btn-quick-acc" onclick="quickLogin('kasmin@gmail.com', '123')">
             <strong>Kasmin, S.Pd., M.M. (Kepsek)</strong>
             <small>Klik Masuk &rarr;</small>
           </button>
@@ -1480,7 +1441,7 @@
     <!-- Bilah Samping (Sidebar) -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <img id="sideLogo" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/960px-LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=thumbnail" alt="Logo Pemkab Kebumen" class="side-logo">
+        <img id="sideLogo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/480px-LOGO_KABUPATEN_KEBUMEN.png" alt="Logo Pemkab Kebumen" class="side-logo">
         <div class="side-title">
           <h3 id="sideSchoolName">SDN 3 NOGORAJI</h3>
           <p>Persuratan & Arsip</p>
@@ -1634,7 +1595,7 @@
                   </div>
                   <div class="form-group">
                     <label for="inSptTujuan">Tempat / Lokasi</label>
-                    <input type="text" id="inSptTujuan" class="form-input" placeholder="">
+                    <input type="text" id="inSptTujuan" class="form-input" placeholder="Ruang Rapat Korwilcambidik Buayan">
                   </div>
                 </div>
 
@@ -1735,7 +1696,7 @@
                   
                   <!-- Kop Surat Sekolah Resmi dengan Logo Pemkab Kebumen -->
                   <header class="letter-header">
-                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/480px-LOGO_KABUPATEN_KEBUMEN.png" alt="Logo Pemerintah Kabupaten Kebumen" class="letter-logo">
+                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Pemerintah Kabupaten Kebumen" class="letter-logo">
                     <div class="kop-text">
                       <h4 id="viewKopBaris1">PEMERINTAH KABUPATEN KEBUMEN</h4>
                       <h3 id="viewKopBaris2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</h3>
@@ -1812,22 +1773,15 @@
                     <p style="text-indent: 28px;">Mengingat pentingnya acara tersebut, kami sangat mengharapkan kehadiran Bapak/Ibu tepat pada waktunya.</p>
                   </div>
 
-                  <!-- Tanda Tangan & Stempel Resmi -->
+                  <!-- Tanda Tangan Resmi (Ruang Bersih untuk Tanda Tangan Basah & Stempel Manual) -->
                   <div class="letter-footer-sign">
                     <div class="sign-box">
                       <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
                       <p>Pada tanggal : <span id="viewPadaTanggal">20 Oktober 2026</span></p>
                       <p class="sign-job" id="viewJabatanTtd">Kepala Sekolah,</p>
 
-                      <div class="stamp-and-sig-area" id="ttdBoxVisual">
-                        <div class="stamp-round">
-                          <span class="stamp-text-curve" id="stampTextSekolah">★ SDN 3 NOGORAJI ★</span>
-                          <span class="stamp-core">KEBUMEN</span>
-                        </div>
-                        <svg class="svg-ttd" viewBox="0 0 160 80" width="130" height="58">
-                          <path d="M15,48 Q40,15 65,42 T110,32 Q135,15 150,52" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linecap="round"/>
-                        </svg>
-                      </div>
+                      <!-- Ruang Tanda Tangan Basah & Cap Stempel Fisik -->
+                      <div class="signature-space"></div>
 
                       <strong class="sign-name" id="viewNamaTtd"><span class="placeholder-dots">................................................</span></strong>
                       <span class="sign-nip" id="viewNipTtd">NIP. -</span>
@@ -2256,7 +2210,7 @@
        ========================================================================= -->
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
-    const LOGO_KEBUMEN_URL = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/LOGO_KABUPATEN_KEBUMEN.png/480px-LOGO_KABUPATEN_KEBUMEN.png";
+    const LOGO_KEBUMEN_URL = "https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original";
 
     // Engine TOTP RFC 6238 Mandiri (Google Authenticator Standard)
     const TOTP_ENGINE = {
@@ -2765,7 +2719,6 @@
       setTxt("viewKopAlamat", k.alamat);
       setTxt("viewKopKontak", k.kontak);
       setTxt("sideSchoolName", k.namaSekolah);
-      setTxt("stampTextSekolah", `★ ${k.namaSekolah} ★`);
 
       const img = document.getElementById("viewKopLogo");
       const sideLogo = document.getElementById("sideLogo");
