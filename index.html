@@ -2980,9 +2980,38 @@
       AppState.siswa = getDefaultSiswaList();
     }
 
-    function saveSiswaState() {
+    async function syncSiswaToDrive(siswaList) {
+      if (!siswaList || !Array.isArray(siswaList)) return;
+      const statusTxt = document.getElementById("cloudStatusText");
+      try {
+        if (statusTxt) statusTxt.innerText = "Menyimpan Siswa ke Drive...";
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "sync_siswa",
+            siswa: siswaList
+          })
+        });
+        const resData = await res.json();
+        if (resData.status === "success") {
+          if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
+          return true;
+        }
+      } catch (err) {
+        console.warn("Gagal sinkron siswa ke Google Drive:", err);
+      } finally {
+        if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
+      }
+      return false;
+    }
+
+    function saveSiswaState(syncCloud = true) {
       localStorage.setItem("sdn3_cached_siswa_v3", JSON.stringify(AppState.siswa));
       renderTabelSiswa();
+      if (syncCloud && typeof GOOGLE_SCRIPT_URL !== "undefined") {
+        syncSiswaToDrive(AppState.siswa);
+      }
     }
 
     function loadUserVault(user) {
@@ -4609,39 +4638,65 @@
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_files&_t=${Date.now()}`);
         const result = await res.json();
         
-        if (result.status === "success" && Array.isArray(result.data)) {
+        if (result.status === "success") {
+          // 1. Sinkronisasi data siswa dari Google Drive
+          if (Array.isArray(result.siswa) && result.siswa.length > 0) {
+            AppState.siswa = result.siswa;
+            localStorage.setItem("sdn3_cached_siswa_v3", JSON.stringify(AppState.siswa));
+            renderTabelSiswa();
+          } else if (AppState.siswa && AppState.siswa.length > 0) {
+            syncSiswaToDrive(AppState.siswa);
+          }
+
+          // 2. Sinkronisasi data pegawai dari Google Drive
+          if (Array.isArray(result.pegawai) && result.pegawai.length > 0) {
+            AppState.pegawai = result.pegawai;
+            localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
+            populateDropdownPegawai();
+            renderTabelPegawai();
+          }
+
+          // 3. Sinkronisasi kop surat dari Google Drive
+          if (result.kop && result.kop.namaSekolah) {
+            AppState.kop = result.kop;
+            localStorage.setItem("sdn3_cached_kop", JSON.stringify(AppState.kop));
+            renderKopSuratView();
+          }
+
+          // 4. Pemetaan arsip dokumen khusus akun aktif
           const userDriveItems = [];
-          
-          result.data.forEach(f => {
-            const rawName = f.nama || "";
-            let isMine = false;
-            let displayTitle = rawName;
-            let displayNomor = "-";
+          if (Array.isArray(result.data)) {
+            result.data.forEach(f => {
+              const rawName = f.nama || "";
+              let isMine = false;
+              let displayTitle = rawName;
+              let displayNomor = "-";
 
-            if (rawName.startsWith(`[${userKey}]__`)) {
-              isMine = true;
-              displayTitle = rawName.replace(`[${userKey}]__`, "");
-              displayNomor = (displayTitle.split("_")[0] || "-").replace(/-/g, "/");
-            } else if (!rawName.includes("__")) {
-              if (userKey.includes("arifprasetyo")) {
+              if (rawName.startsWith(`[${userKey}]__`)) {
                 isMine = true;
-                displayNomor = (rawName.split("_")[0] || "-").replace(/-/g, "/");
+                displayTitle = rawName.replace(`[${userKey}]__`, "");
+                displayNomor = (displayTitle.split("_")[0] || "-").replace(/-/g, "/");
+              } else if (!rawName.includes("__")) {
+                if (userKey.includes("arifprasetyo")) {
+                  isMine = true;
+                  displayNomor = (rawName.split("_")[0] || "-").replace(/-/g, "/");
+                }
               }
-            }
 
-            if (isMine) {
-              userDriveItems.push({
-                id: f.id,
-                ownerTag: userKey,
-                tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
-                nomor: displayNomor,
-                judul: displayTitle,
-                kategori: "Surat Kedinasan",
-                status: "Google Drive",
-                url: f.url
-              });
-            }
-          });
+              if (isMine) {
+                userDriveItems.push({
+                  id: f.id,
+                  ownerTag: userKey,
+                  tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
+                  nomor: displayNomor,
+                  judul: displayTitle,
+                  kategori: "Surat Kedinasan",
+                  status: "Google Drive",
+                  url: f.url
+                });
+              }
+            });
+          }
 
           const merged = [...userDriveItems];
           (AppState.arsip || []).forEach(local => {
@@ -4705,7 +4760,7 @@
       });
     }
 
-    window.bukaBerkasArsip = (idx) => {
+    window.bukaBerkasArsip = function(idx) {
       const item = AppState.arsip[idx];
       if (!item) return;
       if (item.url && item.url !== "#") {
@@ -4715,7 +4770,7 @@
       }
     };
 
-    window.hapusBerkasArsip = (idx) => {
+    window.hapusBerkasArsip = function(idx) {
       const item = AppState.arsip[idx];
       if (!item) return;
       openModalConfirm(`Apakah Anda yakin ingin menghapus berkas "${item.judul}" dari riwayat akun Anda?`, () => {
@@ -4733,12 +4788,17 @@
 
       loadUserVault(user);
 
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("mainApp").style.display = "flex";
+      const loginScreen = document.getElementById("loginScreen");
+      const mainApp = document.getElementById("mainApp");
+      if (loginScreen) loginScreen.style.display = "none";
+      if (mainApp) mainApp.style.display = "flex";
 
-      document.getElementById("sidebarUserName").innerText = user.name || "Operator";
-      document.getElementById("sidebarUserRole").innerText = user.role || "Operator Sekolah";
-      document.getElementById("sidebarUserAvatar").innerText = (user.name || "A")[0].toUpperCase();
+      const sideUser = document.getElementById("sidebarUserName");
+      const sideRole = document.getElementById("sidebarUserRole");
+      const sideAvatar = document.getElementById("sidebarUserAvatar");
+      if (sideUser) sideUser.innerText = user.name || "Operator";
+      if (sideRole) sideRole.innerText = user.role || "Operator Sekolah";
+      if (sideAvatar) sideAvatar.innerText = (user.name || "A")[0].toUpperCase();
 
       const inNama = document.getElementById("cfgAccNama");
       const inEmail = document.getElementById("cfgAccEmail");
@@ -4755,12 +4815,14 @@
       showToast(`Selamat datang, ${user.name}!`);
     }
 
-    function quickLogin(username, password) {
-      document.getElementById("loginUsername").value = username;
-      document.getElementById("loginPassword").value = password;
+    window.quickLogin = function(username, password) {
+      const uEl = document.getElementById("loginUsername");
+      const pEl = document.getElementById("loginPassword");
+      if (uEl) uEl.value = username;
+      if (pEl) pEl.value = password;
       checkLogin2FaPrompt();
-      document.getElementById("btnLoginSubmit").click();
-    }
+      document.getElementById("btnLoginSubmit")?.click();
+    };
 
     function getFullNomorSurat() {
       const k = document.getElementById("numKode")?.value || "400.3.5";
@@ -4873,27 +4935,41 @@
       });
     }
 
-    window.bukaModalEditPegawai = (idx) => {
+    window.bukaModalEditPegawai = function(idx) {
       const p = AppState.pegawai[idx];
       if (!p) return;
-      document.getElementById("editPegIdx").value = idx;
-      document.getElementById("inEditPegNama").value = p.nama;
-      document.getElementById("inEditPegNip").value = p.nip || "";
-      document.getElementById("inEditPegGol").value = p.gol || "";
-      document.getElementById("inEditPegJabatan").value = p.jabatan || "";
+      const elIdx = document.getElementById("editPegIdx");
+      const elNama = document.getElementById("inEditPegNama");
+      const elNip = document.getElementById("inEditPegNip");
+      const elGol = document.getElementById("inEditPegGol");
+      const elJab = document.getElementById("inEditPegJabatan");
+      if (elIdx) elIdx.value = idx;
+      if (elNama) elNama.value = p.nama || "";
+      if (elNip) elNip.value = p.nip !== "-" ? (p.nip || "") : "";
+      if (elGol) elGol.value = p.gol !== "-" ? (p.gol || "") : "";
+      if (elJab) elJab.value = p.jabatan !== "-" ? (p.jabatan || "") : "";
       document.getElementById("modalEditPegawai")?.classList.remove("hidden");
     };
 
-    window.hapusPegawai = (idx) => {
+    window.hapusPegawai = function(idx) {
       if (AppState.pegawai.length <= 1) {
         showToast("Minimal harus ada 1 data pegawai di dalam sistem.", "danger");
         return;
       }
       const target = AppState.pegawai[idx];
-      openModalConfirm(`Apakah Anda yakin ingin menghapus data pegawai "${target.nama}"?`, () => {
+      openModalConfirm(`Apakah Anda yakin ingin menghapus data pegawai "${target.nama}"?`, async () => {
         AppState.pegawai.splice(idx, 1);
         localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
         refreshUI();
+        if (typeof GOOGLE_SCRIPT_URL !== "undefined") {
+          try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "sync_pegawai", pegawai: AppState.pegawai })
+            });
+          } catch(e){}
+        }
         showToast(`Data pegawai ${target.nama} berhasil dihapus.`);
       });
     };
@@ -4984,7 +5060,7 @@
       }
     }
 
-    window.bukaTabAkunLangsung = () => {
+    window.bukaTabAkunLangsung = function() {
       document.querySelector(`[data-tab="tab-akun"]`)?.click();
     };
 
