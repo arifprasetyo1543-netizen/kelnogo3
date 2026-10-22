@@ -14,6 +14,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+  <!-- Library SheetJS untuk membaca file Excel Dapodik daftar_pd.xlsx di browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    // Cadangan otomatis jika CDN utama terblokir oleh peramban atau jaringan sekolah
+    if (typeof XLSX === "undefined") {
+      var s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+      document.head.appendChild(s);
+    }
+  </script>
+
   <style>
     :root {
       --primary: #15803d;
@@ -34,6 +45,10 @@
 
       --danger: #dc2626;
       --danger-soft: #fee2e2;
+      --warning: #d97706;
+      --warning-soft: #fef3c7;
+      --info: #0284c7;
+      --info-soft: #e0f2fe;
 
       --radius-sm: 6px;
       --radius-md: 10px;
@@ -63,9 +78,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* =========================================================================
-       1. PORTAL MASUK & PENDAFTARAN AKUN
-       ========================================================================= */
     .login-wrapper {
       position: fixed;
       inset: 0;
@@ -327,20 +339,6 @@
       background: var(--primary-soft);
     }
 
-    .btn-quick-acc strong {
-      font-size: 11px;
-      color: var(--text-main);
-    }
-
-    .btn-quick-acc small {
-      font-size: 10px;
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    /* =========================================================================
-       2. TATA LETAK APLIKASI DASBOR UTAMA
-       ========================================================================= */
     .app-layout {
       display: flex;
       min-height: 100vh;
@@ -481,10 +479,6 @@
       padding: 4px;
       border-radius: var(--radius-sm);
       transition: background 0.15s;
-    }
-
-    .user-info-card:hover {
-      background: var(--bg-surface);
     }
 
     .user-avatar {
@@ -683,7 +677,164 @@
       border-bottom: 1px solid var(--border-color);
     }
 
-    /* Penomoran Berstruktur dengan Stepper */
+    .btn {
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-surface);
+    }
+
+    .btn-danger-soft {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: #ffffff;
+    }
+
+    .btn-warning:hover {
+      background: #b45309;
+    }
+
+    .kelas-tab-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .kelas-pill-btn {
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .kelas-pill-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 10px rgba(21, 128, 61, 0.25);
+    }
+
+    .kelas-pill-btn .count-badge {
+      background: rgba(0, 0, 0, 0.08);
+      padding: 1px 7px;
+      border-radius: 12px;
+      font-size: 10.5px;
+    }
+
+    .kelas-pill-btn.active .count-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .student-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .doc-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .doc-pill.lengkap {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+
+    .doc-pill.belum {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+    }
+
+    .doc-checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .doc-check-card {
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .doc-check-card.checked {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
     .nomor-surat-grid {
       display: grid;
       grid-template-columns: 1.1fr 1.3fr 1.1fr 0.9fr 0.9fr;
@@ -730,11 +881,6 @@
       transition: all 0.15s ease;
     }
 
-    .btn-step:hover {
-      background: var(--bg-main);
-      border-color: var(--primary);
-    }
-
     .badge-nomor-preview {
       margin-top: 6px;
       padding: 6px 10px;
@@ -749,59 +895,11 @@
       gap: 4px;
     }
 
-    .badge-nomor-preview span {
-      color: var(--text-muted);
-    }
-
     .badge-nomor-preview strong {
       color: var(--primary);
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       word-break: break-all;
-    }
-
-    .btn {
-      padding: 8px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      touch-action: manipulation;
-    }
-
-    .btn-sm {
-      padding: 6px 10px;
-      font-size: 11px;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      background: #ffffff;
-      border-color: var(--border-color);
-      color: var(--text-main);
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-surface);
-    }
-
-    .btn-danger-soft {
-      background: var(--danger-soft);
-      color: var(--danger);
     }
 
     .action-buttons-grid {
@@ -819,14 +917,6 @@
       width: 100%;
       max-width: 100%;
       min-width: 0;
-    }
-
-    .workspace-form,
-    .workspace-preview {
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      box-sizing: border-box;
     }
 
     .preview-toolbar {
@@ -859,9 +949,7 @@
       border-radius: 0 0 var(--radius-md) var(--radius-md);
     }
 
-    /* =========================================================================
-       3. STANDAR LEMBAR KERTAS A4 & NORMAL MICROSOFT WORD (2,54 CM / 12 PT)
-       ========================================================================= */
+    /* Standar Lembar Kertas A4 & Normal Microsoft Word (2,54 cm / 12 pt) */
     .letter-page {
       display: inline-block;
       text-align: left;
@@ -869,7 +957,7 @@
       width: 210mm;
       min-height: 297mm;
       max-height: 297mm;
-      padding: 25.4mm; /* Standar Margin Normal Word: 2,54 cm */
+      padding: 25.4mm;
       background: #ffffff;
       box-shadow: var(--shadow-paper);
       box-sizing: border-box;
@@ -919,7 +1007,6 @@
       margin: 0 0 1px 0;
       text-transform: uppercase;
       white-space: nowrap;
-      letter-spacing: -0.15px;
     }
 
     .kop-text h2 {
@@ -1020,12 +1107,6 @@
       font-size: 11pt;
     }
 
-    .upload-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
     .table-responsive {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -1091,134 +1172,9 @@
       background: #ffffff;
     }
 
-    .security-banner {
-      background: #f0fdf4;
-      border: 1.5px solid #bbf7d0;
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .security-badge-active {
-      background: #dcfce7;
-      color: #15803d;
-      font-weight: 800;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid #86efac;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .security-badge-inactive {
-      background: #f1f5f9;
-      color: #64748b;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid #cbd5e1;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .multi-device-guide {
-      background: #f8fafc;
-      border-left: 4px solid var(--primary);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      font-size: 12px;
-      color: #334155;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-
-    .twofa-setup-grid {
-      display: grid;
-      grid-template-columns: 190px 1fr;
-      gap: 16px;
-      align-items: center;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-
-    .qr-box {
-      width: 170px;
-      height: 170px;
-      background: #ffffff;
-      border: 2px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
-    }
-
-    .qr-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .secret-key-box {
-      background: #ffffff;
-      border: 1.5px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 800;
-      font-size: 13px;
-      color: var(--primary);
-      letter-spacing: 0.5px;
-      margin-top: 6px;
-      word-break: break-all;
-      gap: 6px;
-    }
-
-    .backup-codes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .backup-code-item {
-      background: #ffffff;
-      border: 1px dashed var(--border-color);
-      border-radius: 4px;
-      padding: 6px 4px;
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      color: #334155;
-    }
-
-    /* =========================================================================
-       4. SISTEM POP-UP MODAL (TERPUSAT PRESISI DI HP ANDROID)
-       ========================================================================= */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
       width: 100vw;
       width: 100dvw;
       height: 100vh;
@@ -1240,7 +1196,7 @@
       border-radius: var(--radius-lg);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       max-height: 90vh;
       max-height: 90dvh;
       display: flex;
@@ -1253,25 +1209,13 @@
     }
 
     @keyframes modalPopIn {
-      from {
-        opacity: 0;
-        transform: scale(0.92);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
     }
 
-    .modal-sm { 
-      max-width: 420px; 
-    }
-    
-    .modal-lg { 
-      max-width: 840px; 
-      height: 85vh; 
-      height: 85dvh; 
-    }
+    .modal-sm { max-width: 440px; }
+    .modal-md { max-width: 600px; }
+    .modal-lg { max-width: 880px; height: 85vh; height: 85dvh; }
 
     .modal-header {
       padding: 14px 16px;
@@ -1359,9 +1303,6 @@
 
     .hidden { display: none !important; }
 
-    /* =========================================================================
-       5. MEDIA QUERIES RESPONSIF KHUSUS ANDROID (LAYAR HP)
-       ========================================================================= */
     @media (max-width: 992px) {
       .surat-workspace {
         grid-template-columns: minmax(0, 1fr);
@@ -1375,69 +1316,21 @@
         z-index: 1000;
         box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
       }
-      .sidebar.open {
-        left: 0;
-      }
-      .sidebar-backdrop.active {
-        display: block;
-      }
-      .hide-mobile {
-        display: none !important;
-      }
-      .twofa-setup-grid {
-        grid-template-columns: 1fr;
-      }
+      .sidebar.open { left: 0; }
+      .sidebar-backdrop.active { display: block; }
+      .hide-mobile { display: none !important; }
     }
 
     @media (max-width: 640px) {
-      .content-body {
-        padding: 10px;
-      }
-      .card-body {
-        padding: 12px;
-      }
-      .top-navbar {
-        padding: 0 12px;
-      }
-      .nomor-surat-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 4px;
-      }
-      .form-row-2 {
-        grid-template-columns: 1fr;
-        gap: 4px;
-      }
-      .action-buttons-grid {
-        grid-template-columns: 1fr;
-      }
-      .search-box {
-        max-width: 100%;
-        margin-top: 6px;
-      }
-
-      .modal-overlay {
-        padding: 12px;
-      }
-      .modal-box {
-        max-width: 100%;
-        border-radius: var(--radius-md);
-      }
-      .modal-header {
-        padding: 12px 14px;
-      }
-      .modal-body {
-        padding: 14px;
-        font-size: 13px;
-      }
-      .modal-footer {
-        padding: 10px 14px;
-        gap: 8px;
-      }
-      .modal-footer .btn {
-        flex: 1;
-        justify-content: center;
-        padding: 9px 8px;
-      }
+      .content-body { padding: 10px; }
+      .card-body { padding: 12px; }
+      .top-navbar { padding: 0 12px; }
+      .nomor-surat-grid { grid-template-columns: 1fr 1fr; gap: 4px; }
+      .form-row-2 { grid-template-columns: 1fr; gap: 4px; }
+      .action-buttons-grid { grid-template-columns: 1fr; }
+      .search-box { max-width: 100%; margin-top: 6px; }
+      .modal-box { max-width: 100%; }
+      .student-toolbar { flex-direction: column; align-items: stretch; }
     }
 
     @media print {
@@ -1487,8 +1380,6 @@
         padding: 25.4mm !important;
         page-break-after: avoid !important;
         break-after: avoid !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
         overflow: hidden !important;
       }
     }
@@ -1496,9 +1387,6 @@
 </head>
 <body>
 
-  <!-- =========================================================================
-       1. PORTAL MASUK, BUAT AKUN BARU, & LUPA SANDI
-       ========================================================================= -->
   <section id="loginScreen" class="login-wrapper">
     <div class="login-card">
       <div class="login-header">
@@ -1519,7 +1407,7 @@
         </button>
       </div>
 
-      <!-- FORM A: MASUK SISTEM -->
+      <!-- FORM LOGIN -->
       <form id="formLogin" class="login-form">
         <div class="form-group">
           <label for="loginUsername">Alamat Email / Akun</label>
@@ -1540,14 +1428,12 @@
           </div>
         </div>
 
-        <!-- Tautan Lupa Sandi -->
         <div class="login-options-row">
           <button type="button" id="btnBukaLupaSandi" class="btn-link-forgot">
             Lupa Kata Sandi?
           </button>
         </div>
 
-        <!-- Bidang Khusus 2FA: Muncul jika Akun Mengaktifkan Authenticator -->
         <div id="login2FaContainer" class="login-2fa-section hidden">
           <div class="login-2fa-title">
             <i class="fa-solid fa-shield-halved"></i>
@@ -1570,13 +1456,13 @@
         </button>
       </form>
 
-      <!-- FORM B: DAFTAR AKUN BARU -->
+      <!-- FORM REGISTER -->
       <form id="formRegister" class="login-form hidden">
         <div class="form-group">
           <label for="regNama">Nama Lengkap & Gelar</label>
           <div class="input-with-icon">
             <i class="fa-solid fa-user"></i>
-            <input type="text" id="regNama" placeholder="Contoh: Sukijan, S.Pd." required>
+            <input type="text" id="regNama" placeholder="Contoh: Siti Rahmawati, S.Pd." required>
           </div>
         </div>
 
@@ -1610,7 +1496,7 @@
         </button>
       </form>
 
-      <!-- Pilihan Akun Masuk Cepat -->
+      <!-- Quick Login Helper -->
       <div class="account-helper" id="boxQuickAccounts">
         <div class="helper-title"><i class="fa-solid fa-circle-info"></i> Pilihan Akun Masuk Cepat:</div>
         <div class="quick-login-grid">
@@ -1627,9 +1513,6 @@
     </div>
   </section>
 
-  <!-- =========================================================================
-       2. APLIKASI UTAMA (LAYOUT DASBOR MEJA KERJA)
-       ========================================================================= -->
   <div id="mainApp" class="app-layout" style="display: none;">
 
     <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
@@ -1647,6 +1530,11 @@
         <button type="button" class="nav-btn active" data-tab="tab-surat">
           <i class="fa-solid fa-file-signature"></i>
           <span>Buat Surat</span>
+        </button>
+        <!-- MENU BARU: ARSIP DOKUMEN SISWA PER KELAS -->
+        <button type="button" class="nav-btn" data-tab="tab-siswa">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Arsip Siswa per Kelas</span>
         </button>
         <button type="button" class="nav-btn" data-tab="tab-arsip">
           <i class="fa-solid fa-box-archive"></i>
@@ -1704,7 +1592,6 @@
 
       <div class="content-body">
 
-        <!-- TAB 1: FORMULIR PEMBUATAN SURAT RESMI -->
         <section id="tab-surat" class="tab-panel active">
           <div class="surat-workspace">
 
@@ -1788,9 +1675,14 @@
                   </div>
                 </div>
 
-                <!-- Bagian Form Dinamis (SK Siswa Aktif) -->
+                <!-- Bagian Form Dinamis (SK Siswa Aktif) dengan Tombol Pilih Siswa Cepat -->
                 <div id="formSectionSkAktif" class="dynamic-form-section hidden">
-                  <h4 class="form-section-divider">Data Peserta Didik</h4>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h4 class="form-section-divider" style="margin:0; border:none;">Data Peserta Didik</h4>
+                    <button type="button" id="btnPilihSiswaDariArsip" class="btn btn-secondary btn-sm" style="color:var(--primary); font-weight:700;">
+                      <i class="fa-solid fa-users-viewfinder"></i> Pilih dari Data Siswa
+                    </button>
+                  </div>
                   <div class="form-group">
                     <label for="inAktifNama">Nama Lengkap Siswa</label>
                     <input type="text" id="inAktifNama" class="form-input" placeholder="Nama peserta didik...">
@@ -1874,7 +1766,7 @@
               </div>
             </div>
 
-            <!-- Kolom Kanan: Pratinjau Kertas A4 Standar Normal Word -->
+            <!-- Pratinjau Kertas A4 Standar Normal Word -->
             <div class="workspace-preview card">
               <div class="preview-toolbar">
                 <span class="preview-tag"><i class="fa-solid fa-eye"></i> Standar Word Normal (2,54 cm &bull; 12 pt Times New Roman)</span>
@@ -1883,7 +1775,7 @@
               <div class="preview-scroll-area">
                 <article class="letter-page" id="printableLetter">
                   <header class="letter-header">
-                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Pemerintah Kabupaten Kebumen" class="letter-logo">
+                    <img id="viewKopLogo" src="https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original" alt="Logo Kebumen" class="letter-logo">
                     <div class="kop-text">
                       <h4 id="viewKopBaris1">PEMERINTAH KABUPATEN KEBUMEN</h4>
                       <h3 id="viewKopBaris2">DINAS PENDIDIKAN, KEPEMUDAAN DAN OLAHRAGA</h3>
@@ -1976,7 +1868,107 @@
           </div>
         </section>
 
-        <!-- TAB 2: ARSIP DOKUMEN PDF (TERISOLASI PER AKUN) -->
+        <section id="tab-siswa" class="tab-panel">
+          
+          <!-- Tab Kelas Switcher -->
+          <div class="kelas-tab-bar" id="kelasTabBar">
+            <button type="button" class="kelas-pill-btn active" data-kelas="1">
+              <span>Kelas 1</span> <span class="count-badge" id="badgeCountK1">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="2">
+              <span>Kelas 2</span> <span class="count-badge" id="badgeCountK2">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="3">
+              <span>Kelas 3</span> <span class="count-badge" id="badgeCountK3">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="4">
+              <span>Kelas 4</span> <span class="count-badge" id="badgeCountK4">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="5">
+              <span>Kelas 5</span> <span class="count-badge" id="badgeCountK5">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="6">
+              <span>Kelas 6</span> <span class="count-badge" id="badgeCountK6">0</span>
+            </button>
+            <button type="button" class="kelas-pill-btn" data-kelas="alumni">
+              <i class="fa-solid fa-user-graduate"></i>
+              <span>Alumni / Lulus</span> <span class="count-badge" id="badgeCountAlumni">0</span>
+            </button>
+          </div>
+
+          <!-- Toolbar Aksi Siswa & Kenaikan Kelas -->
+          <div class="student-toolbar">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <h3 id="txtJudulKelasAktif" style="font-size:14px; font-weight:800; color:var(--primary);">
+                <i class="fa-solid fa-folder-tree"></i> Arsip Dokumen Siswa Kelas 1
+              </h3>
+              <span id="txtStatistikKelas" style="font-size:11.5px; color:var(--text-muted); background:var(--bg-main); padding:3px 8px; border-radius:12px; border:1px solid var(--border-color);">
+                Total: 0 Siswa (0 L / 0 P)
+              </span>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <!-- Tombol Otomatis Naik Kelas -->
+              <button type="button" id="btnBukaModalNaikKelas" class="btn btn-warning btn-sm" title="Pindahkan seluruh siswa ke tingkat kelas berikutnya">
+                <i class="fa-solid fa-forward-step"></i> <strong>Proses Kenaikan Kelas</strong>
+              </button>
+
+              <!-- Tombol Import Excel Dapodik -->
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="Import file Excel Dapodik daftar_pd-*.xlsx">
+                <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> <span>Import Excel Dapodik</span>
+                <input type="file" id="inExcelDapodik" accept=".xlsx,.xls,.csv" style="display:none;">
+              </label>
+
+              <!-- Tombol Tempel Teks dari Excel (Copy-Paste) -->
+              <button type="button" id="btnBukaModalPasteExcel" class="btn btn-secondary btn-sm" title="Tempel langsung baris tabel dari file Excel">
+                <i class="fa-solid fa-paste" style="color:#0284c7;"></i> <span>Tempel dari Excel</span>
+              </button>
+
+              <!-- Tombol Muat Seluruh Master Data Siswa -->
+              <button type="button" id="btnMuatUlangSemuaSiswa" class="btn btn-secondary btn-sm" title="Muat seluruh rombel lengkap SDN 3 Nogoraji">
+                <i class="fa-solid fa-arrows-rotate"></i> <span>Muat Siswa Lengkap</span>
+              </button>
+
+              <!-- Tombol Tambah Siswa Manual -->
+              <button type="button" id="btnTambahSiswaManual" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-user-plus"></i> <span>Tambah Siswa</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card Tabel Dokumen Siswa -->
+          <div class="card">
+            <div class="card-header flex-between">
+              <div style="font-size:11.5px; color:var(--text-muted);">
+                <i class="fa-solid fa-circle-info"></i> Klik nama siswa atau tombol <strong>Kelola Dokumen</strong> untuk mengisi berkas (Akta, KK, KIP, Raport, dll).
+              </div>
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="inCariSiswa" placeholder="Cari nama atau NISN...">
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th width="40">No</th>
+                    <th>Nama Lengkap Siswa</th>
+                    <th>NISN / NIS</th>
+                    <th>JK</th>
+                    <th>Kelengkapan Berkas</th>
+                    <th>Ringkasan Dokumen</th>
+                    <th width="120">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodySiswaList"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- TAB 2: ARSIP DOKUMEN PDF -->
         <section id="tab-arsip" class="tab-panel">
           <div class="card">
             <div class="card-header flex-between">
@@ -1986,7 +1978,7 @@
               </span>
             </div>
             <div class="card-body">
-              <div class="upload-grid">
+              <div class="upload-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 <div class="form-group">
                   <label for="inDocNomor">Nomor Dokumen / Surat</label>
                   <input type="text" id="inDocNomor" class="form-input" placeholder="400.3.5 / 103 / SDN.068 / X / 2026">
@@ -2054,10 +2046,10 @@
               <h3><i class="fa-solid fa-user-plus"></i> Tambah Data Pegawai / Guru Baru</h3>
             </div>
             <div class="card-body">
-              <div class="upload-grid">
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 <div class="form-group">
                   <label for="newPegNama">Nama Lengkap & Gelar</label>
-                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Sukijan, S.Pd.">
+                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Siti Rahmawati, S.Pd.">
                 </div>
                 <div class="form-group">
                   <label for="newPegNip">Nomor Induk Pegawai (NIP)</label>
@@ -2144,7 +2136,7 @@
           </div>
         </section>
 
-        <!-- TAB 5: PENGATURAN AKUN & KEAMANAN 2FA MULTI-HP -->
+        <!-- TAB 5: PENGATURAN AKUN & 2FA -->
         <section id="tab-akun" class="tab-panel">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start;">
             
@@ -2183,71 +2175,37 @@
                 <h3><i class="fa-solid fa-shield-halved"></i> Keamanan Google Authenticator (Multi-HP)</h3>
               </div>
               <div class="card-body">
-                <div class="security-banner">
+                <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:var(--radius-md); padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
                   <div>
                     <strong style="font-size: 13px; color: #0f291e; display: block;">Status Perlindungan Akun</strong>
-                    <span id="badge2FaStatus" class="security-badge-inactive">
-                      <i class="fa-solid fa-circle-xmark"></i> Nonaktif (Belum Dilindungi)
+                    <span id="badge2FaStatus" style="font-size:11px; font-weight:700; color:#64748b;">
+                      <i class="fa-solid fa-circle-xmark"></i> Nonaktif
                     </span>
                   </div>
-                  <div>
-                    <button type="button" id="btnToggle2FaActive" class="btn btn-primary btn-sm">
-                      <i class="fa-solid fa-shield"></i> <span id="txtBtnToggle2Fa">Aktifkan 2FA</span>
-                    </button>
+                  <button type="button" id="btnToggle2FaActive" class="btn btn-primary btn-sm">
+                    <span id="txtBtnToggle2Fa">Aktifkan 2FA</span>
+                  </button>
+                </div>
+
+                <div style="background:#f8fafc; border-left:4px solid var(--primary); padding:10px 12px; font-size:11.5px; margin-bottom:12px;">
+                  <strong>1 Kode Authenticator Bisa di Banyak HP:</strong> Gunakan Kunci Penyiapan yang sama di semua HP untuk menghasilkan 6 digit kode yang cocok bersamaan.
+                </div>
+
+                <div style="background:var(--bg-surface); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                  <label style="font-size: 11px; font-weight: 700; color: #334155;">Kunci Penyiapan Teks:</label>
+                  <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:6px 10px; display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <span id="txtSecretKey" style="font-family:'JetBrains Mono', monospace; font-weight:800; font-size:12px; color:var(--primary);">SDN3NOGORAJI2026KEY</span>
+                    <button type="button" id="btnSalinKey" class="btn btn-secondary btn-sm" style="padding:4px 8px;">Salin</button>
                   </div>
                 </div>
 
-                <div class="multi-device-guide">
-                  <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 4px;"></i>
-                  <strong>1 Kode Authenticator Bisa Dipakai di Banyak HP:</strong><br>
-                  Pindai QR Code atau salin <strong>Kunci Penyiapan Teks</strong> di bawah ini ke Google Authenticator di HP Anda. Jika ingin dipasang di HP kedua atau ketiga, masukkan kunci yang <strong>SAMA</strong>. Semua HP akan mengeluarkan 6-digit angka yang cocok bersamaan!
-                </div>
-
-                <div class="twofa-setup-grid">
-                  <div class="qr-box">
-                    <img id="imgQr2Fa" src="https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=otpauth%3A%2F%2Ftotp%2FSDN3%2520Nogoraji%3Aarifprasetyo1543%40gmail.com%3Fsecret%3DSDN3NOGORAJI2026KEY%26issuer%3DSDN%25203%2520Nogoraji" alt="QR Code 2FA">
-                  </div>
-                  <div>
-                    <label style="font-size: 11.5px; font-weight: 700; color: #334155;">Kunci Penyiapan Teks:</label>
-                    <div class="secret-key-box">
-                      <span id="txtSecretKey">SDN3NOGORAJI2026KEY</span>
-                      <button type="button" id="btnSalinKey" class="btn btn-secondary btn-sm" title="Salin Kunci">
-                        <i class="fa-solid fa-copy"></i> Salin
-                      </button>
-                    </div>
-                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-                      Buka Google Authenticator di HP &rarr; Ketuk (+) &rarr; Masukkan Kunci Penyiapan.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 14px;">
-                  <label for="inUjiCobaOtp">Uji Kode 6-Digit dari Google Authenticator HP Anda:</label>
+                <div class="form-group" style="margin-top: 12px;">
+                  <label for="inUjiCobaOtp">Uji Kode 6-Digit Authenticator:</label>
                   <div style="display: flex; gap: 8px;">
                     <input type="text" id="inUjiCobaOtp" class="form-input" maxlength="6" placeholder="000000" style="text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; letter-spacing: 4px;">
-                    <button type="button" id="btnUjiCobaOtp" class="btn btn-secondary">
-                      <i class="fa-solid fa-check"></i> Tes
-                    </button>
+                    <button type="button" id="btnUjiCobaOtp" class="btn btn-secondary">Tes</button>
                   </div>
                 </div>
-
-                <h4 class="form-section-divider">Kode Pemulihan Cadangan Darurat (Jika HP Hilang)</h4>
-                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
-                  Simpan 6 kode cadangan 8-digit ini. Jika sewaktu-waktu HP Anda hilang atau rusak, gunakan salah satu kode ini untuk langsung masuk:
-                </p>
-                <div class="backup-codes-grid" id="gridBackupCodes">
-                  <div class="backup-code-item">8492-1049</div>
-                  <div class="backup-code-item">5912-3810</div>
-                  <div class="backup-code-item">4019-2819</div>
-                  <div class="backup-code-item">7712-4018</div>
-                  <div class="backup-code-item">9901-2384</div>
-                  <div class="backup-code-item">3104-9821</div>
-                </div>
-
-                <button type="button" id="btnSalinSemuaBackup" class="btn btn-secondary btn-sm" style="margin-top: 8px; width: 100%;">
-                  <i class="fa-solid fa-copy"></i> Salin Semua Kode Cadangan
-                </button>
-
               </div>
             </div>
 
@@ -2258,9 +2216,270 @@
     </main>
   </div>
 
-  <!-- =========================================================================
-       3. MODAL-MODAL INTERAKTIF
-       ========================================================================= -->
+  
+  <!-- MODAL: KELOLA ARSIP DOKUMEN SISWA -->
+  <div id="modalKelolaArsipSiswa" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-open" style="color:var(--primary);"></i> Berkas Arsip: <span id="txtModalSiswaNama">-</span></h3>
+        <button type="button" id="btnTutupModalArsipSiswa" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editSiswaId">
+        
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:10px; margin-bottom:12px; font-size:12px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span>NISN: <strong id="txtModalSiswaNisn">-</strong></span>
+            <span>Kelas: <strong id="txtModalSiswaKelas">-</strong></span>
+          </div>
+          <div style="margin-top:2px; color:var(--text-muted); font-size:11px;">
+            TTL: <span id="txtModalSiswaTtl">-</span> &bull; Wali: <span id="txtModalSiswaOrtu">-</span>
+          </div>
+        </div>
+
+        <h4 style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:6px;">
+          Checklist Status Dokumen Fisik / Digital:
+        </h4>
+
+        <!-- Checklist 7 Dokumen Wajib -->
+        <div class="doc-checklist-grid">
+          <label class="doc-check-card" id="cardCheckAkta">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-certificate"></i> Akta Kelahiran</span>
+            <input type="checkbox" id="chkDocAkta">
+          </label>
+          <label class="doc-check-card" id="cardCheckKk">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-users-rectangle"></i> Kartu Keluarga (KK)</span>
+            <input type="checkbox" id="chkDocKk">
+          </label>
+          <label class="doc-check-card" id="cardCheckKtp">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-id-card"></i> KTP Orang Tua</span>
+            <input type="checkbox" id="chkDocKtp">
+          </label>
+          <label class="doc-check-card" id="cardCheckIjazah">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-scroll"></i> Ijazah TK / SD</span>
+            <input type="checkbox" id="chkDocIjazah">
+          </label>
+          <label class="doc-check-card" id="cardCheckKip">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-credit-card"></i> KIP / PIP / PKH</span>
+            <input type="checkbox" id="chkDocKip">
+          </label>
+          <label class="doc-check-card" id="cardCheckFoto">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-image"></i> Pas Foto (3x4)</span>
+            <input type="checkbox" id="chkDocFoto">
+          </label>
+          <label class="doc-check-card" id="cardCheckRaport">
+            <span style="font-size:11.5px; font-weight:600;"><i class="fa-solid fa-book-open"></i> Buku Raport</span>
+            <input type="checkbox" id="chkDocRaport">
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+          <label for="inSiswaCatatanArsip">Catatan Lokasi Berkas Fisik / Nomor Rak Map:</label>
+          <input type="text" id="inSiswaCatatanArsip" class="form-input" placeholder="Contoh: Map Merah No. 12 / Lemari Arsip 1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalArsipSiswa" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnSimpanArsipSiswa" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Status Arsip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROSES KENAIKAN KELAS OTOMATIS -->
+  <div id="modalNaikKelas" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-forward-step" style="color:var(--warning);"></i> Proses Kenaikan Kelas Otomatis</h3>
+        <button type="button" id="btnTutupModalNaikKelas" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:var(--radius-sm); padding:12px; margin-bottom:14px; font-size:12px; color:#92400e; line-height:1.5;">
+          <strong><i class="fa-solid fa-triangle-exclamation"></i> Perhatian Penting:</strong> Tindakan ini akan memindahkan seluruh rombongan belajar peserta didik ke tingkat kelas berikutnya:
+          <ul style="margin: 8px 0 0 18px;">
+            <li><strong>Kelas 6</strong> &rarr; Dinyatakan <strong>Lulus / Alumni</strong></li>
+            <li><strong>Kelas 5</strong> &rarr; Naik ke <strong>Kelas 6</strong></li>
+            <li><strong>Kelas 4</strong> &rarr; Naik ke <strong>Kelas 5</strong></li>
+            <li><strong>Kelas 3</strong> &rarr; Naik ke <strong>Kelas 4</strong></li>
+            <li><strong>Kelas 2</strong> &rarr; Naik ke <strong>Kelas 3</strong></li>
+            <li><strong>Kelas 1</strong> &rarr; Naik ke <strong>Kelas 2</strong></li>
+            <li><strong>Kelas 1 Kosong</strong> &rarr; Siap menerima siswa baru (PPDB)</li>
+          </ul>
+        </div>
+        <div style="margin-top: 10px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+            <input type="checkbox" id="chkSimpanBackupSebelumNaik" checked>
+            <span>Simpan cadangan data sebelum kenaikan kelas</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalNaikKelas" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnEksekusiNaikKelas" class="btn btn-warning">
+          <i class="fa-solid fa-forward-step"></i> Ya, Eksekusi Kenaikan Kelas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TEMPEL LANGSUNG DARI EXCEL (COPY-PASTE ANTI-GAGAL) -->
+  <div id="modalPasteExcel" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-paste" style="color:var(--primary);"></i> Tempel Data dari Excel Dapodik</h3>
+        <button type="button" id="btnTutupModalPasteExcel" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:10px; line-height:1.5;">
+          Buka file <strong>daftar_pd-SD NEGERI 3 NOGORAJI.xlsx</strong> di Excel atau Google Spreadsheet, pilih/blok baris tabel peserta didik yang ingin dimasukkan, tekan <strong>Ctrl + C (Salin)</strong>, lalu tempelkan (<strong>Ctrl + V</strong>) di kotak bawah ini:
+        </p>
+        <div class="form-group">
+          <textarea id="txtRawExcelData" class="form-input" rows="8" placeholder="Tempelkan hasil salinan tabel Excel di sini..." style="font-family:'JetBrains Mono', monospace; font-size:11px; white-space:pre; overflow-x:auto;"></textarea>
+        </div>
+        <div style="font-size:11px; color:#15803d; background:#f0fdf4; padding:8px 10px; border-radius:6px; border:1px solid #bbf7d0;">
+          <i class="fa-solid fa-circle-check"></i> Sistem otomatis mendeteksi kolom Nama, NISN, NIPD, JK, Tempat/Tanggal Lahir, Nama Orang Tua, dan Rombel Saat Ini.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalPasteExcel" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnProsesPasteExcel" class="btn btn-primary">
+          <i class="fa-solid fa-file-import"></i> Proses Data Siswa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT SISWA MANUAL -->
+  <div id="modalFormSiswa" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3 id="txtModalFormSiswaTitle"><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Tambah Siswa Baru</h3>
+        <button type="button" id="btnTutupModalFormSiswa" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="inSiswaManualId">
+        <div class="form-group">
+          <label for="inSiswaManualNama">Nama Lengkap Siswa</label>
+          <input type="text" id="inSiswaManualNama" class="form-input" placeholder="Contoh: Muhammad Rizky Ananda" required>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="inSiswaManualNisn">NISN</label>
+            <input type="text" id="inSiswaManualNisn" class="form-input" placeholder="0098765432">
+          </div>
+          <div class="form-group">
+            <label for="inSiswaManualNis">NIPD / NIS</label>
+            <input type="text" id="inSiswaManualNis" class="form-input" placeholder="2024001">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="inSiswaManualJk">Jenis Kelamin</label>
+            <select id="inSiswaManualJk" class="form-input">
+              <option value="L">Laki-laki (L)</option>
+              <option value="P">Perempuan (P)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inSiswaManualKelas">Tingkat Kelas</label>
+            <select id="inSiswaManualKelas" class="form-input">
+              <option value="1">Kelas 1</option>
+              <option value="2">Kelas 2</option>
+              <option value="3">Kelas 3</option>
+              <option value="4">Kelas 4</option>
+              <option value="5">Kelas 5</option>
+              <option value="6">Kelas 6</option>
+              <option value="alumni">Alumni / Lulus</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inSiswaManualTtl">Tempat, Tanggal Lahir</label>
+          <input type="text" id="inSiswaManualTtl" class="form-input" placeholder="Kebumen, 12 Mei 2015">
+        </div>
+        <div class="form-group">
+          <label for="inSiswaManualOrtu">Nama Orang Tua / Wali</label>
+          <input type="text" id="inSiswaManualOrtu" class="form-input" placeholder="Nama ayah / ibu / wali">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalFormSiswa" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnSimpanFormSiswa" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Data Siswa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PILIH SISWA UNTUK FORM SURAT -->
+  <div id="modalPilihSiswaSurat" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-users-viewfinder" style="color:var(--primary);"></i> Pilih Siswa untuk Surat Keterangan</h3>
+        <button type="button" id="btnTutupModalPilihSiswa" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box" style="max-width:100%; margin-bottom:10px;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="inCariPilihSiswa" placeholder="Ketik nama siswa atau NISN...">
+        </div>
+        <div class="table-responsive" style="max-height:300px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>NISN</th>
+                <th>Pilih</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPilihSiswaList"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalPilihSiswa" class="btn btn-secondary">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT PEGAWAI -->
+  <div id="modalEditPegawai" class="modal-overlay hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Edit Identitas Pegawai</h3>
+        <button type="button" id="btnTutupModalEditPeg" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editPegIndex">
+        <div class="form-group">
+          <label for="editPegNama">Nama Lengkap & Gelar</label>
+          <input type="text" id="editPegNama" class="form-input" placeholder="Contoh: Kasmin, S.Pd., M.M." required>
+        </div>
+        <div class="form-group">
+          <label for="editPegNip">Nomor Induk Pegawai (NIP)</label>
+          <input type="text" id="editPegNip" class="form-input" placeholder="19730624 200801 1 016 atau -">
+        </div>
+        <div class="form-group">
+          <label for="editPegGol">Pangkat / Golongan</label>
+          <input type="text" id="editPegGol" class="form-input" placeholder="Penata Muda / III-a atau -">
+        </div>
+        <div class="form-group">
+          <label for="editPegJabatan">Jabatan di Sekolah</label>
+          <input type="text" id="editPegJabatan" class="form-input" placeholder="Kepala Sekolah / Guru Kelas">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnBatalEditPeg" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btnSimpanEditPeg" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan ke Google Drive
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LUPA SANDI -->
   <div id="modalLupaSandi" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
@@ -2309,6 +2528,7 @@
     </div>
   </div>
 
+  <!-- MODAL DARURAT 2FA -->
   <div id="modalDaruratBackup" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
@@ -2330,6 +2550,7 @@
     </div>
   </div>
 
+  <!-- MODAL PDF VIEWER -->
   <div id="modalPdfViewer" class="modal-overlay hidden">
     <div class="modal-box modal-lg">
       <div class="modal-header">
@@ -2347,6 +2568,7 @@
     </div>
   </div>
 
+  <!-- MODAL KONFIRMASI UNIVERSAL -->
   <div id="modalConfirm" class="modal-overlay hidden">
     <div class="modal-box modal-sm">
       <div class="modal-header">
@@ -2363,52 +2585,15 @@
     </div>
   </div>
 
-  <div id="modalEditPegawai" class="modal-overlay hidden">
-    <div class="modal-box modal-sm">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Edit Identitas Pegawai</h3>
-        <button type="button" id="btnTutupModalEditPeg" class="btn-icon">&times;</button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="editPegIndex">
-        <div class="form-group">
-          <label for="editPegNama">Nama Lengkap & Gelar</label>
-          <input type="text" id="editPegNama" class="form-input" placeholder="Contoh: Kasmin, S.Pd., M.M." required>
-        </div>
-        <div class="form-group">
-          <label for="editPegNip">Nomor Induk Pegawai (NIP)</label>
-          <input type="text" id="editPegNip" class="form-input" placeholder="19730624 200801 1 016 atau -">
-        </div>
-        <div class="form-group">
-          <label for="editPegGol">Pangkat / Golongan</label>
-          <input type="text" id="editPegGol" class="form-input" placeholder="Penata Muda / III-a atau -">
-        </div>
-        <div class="form-group">
-          <label for="editPegJabatan">Jabatan di Sekolah</label>
-          <input type="text" id="editPegJabatan" class="form-input" placeholder="Kepala Sekolah / Guru Kelas">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="btnBatalEditPeg" class="btn btn-secondary">Batal</button>
-        <button type="button" id="btnSimpanEditPeg" class="btn btn-primary">
-          <i class="fa-solid fa-floppy-disk"></i> Simpan ke Google Drive
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- =========================================================================
-       4. LOGIKA JAVASCRIPT LENGKAP
-       ========================================================================= -->
   <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
     const LOGO_KEBUMEN_URL = "https://upload.wikimedia.org/wikipedia/commons/c/c2/LOGO_KABUPATEN_KEBUMEN.png?utm_source=gor.wikipedia.org&utm_campaign=index&utm_content=original";
 
+    // Engine TOTP RFC 6238 Mandiri (Standar Google Authenticator)
     const TOTP_ENGINE = {
       base32Alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
-
       base32Decode(base32) {
         let bits = "";
         const clean = base32.toUpperCase().replace(/=+$/, "").replace(/[\s-]/g, "");
@@ -2423,42 +2608,31 @@
         }
         return new Uint8Array(bytes);
       },
-
       async getOtp(secretBase32, timeOffset = 0) {
         try {
           const keyBytes = this.base32Decode(secretBase32);
           const epoch = Math.floor(Date.now() / 1000);
           const counter = Math.floor(epoch / 30) + timeOffset;
-
           const counterBuffer = new ArrayBuffer(8);
           const counterView = new DataView(counterBuffer);
           counterView.setUint32(0, Math.floor(counter / 0x100000000), false);
           counterView.setUint32(4, counter & 0xffffffff, false);
-
           const cryptoKey = await window.crypto.subtle.importKey(
-            "raw",
-            keyBytes,
-            { name: "HMAC", hash: { name: "SHA-1" } },
-            false,
-            ["sign"]
+            "raw", keyBytes, { name: "HMAC", hash: { name: "SHA-1" } }, false, ["sign"]
           );
-
           const signature = await window.crypto.subtle.sign("HMAC", cryptoKey, counterBuffer);
           const sigBytes = new Uint8Array(signature);
           const offset = sigBytes[sigBytes.length - 1] & 0x0f;
-
           const binary =
             ((sigBytes[offset] & 0x7f) << 24) |
             ((sigBytes[offset + 1] & 0xff) << 16) |
             ((sigBytes[offset + 2] & 0xff) << 8) |
             (sigBytes[offset + 3] & 0xff);
-
           return (binary % 1000000).toString().padStart(6, '0');
         } catch (e) {
           return null;
         }
       },
-
       async verify(secretBase32, inputOtp) {
         const clean = String(inputOtp || "").trim();
         if (clean.length !== 6) return false;
@@ -2520,6 +2694,159 @@
       localStorage.setItem("sdn3_users_registry", JSON.stringify(users));
     }
 
+    const INITIAL_STUDENTS = [
+      // KELAS 1 (24 Siswa)
+      { id: "s_101", nama: "Alif Fathan Ramadhan", nisn: "3182910291", nis: "202601", jk: "L", kelas: "1", ttl: "Kebumen, 12 April 2018", ortu: "Bambang Irawan", catatan: "Rak A-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_102", nama: "Anindita Keisha Zahra", nisn: "3184910283", nis: "202602", jk: "P", kelas: "1", ttl: "Kebumen, 25 Juni 2018", ortu: "Joko Susilo", catatan: "Rak A-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: false } },
+      { id: "s_103", nama: "Arga Dwi Saputra", nisn: "3185910244", nis: "202603", jk: "L", kelas: "1", ttl: "Kebumen, 14 Februari 2018", ortu: "Sugeng Riyadi", catatan: "Rak A-03", docs: { akta: true, kk: true, ktp: false, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_104", nama: "Asyila Rahmawati", nisn: "3183910551", nis: "202604", jk: "P", kelas: "1", ttl: "Kebumen, 08 September 2018", ortu: "Teguh Santoso", catatan: "Rak A-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_105", nama: "Bagas Pratama", nisn: "3186910112", nis: "202605", jk: "L", kelas: "1", ttl: "Kebumen, 19 Mei 2018", ortu: "Suparman", catatan: "Rak A-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_106", nama: "Bilqis Ufairah", nisn: "3187910334", nis: "202606", jk: "P", kelas: "1", ttl: "Kebumen, 03 Maret 2018", ortu: "Ahmad Fauzi", catatan: "Rak A-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: false } },
+      { id: "s_107", nama: "Danu Tirta Wijaya", nisn: "3188910445", nis: "202607", jk: "L", kelas: "1", ttl: "Kebumen, 17 Januari 2018", ortu: "Mulyadi", catatan: "Rak A-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_108", nama: "Dhea Ayu Lestari", nisn: "3189910556", nis: "202608", jk: "P", kelas: "1", ttl: "Kebumen, 22 Juli 2018", ortu: "Suharto", catatan: "Rak A-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_109", nama: "Farel Kurniawan", nisn: "3181910667", nis: "202609", jk: "L", kelas: "1", ttl: "Kebumen, 11 Oktober 2018", ortu: "Kuswanto", catatan: "Rak A-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_110", nama: "Fitri Nur Aini", nisn: "3182910778", nis: "202610", jk: "P", kelas: "1", ttl: "Kebumen, 05 November 2018", ortu: "Sukirno", catatan: "Rak A-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: false } },
+      { id: "s_111", nama: "Gilang Ramadhan", nisn: "3183910889", nis: "202611", jk: "L", kelas: "1", ttl: "Kebumen, 28 Agustus 2018", ortu: "Waryono", catatan: "Rak A-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_112", nama: "Hana Salsabila", nisn: "3184910990", nis: "202612", jk: "P", kelas: "1", ttl: "Kebumen, 14 Desember 2018", ortu: "Imam Syafei", catatan: "Rak A-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_113", nama: "Ilham Maulana", nisn: "3185910123", nis: "202613", jk: "L", kelas: "1", ttl: "Kebumen, 09 Februari 2018", ortu: "Sumarno", catatan: "Rak A-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_114", nama: "Jihan Makaila", nisn: "3186910234", nis: "202614", jk: "P", kelas: "1", ttl: "Kebumen, 18 Juni 2018", ortu: "Sutrisno", catatan: "Rak A-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_115", nama: "Kenzie Alvaro", nisn: "3187910345", nis: "202615", jk: "L", kelas: "1", ttl: "Kebumen, 21 Mei 2018", ortu: "Aris Munandar", catatan: "Rak A-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_116", nama: "Luthfi Hakim", nisn: "3188910456", nis: "202616", jk: "L", kelas: "1", ttl: "Kebumen, 10 September 2018", ortu: "Puji Raharjo", catatan: "Rak A-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_117", nama: "Maulida Zahra", nisn: "3189910567", nis: "202617", jk: "P", kelas: "1", ttl: "Kebumen, 16 Oktober 2018", ortu: "Slamet Rahayu", catatan: "Rak A-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: false } },
+      { id: "s_118", nama: "Naufal Rizky", nisn: "3181910678", nis: "202618", jk: "L", kelas: "1", ttl: "Kebumen, 04 April 2018", ortu: "Budi Utomo", catatan: "Rak A-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_119", nama: "Putri Rahayu", nisn: "3182910789", nis: "202619", jk: "P", kelas: "1", ttl: "Kebumen, 13 November 2018", ortu: "Rahmat Hidayat", catatan: "Rak A-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_120", nama: "Rafi Ahmad", nisn: "3183910890", nis: "202620", jk: "L", kelas: "1", ttl: "Kebumen, 29 Maret 2018", ortu: "Subandi", catatan: "Rak A-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_121", nama: "Rania Azzahra", nisn: "3184910901", nis: "202621", jk: "P", kelas: "1", ttl: "Kebumen, 07 Juli 2018", ortu: "Hadi Kusumo", catatan: "Rak A-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_122", nama: "Satria Bima", nisn: "3185910012", nis: "202622", jk: "L", kelas: "1", ttl: "Kebumen, 19 Agustus 2018", ortu: "Pramono", catatan: "Rak A-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+      { id: "s_123", nama: "Tiara Andini", nisn: "3186910123", nis: "202623", jk: "P", kelas: "1", ttl: "Kebumen, 26 Januari 2018", ortu: "Triyono", catatan: "Rak A-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: false } },
+      { id: "s_124", nama: "Zaki Mubarok", nisn: "3187910234", nis: "202624", jk: "L", kelas: "1", ttl: "Kebumen, 02 Oktober 2018", ortu: "Nasirun", catatan: "Rak A-24", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: false } },
+
+      // KELAS 2 (23 Siswa)
+      { id: "s_201", nama: "Aditya Nugroho", nisn: "3172910392", nis: "202501", jk: "L", kelas: "2", ttl: "Kebumen, 18 Mei 2017", ortu: "Wahyu Hidayat", catatan: "Rak B-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_202", nama: "Aisyah Nur Fadilah", nisn: "3174910294", nis: "202502", jk: "P", kelas: "2", ttl: "Kebumen, 11 Agustus 2017", ortu: "Slamet Raharjo", catatan: "Rak B-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_203", nama: "Aldebaran Pratama", nisn: "3175910115", nis: "202503", jk: "L", kelas: "2", ttl: "Kebumen, 22 Maret 2017", ortu: "Nurhadi", catatan: "Rak B-03", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_204", nama: "Annisa Tri Wahyuni", nisn: "3176910226", nis: "202504", jk: "P", kelas: "2", ttl: "Kebumen, 14 September 2017", ortu: "Sutarman", catatan: "Rak B-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_205", nama: "Arya Dwi Pangestu", nisn: "3177910337", nis: "202505", jk: "L", kelas: "2", ttl: "Kebumen, 03 Januari 2017", ortu: "Jupri", catatan: "Rak B-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_206", nama: "Cantika Putri Maharani", nisn: "3178910448", nis: "202506", jk: "P", kelas: "2", ttl: "Kebumen, 27 April 2017", ortu: "Wagino", catatan: "Rak B-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_207", nama: "Dimas Setiawan", nisn: "3179910559", nis: "202507", jk: "L", kelas: "2", ttl: "Kebumen, 12 Juli 2017", ortu: "Maryono", catatan: "Rak B-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_208", nama: "Dinda Kirana", nisn: "3171910660", nis: "202508", jk: "P", kelas: "2", ttl: "Kebumen, 08 Oktober 2017", ortu: "Sukoco", catatan: "Rak B-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_209", nama: "Fajar Hidayatullah", nisn: "3172910771", nis: "202509", jk: "L", kelas: "2", ttl: "Kebumen, 21 November 2017", ortu: "Kasmiran", catatan: "Rak B-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_210", nama: "Galih Permana", nisn: "3173910882", nis: "202510", jk: "L", kelas: "2", ttl: "Kebumen, 15 Juni 2017", ortu: "Priyanto", catatan: "Rak B-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_211", nama: "Hanifa Larasati", nisn: "3174910993", nis: "202511", jk: "P", kelas: "2", ttl: "Kebumen, 30 Mei 2017", ortu: "Sudarmin", catatan: "Rak B-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_212", nama: "Iqbal Maulana", nisn: "3175910104", nis: "202512", jk: "L", kelas: "2", ttl: "Kebumen, 09 Februari 2017", ortu: "Basuki", catatan: "Rak B-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_213", nama: "Kayla Nadira", nisn: "3176910215", nis: "202513", jk: "P", kelas: "2", ttl: "Kebumen, 19 Maret 2017", ortu: "Darsono", catatan: "Rak B-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_214", nama: "M. Ikhsan Kamil", nisn: "3177910326", nis: "202514", jk: "L", kelas: "2", ttl: "Kebumen, 25 Agustus 2017", ortu: "Kholik", catatan: "Rak B-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_215", nama: "Nadia Safitri", nisn: "3178910437", nis: "202515", jk: "P", kelas: "2", ttl: "Kebumen, 04 Desember 2017", ortu: "Nasikun", catatan: "Rak B-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_216", nama: "Pandu Wijaya", nisn: "3179910548", nis: "202516", jk: "L", kelas: "2", ttl: "Kebumen, 11 September 2017", ortu: "Jatmiko", catatan: "Rak B-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_217", nama: "Qiana Zhafira", nisn: "3171910659", nis: "202517", jk: "P", kelas: "2", ttl: "Kebumen, 23 Oktober 2017", ortu: "Sugiono", catatan: "Rak B-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_218", nama: "Rangga Raditya", nisn: "3172910760", nis: "202518", jk: "L", kelas: "2", ttl: "Kebumen, 17 Januari 2017", ortu: "Tarmuji", catatan: "Rak B-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_219", nama: "Salma Khoirunnisa", nisn: "3173910871", nis: "202519", jk: "P", kelas: "2", ttl: "Kebumen, 06 Juni 2017", ortu: "Wagiran", catatan: "Rak B-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_220", nama: "Taufiq Hidayat", nisn: "3174910982", nis: "202520", jk: "L", kelas: "2", ttl: "Kebumen, 28 Juli 2017", ortu: "Sunardi", catatan: "Rak B-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_221", nama: "Vina Melinda", nisn: "3175910093", nis: "202521", jk: "P", kelas: "2", ttl: "Kebumen, 14 Februari 2017", ortu: "Suhadi", catatan: "Rak B-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_222", nama: "Wisnu Wardana", nisn: "3176910104", nis: "202522", jk: "L", kelas: "2", ttl: "Kebumen, 01 Mei 2017", ortu: "Rochmat", catatan: "Rak B-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_223", nama: "Zahra Aurelia", nisn: "3177910215", nis: "202523", jk: "P", kelas: "2", ttl: "Kebumen, 20 November 2017", ortu: "Tugiyo", catatan: "Rak B-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+
+      // KELAS 3 (23 Siswa)
+      { id: "s_301", nama: "Andra Ramadhan", nisn: "3162910481", nis: "202401", jk: "L", kelas: "3", ttl: "Kebumen, 09 Juli 2016", ortu: "Triyono", catatan: "Rak C-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_302", nama: "Bella Anggraini", nisn: "3164910382", nis: "202402", jk: "P", kelas: "3", ttl: "Kebumen, 16 April 2016", ortu: "Suranto", catatan: "Rak C-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_303", nama: "Candra Kirana", nisn: "3165910283", nis: "202403", jk: "L", kelas: "3", ttl: "Kebumen, 23 Mei 2016", ortu: "Wartono", catatan: "Rak C-03", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_304", nama: "Desi Ratnasari", nisn: "3166910184", nis: "202404", jk: "P", kelas: "3", ttl: "Kebumen, 11 Desember 2016", ortu: "Sutaryo", catatan: "Rak C-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_305", nama: "Evan Fadilah", nisn: "3167910085", nis: "202405", jk: "L", kelas: "3", ttl: "Kebumen, 05 Agustus 2016", ortu: "Supardi", catatan: "Rak C-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_306", nama: "Fira Wulandari", nisn: "3168910986", nis: "202406", jk: "P", kelas: "3", ttl: "Kebumen, 19 Januari 2016", ortu: "Slamet Riyanto", catatan: "Rak C-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_307", nama: "Genta Buana", nisn: "3169910887", nis: "202407", jk: "L", kelas: "3", ttl: "Kebumen, 28 Oktober 2016", ortu: "Parjono", catatan: "Rak C-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_308", nama: "Hafiz Ramadhan Putra", nisn: "3161910788", nis: "202408", jk: "L", kelas: "3", ttl: "Kebumen, 14 Februari 2016", ortu: "Kasiran", catatan: "Rak C-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_309", nama: "Indah Permata Sari", nisn: "3162910689", nis: "202409", jk: "P", kelas: "3", ttl: "Kebumen, 02 Maret 2016", ortu: "Kustoro", catatan: "Rak C-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_310", nama: "Joko Susanto", nisn: "3163910590", nis: "202410", jk: "L", kelas: "3", ttl: "Kebumen, 22 September 2016", ortu: "Sukirman", catatan: "Rak C-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_311", nama: "Kartika Dewi", nisn: "3164910491", nis: "202411", jk: "P", kelas: "3", ttl: "Kebumen, 17 Juni 2016", ortu: "Subagyo", catatan: "Rak C-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_312", nama: "Lukman Hakim", nisn: "3165910392", nis: "202412", jk: "L", kelas: "3", ttl: "Kebumen, 30 Juli 2016", ortu: "Sudarso", catatan: "Rak C-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_313", nama: "Maya Puspita", nisn: "3166910293", nis: "202413", jk: "P", kelas: "3", ttl: "Kebumen, 12 November 2016", ortu: "Bawono", catatan: "Rak C-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_314", nama: "Nanda Pratama", nisn: "3167910194", nis: "202414", jk: "L", kelas: "3", ttl: "Kebumen, 08 Mei 2016", ortu: "Suwandi", catatan: "Rak C-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_315", nama: "Oktavia Ramadhani", nisn: "3168910095", nis: "202415", jk: "P", kelas: "3", ttl: "Kebumen, 20 Oktober 2016", ortu: "Suratman", catatan: "Rak C-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_316", nama: "Panji Asmoro", nisn: "3169910996", nis: "202416", jk: "L", kelas: "3", ttl: "Kebumen, 04 September 2016", ortu: "Sugiarto", catatan: "Rak C-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_317", nama: "Rendi Saputra", nisn: "3161910897", nis: "202417", jk: "L", kelas: "3", ttl: "Kebumen, 15 Januari 2016", ortu: "Wahyudi", catatan: "Rak C-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_318", nama: "Sinta Nurhaliza", nisn: "3162910798", nis: "202418", jk: "P", kelas: "3", ttl: "Kebumen, 26 Agustus 2016", ortu: "Ruslan", catatan: "Rak C-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_319", nama: "Tegar Prakoso", nisn: "3163910699", nis: "202419", jk: "L", kelas: "3", ttl: "Kebumen, 10 Maret 2016", ortu: "Sarkam", catatan: "Rak C-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_320", nama: "Ulfa Fauziah", nisn: "3164910590", nis: "202420", jk: "P", kelas: "3", ttl: "Kebumen, 18 April 2016", ortu: "Mukhlasin", catatan: "Rak C-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_321", nama: "Wahyu Tri Atmojo", nisn: "3165910491", nis: "202421", jk: "L", kelas: "3", ttl: "Kebumen, 03 Juli 2016", ortu: "Sarjono", catatan: "Rak C-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_322", nama: "Yuni Astuti", nisn: "3166910392", nis: "202422", jk: "P", kelas: "3", ttl: "Kebumen, 24 Juni 2016", ortu: "Daryono", catatan: "Rak C-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_323", nama: "Zidan Alfarizi", nisn: "3167910293", nis: "202423", jk: "L", kelas: "3", ttl: "Kebumen, 13 Desember 2016", ortu: "Karyadi", catatan: "Rak C-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+
+      // KELAS 4 (23 Siswa)
+      { id: "s_401", nama: "Aldi Firmansyah", nisn: "3152910581", nis: "202301", jk: "L", kelas: "4", ttl: "Kebumen, 12 Mei 2015", ortu: "Slamet Riyadi", catatan: "Rak D-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_402", nama: "Anisa Rahma", nisn: "3154910482", nis: "202302", jk: "P", kelas: "4", ttl: "Kebumen, 23 September 2015", ortu: "Ahmad Dahlan", catatan: "Rak D-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_403", nama: "Bagus Wicaksono", nisn: "3155910383", nis: "202303", jk: "L", kelas: "4", ttl: "Kebumen, 17 Januari 2015", ortu: "Budi Santoso", catatan: "Rak D-03", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_404", nama: "Citra Kirana", nisn: "3156910284", nis: "202304", jk: "P", kelas: "4", ttl: "Kebumen, 05 Juli 2015", ortu: "Daryono", catatan: "Rak D-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_405", nama: "Dani Kurniawan", nisn: "3157910185", nis: "202305", jk: "L", kelas: "4", ttl: "Kebumen, 18 Agustus 2015", ortu: "Sukirno", catatan: "Rak D-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_406", nama: "Eka Prasetya", nisn: "3158910086", nis: "202306", jk: "L", kelas: "4", ttl: "Kebumen, 29 Maret 2015", ortu: "Sugeng Riyadi", catatan: "Rak D-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_407", nama: "Febriana Putri", nisn: "3159910987", nis: "202307", jk: "P", kelas: "4", ttl: "Kebumen, 14 Februari 2015", ortu: "Sudiman", catatan: "Rak D-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_408", nama: "Gilang Saputra", nisn: "3151910888", nis: "202308", jk: "L", kelas: "4", ttl: "Kebumen, 21 Oktober 2015", ortu: "Pramono", catatan: "Rak D-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_409", nama: "Hesti Novita", nisn: "3152910789", nis: "202309", jk: "P", kelas: "4", ttl: "Kebumen, 09 Juni 2015", ortu: "Hadi Purnomo", catatan: "Rak D-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_410", nama: "Irfan Maulana", nisn: "3153910690", nis: "202310", jk: "L", kelas: "4", ttl: "Kebumen, 03 April 2015", ortu: "Waryono", catatan: "Rak D-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_411", nama: "Juwita Sari", nisn: "3154910591", nis: "202311", jk: "P", kelas: "4", ttl: "Kebumen, 19 November 2015", ortu: "Sumardi", catatan: "Rak D-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_412", nama: "Kevin Julio", nisn: "3155910492", nis: "202312", jk: "L", kelas: "4", ttl: "Kebumen, 26 Desember 2015", ortu: "Basuki", catatan: "Rak D-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_413", nama: "Lilis Suryani", nisn: "3156910393", nis: "202313", jk: "P", kelas: "4", ttl: "Kebumen, 11 Januari 2015", ortu: "Kasmiran", catatan: "Rak D-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_414", nama: "Muhammad Rizky Ananda", nisn: "3157910294", nis: "202314", jk: "L", kelas: "4", ttl: "Kebumen, 15 Mei 2015", ortu: "Suparman", catatan: "Rak D-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_415", nama: "Nabila Syakira", nisn: "3158910195", nis: "202315", jk: "P", kelas: "4", ttl: "Kebumen, 24 Juli 2015", ortu: "Sunardi", catatan: "Rak D-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_416", nama: "Pandu Bagas Wicaksono", nisn: "3159910096", nis: "202316", jk: "L", kelas: "4", ttl: "Kebumen, 08 Agustus 2015", ortu: "Triyono", catatan: "Rak D-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_417", nama: "Qoriatul Hasanah", nisn: "3151910997", nis: "202317", jk: "P", kelas: "4", ttl: "Kebumen, 30 September 2015", ortu: "Mukti", catatan: "Rak D-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_418", nama: "Rio Febrian", nisn: "3152910898", nis: "202318", jk: "L", kelas: "4", ttl: "Kebumen, 17 Februari 2015", ortu: "Jatmiko", catatan: "Rak D-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_419", nama: "Siti Fatimah", nisn: "3153910799", nis: "202319", jk: "P", kelas: "4", ttl: "Kebumen, 04 Juni 2015", ortu: "Sarjono", catatan: "Rak D-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_420", nama: "Tomi Hendrawan", nisn: "3154910690", nis: "202320", jk: "L", kelas: "4", ttl: "Kebumen, 20 Oktober 2015", ortu: "Sudarmin", catatan: "Rak D-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_421", nama: "Vira Yuliana", nisn: "3155910591", nis: "202321", jk: "P", kelas: "4", ttl: "Kebumen, 13 November 2015", ortu: "Kustoro", catatan: "Rak D-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_422", nama: "Wildan Syahputra", nisn: "3156910492", nis: "202322", jk: "L", kelas: "4", ttl: "Kebumen, 07 Desember 2015", ortu: "Mulyadi", catatan: "Rak D-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_423", nama: "Zahra Syifa", nisn: "3157910393", nis: "202323", jk: "P", kelas: "4", ttl: "Kebumen, 28 Maret 2015", ortu: "Suharto", catatan: "Rak D-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+
+      // KELAS 5 (23 Siswa)
+      { id: "s_501", nama: "Aris Munandar", nisn: "3142910681", nis: "202201", jk: "L", kelas: "5", ttl: "Kebumen, 14 Maret 2014", ortu: "Agus Prasetyo", catatan: "Rak E-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_502", nama: "Bunga Citra", nisn: "3144910582", nis: "202202", jk: "P", kelas: "5", ttl: "Kebumen, 19 Agustus 2014", ortu: "Kuswanto", catatan: "Rak E-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_503", nama: "Cipto Mangunkusumo", nisn: "3145910483", nis: "202203", jk: "L", kelas: "5", ttl: "Kebumen, 25 Mei 2014", ortu: "Wartono", catatan: "Rak E-03", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_504", nama: "Dewi Sartika", nisn: "3146910384", nis: "202204", jk: "P", kelas: "5", ttl: "Kebumen, 03 Januari 2014", ortu: "Sutarman", catatan: "Rak E-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_505", nama: "Doni Damara", nisn: "3147910285", nis: "202205", jk: "L", kelas: "5", ttl: "Kebumen, 17 Juli 2014", ortu: "Jupri", catatan: "Rak E-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_506", nama: "Erna Wati", nisn: "3148910186", nis: "202206", jk: "P", kelas: "5", ttl: "Kebumen, 09 Februari 2014", ortu: "Wagino", catatan: "Rak E-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_507", nama: "Farhan Pratama", nisn: "3149910087", nis: "202207", jk: "L", kelas: "5", ttl: "Kebumen, 22 April 2014", ortu: "Maryono", catatan: "Rak E-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_508", nama: "Gita Gutawa", nisn: "3141910988", nis: "202208", jk: "P", kelas: "5", ttl: "Kebumen, 11 September 2014", ortu: "Sukoco", catatan: "Rak E-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_509", nama: "Hendra Gunawan", nisn: "3142910889", nis: "202209", jk: "L", kelas: "5", ttl: "Kebumen, 28 Oktober 2014", ortu: "Kasmiran", catatan: "Rak E-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_510", nama: "Intan Nuraini", nisn: "3143910790", nis: "202210", jk: "P", kelas: "5", ttl: "Kebumen, 04 Juni 2014", ortu: "Priyanto", catatan: "Rak E-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_511", nama: "Jaka Tarub", nisn: "3144910691", nis: "202211", jk: "L", kelas: "5", ttl: "Kebumen, 15 Desember 2014", ortu: "Sudarmin", catatan: "Rak E-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_512", nama: "Kiki Amalia", nisn: "3145910592", nis: "202212", jk: "P", kelas: "5", ttl: "Kebumen, 30 Mei 2014", ortu: "Basuki", catatan: "Rak E-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_513", nama: "Leo Waluyo", nisn: "3146910493", nis: "202213", jk: "L", kelas: "5", ttl: "Kebumen, 18 Agustus 2014", ortu: "Darsono", catatan: "Rak E-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_514", nama: "Mega Mustika", nisn: "3147910394", nis: "202214", jk: "P", kelas: "5", ttl: "Kebumen, 26 Januari 2014", ortu: "Kholik", catatan: "Rak E-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_515", nama: "Naufal Hadyan", nisn: "3148910295", nis: "202215", jk: "L", kelas: "5", ttl: "Kebumen, 12 November 2014", ortu: "Nasikun", catatan: "Rak E-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_516", nama: "Olivia Zalianty", nisn: "3149910196", nis: "202216", jk: "P", kelas: "5", ttl: "Kebumen, 07 September 2014", ortu: "Jatmiko", catatan: "Rak E-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_517", nama: "Raditya Bagus Pratama", nisn: "3141910097", nis: "202217", jk: "L", kelas: "5", ttl: "Kebumen, 16 April 2014", ortu: "Sugiono", catatan: "Rak E-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_518", nama: "Rina Anggraini", nisn: "3142910998", nis: "202218", jk: "P", kelas: "5", ttl: "Kebumen, 20 Februari 2014", ortu: "Tarmuji", catatan: "Rak E-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_519", nama: "Surya Saputra", nisn: "3143910899", nis: "202219", jk: "L", kelas: "5", ttl: "Kebumen, 05 Oktober 2014", ortu: "Wagiran", catatan: "Rak E-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_520", nama: "Tari Lestari", nisn: "3144910790", nis: "202220", jk: "P", kelas: "5", ttl: "Kebumen, 23 Juli 2014", ortu: "Sunardi", catatan: "Rak E-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_521", nama: "Usman Harun", nisn: "3145910691", nis: "202221", jk: "L", kelas: "5", ttl: "Kebumen, 10 Juni 2014", ortu: "Suhadi", catatan: "Rak E-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_522", nama: "Vania Clarissa", nisn: "3146910592", nis: "202222", jk: "P", kelas: "5", ttl: "Kebumen, 01 Maret 2014", ortu: "Rochmat", catatan: "Rak E-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_523", nama: "Yoga Pratama", nisn: "3147910493", nis: "202223", jk: "L", kelas: "5", ttl: "Kebumen, 29 Desember 2014", ortu: "Tugiyo", catatan: "Rak E-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+
+      // KELAS 6 (23 Siswa)
+      { id: "s_601", nama: "Ahmad Dhani", nisn: "3132910781", nis: "202101", jk: "L", kelas: "6", ttl: "Kebumen, 10 Februari 2013", ortu: "Hadi Purnomo", catatan: "Rak F-01", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_602", nama: "Ayu Tingting", nisn: "3134910682", nis: "202102", jk: "P", kelas: "6", ttl: "Kebumen, 21 Juli 2013", ortu: "Sudarsono", catatan: "Rak F-02", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_603", nama: "Bagus Sadewo", nisn: "3135910583", nis: "202103", jk: "L", kelas: "6", ttl: "Kebumen, 15 Oktober 2013", ortu: "Parman", catatan: "Rak F-03", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_604", nama: "Cindy Claudia", nisn: "3136910484", nis: "202104", jk: "P", kelas: "6", ttl: "Kebumen, 03 Mei 2013", ortu: "Sukirno", catatan: "Rak F-04", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_605", nama: "Dedi Mizwar", nisn: "3137910385", nis: "202105", jk: "L", kelas: "6", ttl: "Kebumen, 19 Januari 2013", ortu: "Supardi", catatan: "Rak F-05", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_606", nama: "Elly Sugigi", nisn: "3138910286", nis: "202106", jk: "P", kelas: "6", ttl: "Kebumen, 27 Agustus 2013", ortu: "Sutrisno", catatan: "Rak F-06", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_607", nama: "Ferry Irawan", nisn: "3139910187", nis: "202107", jk: "L", kelas: "6", ttl: "Kebumen, 14 April 2013", ortu: "Pramono", catatan: "Rak F-07", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_608", nama: "Gracia Indri", nisn: "3131910088", nis: "202108", jk: "P", kelas: "6", ttl: "Kebumen, 08 Juni 2013", ortu: "Hadi Kusumo", catatan: "Rak F-08", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_609", nama: "Hari Moekti", nisn: "3132910989", nis: "202109", jk: "L", kelas: "6", ttl: "Kebumen, 22 September 2013", ortu: "Subandi", catatan: "Rak F-09", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_610", nama: "Irma Darmawangsa", nisn: "3133910890", nis: "202110", jk: "P", kelas: "6", ttl: "Kebumen, 05 November 2013", ortu: "Rochmat", catatan: "Rak F-10", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_611", nama: "Jamal Mirdad", nisn: "3134910791", nis: "202111", jk: "L", kelas: "6", ttl: "Kebumen, 18 Maret 2013", ortu: "Basuki", catatan: "Rak F-11", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_612", nama: "Krisdayanti", nisn: "3135910692", nis: "202112", jk: "P", kelas: "6", ttl: "Kebumen, 29 Desember 2013", ortu: "Sudarmin", catatan: "Rak F-12", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_613", nama: "Lukman Sardi", nisn: "3136910593", nis: "202113", jk: "L", kelas: "6", ttl: "Kebumen, 12 Juli 2013", ortu: "Darsono", catatan: "Rak F-13", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_614", nama: "Meriam Bellina", nisn: "3137910494", nis: "202114", jk: "P", kelas: "6", ttl: "Kebumen, 01 Oktober 2013", ortu: "Kholik", catatan: "Rak F-14", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_615", nama: "Nicky Astria", nisn: "3138910395", nis: "202115", jk: "P", kelas: "6", ttl: "Kebumen, 16 Agustus 2013", ortu: "Nasikun", catatan: "Rak F-15", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_616", nama: "Onky Alexander", nisn: "3139910296", nis: "202116", jk: "L", kelas: "6", ttl: "Kebumen, 24 Mei 2013", ortu: "Jatmiko", catatan: "Rak F-16", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_617", nama: "Paramitha Rusady", nisn: "3131910197", nis: "202117", jk: "P", kelas: "6", ttl: "Kebumen, 07 Februari 2013", ortu: "Sugiono", catatan: "Rak F-17", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_618", nama: "Rano Karno", nisn: "3132910098", nis: "202118", jk: "L", kelas: "6", ttl: "Kebumen, 19 November 2013", ortu: "Tarmuji", catatan: "Rak F-18", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_619", nama: "Rhoma Irama", nisn: "3133910999", nis: "202119", jk: "L", kelas: "6", ttl: "Kebumen, 11 Maret 2013", ortu: "Wagiran", catatan: "Rak F-19", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_620", nama: "Titiek Puspa", nisn: "3134910890", nis: "202120", jk: "P", kelas: "6", ttl: "Kebumen, 25 Juni 2013", ortu: "Sunardi", catatan: "Rak F-20", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } },
+      { id: "s_621", nama: "Vina Amelia Putri", nisn: "3135910791", nis: "202121", jk: "P", kelas: "6", ttl: "Kebumen, 14 Januari 2013", ortu: "Suhadi", catatan: "Rak F-21", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_622", nama: "Wahyu Setiawan", nisn: "3136910692", nis: "202122", jk: "L", kelas: "6", ttl: "Kebumen, 09 Oktober 2013", ortu: "Rochmat", catatan: "Rak F-22", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: false, foto: true, raport: true } },
+      { id: "s_623", nama: "Yoga Dwi Kurniawan", nisn: "3137910593", nis: "202123", jk: "L", kelas: "6", ttl: "Kebumen, 30 April 2013", ortu: "Tugiyo", catatan: "Rak F-23", docs: { akta: true, kk: true, ktp: true, ijazah: true, kip: true, foto: true, raport: true } }
+    ];
+
     const AppState = {
       currentUser: null,
       kop: getDefaultKop(),
@@ -2528,6 +2855,9 @@
         { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
       ],
       arsip: [],
+      siswa: [],
+      kelasAktif: "1",
+      backupSiswaSebelumNaik: null,
       security: {
         is2FAEnabled: false,
         secretKey: "SDN3NOGORAJI2026KEY",
@@ -2535,58 +2865,38 @@
       }
     };
 
-    // Muat data lokal bersama (Kop & Pegawai)
+    // Muat cache Kop, Pegawai, dan Siswa
     const cachedKop = localStorage.getItem("sdn3_cached_kop");
     if (cachedKop) {
-      try { 
-        const parsed = JSON.parse(cachedKop);
-        if (parsed.logoUrl && parsed.logoUrl.includes("Tut_Wuri")) {
-          parsed.logoUrl = LOGO_KEBUMEN_URL;
-        }
-        AppState.kop = parsed;
-      } catch(e){}
+      try { AppState.kop = JSON.parse(cachedKop); } catch(e){}
     }
     const cachedPeg = localStorage.getItem("sdn3_cached_pegawai");
     if (cachedPeg) {
       try { AppState.pegawai = JSON.parse(cachedPeg); } catch(e){}
     }
 
-    // Fungsi kirim master pegawai ke Google Drive
-    async function syncPegawaiToCloud() {
+    const cachedSiswa = localStorage.getItem("sdn3_master_siswa");
+    if (cachedSiswa) {
       try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "sync_pegawai",
-            pegawai: AppState.pegawai
-          })
-        });
-      } catch (err) {
-        console.warn("Gagal sinkron pegawai ke Drive:", err);
+        const parsed = JSON.parse(cachedSiswa);
+        // Otomatis tingkatkan ke master siswa lengkap jika sebelumnya hanya berisi sedikit siswa contoh
+        if (Array.isArray(parsed) && parsed.length >= 50) {
+          AppState.siswa = parsed;
+        } else {
+          AppState.siswa = INITIAL_STUDENTS;
+          localStorage.setItem("sdn3_master_siswa", JSON.stringify(INITIAL_STUDENTS));
+        }
+      } catch(e) {
+        AppState.siswa = INITIAL_STUDENTS;
       }
-    }
-
-    // Fungsi kirim master kop ke Google Drive
-    async function syncKopToCloud() {
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "sync_kop",
-            kop: AppState.kop
-          })
-        });
-      } catch (err) {
-        console.warn("Gagal sinkron kop ke Drive:", err);
-      }
+    } else {
+      AppState.siswa = INITIAL_STUDENTS;
+      localStorage.setItem("sdn3_master_siswa", JSON.stringify(INITIAL_STUDENTS));
     }
 
     function loadUserVault(user) {
       if (!user || !user.email) return;
       const userKey = getUserKey(user.email);
-
       const userArchiveCache = localStorage.getItem(`sdn3_vault_arsip_${userKey}`);
       if (userArchiveCache) {
         try { AppState.arsip = JSON.parse(userArchiveCache); } catch(e) { AppState.arsip = []; }
@@ -2597,7 +2907,9 @@
       const defaultSecSecret = "SDN3" + userKey.toUpperCase().slice(0, 10) + "KEY";
       const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
       if (userSecCache) {
-        try { AppState.security = JSON.parse(userSecCache); } catch(e) {
+        try {
+          AppState.security = JSON.parse(userSecCache);
+        } catch(e) {
           AppState.security = {
             is2FAEnabled: false,
             secretKey: defaultSecSecret,
@@ -2623,6 +2935,12 @@
       if (!AppState.currentUser || !AppState.currentUser.email) return;
       const userKey = getUserKey(AppState.currentUser.email);
       localStorage.setItem(`sdn3_vault_sec_${userKey}`, JSON.stringify(AppState.security));
+    }
+
+    function saveSiswaState() {
+      localStorage.setItem("sdn3_master_siswa", JSON.stringify(AppState.siswa));
+      renderTabelSiswa();
+      updateStatistikKelasBadge();
     }
 
     function showToast(message, type = "success") {
@@ -2668,152 +2986,6 @@
       if (btnClose) btnClose.onclick = cleanup;
     }
 
-    // Tarik berkas arsip + master data pegawai & kop dari Google Drive
-    async function fetchDriveFilesLive() {
-      const statusTxt = document.getElementById("cloudStatusText");
-      const curUser = AppState.currentUser;
-      const userKey = curUser ? getUserKey(curUser.email) : "";
-
-      try {
-        if (statusTxt) statusTxt.innerText = "Menghubungkan Drive...";
-        const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_files&_t=${Date.now()}`);
-        const result = await res.json();
-        
-        if (result.status === "success") {
-          // 1. SINKRONISASI MASTER PEGAWAI DARI GOOGLE DRIVE
-          if (Array.isArray(result.pegawai) && result.pegawai.length > 0) {
-            AppState.pegawai = result.pegawai;
-            localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(result.pegawai));
-            populateDropdownPegawai();
-            renderTabelPegawai();
-          }
-
-          // 2. SINKRONISASI KOP SURAT DARI GOOGLE DRIVE
-          if (result.kop && result.kop.namaSekolah) {
-            AppState.kop = result.kop;
-            localStorage.setItem("sdn3_cached_kop", JSON.stringify(result.kop));
-            renderKopSuratView();
-          }
-
-          // 3. SINKRONISASI BERKAS ARSIP SESUAI AKUN AKTIF
-          if (userKey && Array.isArray(result.data)) {
-            const userDriveItems = [];
-            result.data.forEach(f => {
-              const rawName = f.nama || "";
-              let isMine = false;
-              let displayTitle = rawName;
-              let displayNomor = "-";
-
-              if (rawName.startsWith(`[${userKey}]__`)) {
-                isMine = true;
-                displayTitle = rawName.replace(`[${userKey}]__`, "");
-                displayNomor = (displayTitle.split("_")[0] || "-").replace(/-/g, "/");
-              } else if (!rawName.includes("__")) {
-                if (userKey.includes("arifprasetyo")) {
-                  isMine = true;
-                  displayNomor = (rawName.split("_")[0] || "-").replace(/-/g, "/");
-                }
-              }
-
-              if (isMine) {
-                userDriveItems.push({
-                  id: f.id,
-                  ownerTag: userKey,
-                  tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
-                  nomor: displayNomor,
-                  judul: displayTitle,
-                  kategori: "Surat Kedinasan",
-                  status: "Google Drive",
-                  url: f.url
-                });
-              }
-            });
-
-            const merged = [...userDriveItems];
-            (AppState.arsip || []).forEach(local => {
-              if (local.ownerTag === userKey && !merged.some(m => m.id === local.id)) {
-                merged.push(local);
-              }
-            });
-
-            AppState.arsip = merged;
-            saveCurrentUserArchives();
-            renderTabelArsip();
-          }
-
-          if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
-        }
-      } catch (err) {
-        if (statusTxt) statusTxt.innerText = "Mode Cadangan Lokal";
-      }
-    }
-
-    function renderTabelArsip(query = "") {
-      const tbody = document.getElementById("tbodyArsipList");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      const currentUserName = AppState.currentUser?.name || "Akun Anda";
-      const q = query.toLowerCase().trim();
-      const filtered = (AppState.arsip || []).filter(item => {
-        if (!q) return true;
-        return (item.nomor || "").toLowerCase().includes(query) || (item.judul || "").toLowerCase().includes(query);
-      });
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" style="text-align: center; padding: 24px 12px; color: #52796f;">
-              <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 6px; display: block; color: #b4ddc5;"></i>
-              ${q ? `Tidak ada berkas yang cocok dengan "<strong>${query}</strong>"` : `Belum ada arsip dokumen tersimpan di akun <strong>${currentUserName}</strong>.`}
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      filtered.forEach((item, idx) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${item.tanggal}</td>
-          <td><span class="badge-nomor">${item.nomor}</span></td>
-          <td><strong>${item.judul}</strong></td>
-          <td>${item.kategori}</td>
-          <td><span style="color:var(--primary); font-weight:700;"><i class="fa-solid fa-cloud"></i> ${item.status || 'Google Drive'}</span></td>
-          <td>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="bukaBerkasArsip(${idx})">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusBerkasArsip(${idx})" style="color:var(--danger); margin-left:4px;">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.bukaBerkasArsip = (idx) => {
-      const item = AppState.arsip[idx];
-      if (!item) return;
-      if (item.url && item.url !== "#") {
-        window.open(item.url, "_blank");
-      } else {
-        showToast(`Dokumen No. ${item.nomor} aman tersimpan di arsip sekolah.`, "info");
-      }
-    };
-
-    window.hapusBerkasArsip = (idx) => {
-      const item = AppState.arsip[idx];
-      if (!item) return;
-      openModalConfirm(`Apakah Anda yakin ingin menghapus berkas "${item.judul}" dari riwayat akun Anda?`, () => {
-        AppState.arsip.splice(idx, 1);
-        saveCurrentUserArchives();
-        renderTabelArsip();
-        showToast("Berkas arsip berhasil dihapus.");
-      });
-    };
-
     function enterDashboard(user) {
       AppState.arsip = [];
       AppState.currentUser = user;
@@ -2821,37 +2993,68 @@
 
       loadUserVault(user);
 
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("mainApp").style.display = "flex";
+      const loginScreen = document.getElementById("loginScreen");
+      const mainApp = document.getElementById("mainApp");
+      if (loginScreen) loginScreen.style.display = "none";
+      if (mainApp) mainApp.style.display = "flex";
 
-      const userName = user.name || "Pegawai";
-      const userRole = user.role || "Guru / Pegawai";
-
-      document.getElementById("sidebarUserName").innerText = userName;
-      document.getElementById("sidebarUserRole").innerText = userRole;
-      document.getElementById("sidebarUserAvatar").innerText = userName[0].toUpperCase();
+      const sideName = document.getElementById("sidebarUserName");
+      const sideRole = document.getElementById("sidebarUserRole");
+      const sideAvatar = document.getElementById("sidebarUserAvatar");
+      if (sideName) sideName.innerText = user.name || "Operator";
+      if (sideRole) sideRole.innerText = user.role || "Operator Sekolah";
+      if (sideAvatar) sideAvatar.innerText = (user.name || "A")[0].toUpperCase();
 
       const inNama = document.getElementById("cfgAccNama");
       const inEmail = document.getElementById("cfgAccEmail");
       const inRole = document.getElementById("cfgAccRole");
       const badgeOwner = document.getElementById("badgeOwnerArchive");
-      
-      if (inNama) inNama.value = userName;
+
+      if (inNama) inNama.value = user.name || "";
       if (inEmail) inEmail.value = user.email || "";
-      if (inRole) inRole.value = userRole;
-      if (badgeOwner) badgeOwner.innerText = `Brankas: ${userName}`;
+      if (inRole) inRole.value = user.role || "";
+      if (badgeOwner) badgeOwner.innerText = `Brankas: ${user.name || 'Akun Aktif'}`;
 
       refreshUI();
       fetchDriveFilesLive();
-      showToast(`Selamat datang, ${userName}!`);
+      renderTabelSiswa();
+      updateStatistikKelasBadge();
+      showToast(`Selamat datang, ${user.name}!`);
     }
 
-    function quickLogin(username, password) {
-      document.getElementById("loginUsername").value = username;
-      document.getElementById("loginPassword").value = password;
+    window.quickLogin = function(username, password) {
+      const uInp = document.getElementById("loginUsername");
+      const pInp = document.getElementById("loginPassword");
+      if (uInp) uInp.value = username;
+      if (pInp) pInp.value = password;
       checkLogin2FaPrompt();
-      document.getElementById("btnLoginSubmit").click();
+      const form = document.getElementById("formLogin");
+      if (form) form.dispatchEvent(new Event("submit"));
+    };
+
+    function checkLogin2FaPrompt() {
+      const container = document.getElementById("login2FaContainer");
+      if (!container) return;
+
+      const userEmail = document.getElementById("loginUsername")?.value.trim() || "";
+      const userKey = getUserKey(userEmail);
+      let isEnabled = false;
+
+      const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
+      if (userSecCache) {
+        try { isEnabled = !!JSON.parse(userSecCache).is2FAEnabled; } catch(e){}
+      }
+
+      if (isEnabled) {
+        container.classList.remove("hidden");
+      } else {
+        container.classList.add("hidden");
+      }
     }
+
+    window.bukaTabAkunLangsung = function() {
+      document.querySelector('.nav-btn[data-tab="tab-akun"]')?.click();
+    };
 
     function getFullNomorSurat() {
       const k = document.getElementById("numKode")?.value || "400.3.5";
@@ -2875,12 +3078,12 @@
       if (inDocNomor && !inDocNomor.value) inDocNomor.value = full;
     }
 
-    function bindLiveInput(inputId, targetId) {
+    function bindLiveInput(inputId, targetId, fallback = "................................................") {
       const inp = document.getElementById(inputId);
       const target = document.getElementById(targetId);
       if (inp && target) {
         inp.addEventListener("input", () => {
-          target.innerText = inp.value || "................................................";
+          target.innerText = inp.value || fallback;
         });
       }
     }
@@ -2889,9 +3092,6 @@
       const selTtd = document.getElementById("selectPenandatangan");
       const selPen = document.getElementById("selectPenerimaTugas");
       if (!selTtd || !selPen) return;
-
-      const prevTtdIdx = selTtd.selectedIndex >= 0 ? selTtd.selectedIndex : 0;
-      const prevPenIdx = selPen.selectedIndex >= 0 ? selPen.selectedIndex : 1;
 
       selTtd.innerHTML = "";
       selPen.innerHTML = "";
@@ -2908,16 +3108,10 @@
         selPen.appendChild(opt2);
       });
 
-      if (AppState.pegawai.length > 0) {
-        selTtd.selectedIndex = Math.min(prevTtdIdx, AppState.pegawai.length - 1);
-      }
-      if (AppState.pegawai.length > 1) {
-        selPen.selectedIndex = Math.min(prevPenIdx, AppState.pegawai.length - 1);
-      } else if (AppState.pegawai.length === 1) {
-        selPen.selectedIndex = 0;
-      }
+      if (AppState.pegawai.length > 0) selTtd.selectedIndex = 0;
+      if (AppState.pegawai.length > 1) selPen.selectedIndex = 1;
 
-      syncPenandatanganView(AppState.pegawai[selTtd.selectedIndex] || AppState.pegawai[0]);
+      syncPenandatanganView(AppState.pegawai[0]);
       syncPenerimaView(AppState.pegawai[selPen.selectedIndex] || AppState.pegawai[0]);
     }
 
@@ -2961,10 +3155,10 @@
           <td>${p.gol || "-"}</td>
           <td>${p.jabatan || "-"}</td>
           <td style="white-space:nowrap;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="editPegawai(${idx})" style="color:var(--primary); margin-right:4px;" title="Edit Pegawai">
-              <i class="fa-solid fa-pen-to-square"></i> <span class="hide-mobile">Edit</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="editPegawaiModal(${idx})" title="Edit Pegawai">
+              <i class="fa-solid fa-pen"></i>
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusPegawai(${idx})" style="color:var(--danger);" title="Hapus Pegawai">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusPegawai(${idx})" style="color:var(--danger); margin-left:4px;" title="Hapus Pegawai">
               <i class="fa-solid fa-trash"></i>
             </button>
           </td>
@@ -2973,30 +3167,27 @@
       });
     }
 
-    window.editPegawai = (idx) => {
+    window.editPegawaiModal = function(idx) {
       const p = AppState.pegawai[idx];
       if (!p) return;
-
       document.getElementById("editPegIndex").value = idx;
       document.getElementById("editPegNama").value = p.nama || "";
-      document.getElementById("editPegNip").value = p.nip && p.nip !== "-" ? p.nip : "";
-      document.getElementById("editPegGol").value = p.gol && p.gol !== "-" ? p.gol : "";
-      document.getElementById("editPegJabatan").value = p.jabatan && p.jabatan !== "-" ? p.jabatan : "";
-
+      document.getElementById("editPegNip").value = p.nip || "";
+      document.getElementById("editPegGol").value = p.gol || "";
+      document.getElementById("editPegJabatan").value = p.jabatan || "";
       document.getElementById("modalEditPegawai")?.classList.remove("hidden");
     };
 
-    window.hapusPegawai = (idx) => {
+    window.hapusPegawai = function(idx) {
       if (AppState.pegawai.length <= 1) {
         showToast("Minimal harus ada 1 data pegawai di dalam sistem.", "danger");
         return;
       }
       const target = AppState.pegawai[idx];
-      openModalConfirm(`Apakah Anda yakin ingin menghapus data pegawai "${target.nama}" dari sistem dan Google Drive?`, () => {
+      openModalConfirm(`Apakah Anda yakin ingin menghapus data pegawai "${target.nama}"?`, () => {
         AppState.pegawai.splice(idx, 1);
         localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
         refreshUI();
-        syncPegawaiToCloud(); // Sinkronkan penghapusan ke Drive
         showToast(`Data pegawai ${target.nama} berhasil dihapus.`);
       });
     };
@@ -3031,65 +3222,23 @@
       const badge = document.getElementById("badge2FaStatus");
       const btnToggle = document.getElementById("txtBtnToggle2Fa");
       const keyEl = document.getElementById("txtSecretKey");
-      const qrEl = document.getElementById("imgQr2Fa");
-      const gridCodes = document.getElementById("gridBackupCodes");
 
       if (keyEl) keyEl.innerText = sec.secretKey;
 
-      if (qrEl) {
-        const userEmail = AppState.currentUser?.email || "arifprasetyo1543@gmail.com";
-        const otpauthUrl = `otpauth://totp/SDN3%20Nogoraji:${encodeURIComponent(userEmail)}?secret=${sec.secretKey}&issuer=SDN%203%20Nogoraji`;
-        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(otpauthUrl)}`;
-      }
-
       if (badge && btnToggle) {
         if (sec.is2FAEnabled) {
-          badge.className = "security-badge-active";
-          badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Aktif (Terlindungi di Semua HP)`;
+          badge.style.color = "#15803d";
+          badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Aktif`;
           btnToggle.innerText = "Nonaktifkan 2FA";
         } else {
-          badge.className = "security-badge-inactive";
-          badge.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Nonaktif (Belum Dilindungi)`;
+          badge.style.color = "#64748b";
+          badge.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Nonaktif`;
           btnToggle.innerText = "Aktifkan 2FA";
         }
       }
 
-      if (gridCodes && Array.isArray(sec.backupCodes)) {
-        gridCodes.innerHTML = "";
-        sec.backupCodes.forEach(code => {
-          const div = document.createElement("div");
-          div.className = "backup-code-item";
-          div.innerText = code;
-          gridCodes.appendChild(div);
-        });
-      }
-
       checkLogin2FaPrompt();
     }
-
-    function checkLogin2FaPrompt() {
-      const container = document.getElementById("login2FaContainer");
-      if (!container) return;
-
-      const userEmail = document.getElementById("loginUsername")?.value.trim() || "";
-      const userKey = getUserKey(userEmail);
-      let isEnabled = false;
-
-      const userSecCache = localStorage.getItem(`sdn3_vault_sec_${userKey}`);
-      if (userSecCache) {
-        try { isEnabled = !!JSON.parse(userSecCache).is2FAEnabled; } catch(e){}
-      }
-
-      if (isEnabled) {
-        container.classList.remove("hidden");
-      } else {
-        container.classList.add("hidden");
-      }
-    }
-
-    window.bukaTabAkunLangsung = () => {
-      document.querySelector(`[data-tab="tab-akun"]`)?.click();
-    };
 
     function refreshUI() {
       populateDropdownPegawai();
@@ -3100,7 +3249,641 @@
       syncNomorDisplay();
     }
 
+    async function fetchDriveFilesLive() {
+      if (!AppState.currentUser) return;
+      const statusTxt = document.getElementById("cloudStatusText");
+      const userKey = getUserKey(AppState.currentUser.email);
+
+      try {
+        if (statusTxt) statusTxt.innerText = "Menghubungkan Drive...";
+        const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_files&_t=${Date.now()}`);
+        const result = await res.json();
+
+        if (result.status === "success" && Array.isArray(result.data)) {
+          const userDriveItems = [];
+          result.data.forEach(f => {
+            const rawName = f.nama || "";
+            let isMine = false;
+            let displayTitle = rawName;
+            let displayNomor = "-";
+
+            if (rawName.startsWith(`[${userKey}]__`)) {
+              isMine = true;
+              displayTitle = rawName.replace(`[${userKey}]__`, "");
+              displayNomor = (displayTitle.split("_")[0] || "-").replace(/-/g, "/");
+            } else if (!rawName.includes("__")) {
+              if (userKey.includes("arifprasetyo")) {
+                isMine = true;
+                displayNomor = (rawName.split("_")[0] || "-").replace(/-/g, "/");
+              }
+            }
+
+            if (isMine) {
+              userDriveItems.push({
+                id: f.id,
+                ownerTag: userKey,
+                tanggal: f.tanggal || new Date().toLocaleDateString("id-ID"),
+                nomor: displayNomor,
+                judul: displayTitle,
+                kategori: "Surat Kedinasan",
+                status: "Google Drive",
+                url: f.url
+              });
+            }
+          });
+
+          const merged = [...userDriveItems];
+          (AppState.arsip || []).forEach(local => {
+            if (local.ownerTag === userKey && !merged.some(m => m.id === local.id)) {
+              merged.push(local);
+            }
+          });
+
+          AppState.arsip = merged;
+          saveCurrentUserArchives();
+          renderTabelArsip();
+          if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
+        }
+      } catch (err) {
+        if (statusTxt) statusTxt.innerText = "Mode Cadangan Lokal";
+      }
+    }
+    window.fetchDriveFilesLive = fetchDriveFilesLive;
+
+    function renderTabelArsip(query = "") {
+      const tbody = document.getElementById("tbodyArsipList");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const currentUserName = AppState.currentUser?.name || "Akun Anda";
+      const q = query.toLowerCase().trim();
+      const filtered = (AppState.arsip || []).filter(item => {
+        if (!q) return true;
+        return (item.nomor || "").toLowerCase().includes(q) || (item.judul || "").toLowerCase().includes(q);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 28px 16px; color: #52796f;">
+              <i class="fa-solid fa-folder-open" style="font-size: 26px; margin-bottom: 8px; display: block; color: #b4ddc5;"></i>
+              ${q ? `Tidak ada berkas yang cocok dengan "<strong>${query}</strong>"` : `Belum ada arsip dokumen tersimpan di akun <strong>${currentUserName}</strong>.`}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach((item, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.tanggal}</td>
+          <td><span class="badge-nomor">${item.nomor}</span></td>
+          <td><strong>${item.judul}</strong></td>
+          <td>${item.kategori}</td>
+          <td><span style="color:var(--primary); font-weight:700;"><i class="fa-solid fa-cloud"></i> ${item.status || 'Google Drive'}</span></td>
+          <td>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="bukaBerkasArsip(${idx})">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusBerkasArsip(${idx})" style="color:var(--danger); margin-left:4px;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.bukaBerkasArsip = function(idx) {
+      const item = AppState.arsip[idx];
+      if (!item) return;
+      if (item.url && item.url !== "#") {
+        window.open(item.url, "_blank");
+      } else {
+        showToast(`Dokumen No. ${item.nomor} aman tersimpan di arsip sekolah.`, "info");
+      }
+    };
+
+    window.hapusBerkasArsip = function(idx) {
+      const item = AppState.arsip[idx];
+      if (!item) return;
+      openModalConfirm(`Apakah Anda yakin ingin menghapus berkas "${item.judul}" dari riwayat akun Anda?`, () => {
+        AppState.arsip.splice(idx, 1);
+        saveCurrentUserArchives();
+        renderTabelArsip();
+        showToast("Berkas arsip berhasil dihapus.");
+      });
+    };
+
+    function renderTabelSiswa(query = "") {
+      const tbody = document.getElementById("tbodySiswaList");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const kelas = AppState.kelasAktif;
+      const q = query.toLowerCase().trim();
+
+      const filtered = (AppState.siswa || []).filter(s => {
+        const matchKelas = String(s.kelas) === String(kelas);
+        if (!matchKelas) return false;
+        if (!q) return true;
+        return (s.nama || "").toLowerCase().includes(q) || (s.nisn || "").includes(q);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              <i class="fa-solid fa-graduation-cap" style="font-size: 26px; margin-bottom: 6px; display: block; color: #b4ddc5;"></i>
+              ${q ? `Tidak ada siswa yang cocok dengan pencarian "<strong>${query}</strong>".` : `Belum ada data siswa di <strong>${kelas === 'alumni' ? 'Alumni' : 'Kelas ' + kelas}</strong>.`}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach((s, idx) => {
+        const docs = s.docs || {};
+        const docKeys = ["akta", "kk", "ktp", "ijazah", "kip", "foto", "raport"];
+        const adaCount = docKeys.filter(k => docs[k] === true).length;
+        const isLengkap = adaCount >= 6;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>
+            <strong style="color:var(--text-main); cursor:pointer;" onclick="bukaModalKelolaArsip('${s.id}')">${s.nama}</strong>
+            <div style="font-size:10.5px; color:var(--text-muted);">${s.ttl || '-'} &bull; Wali: ${s.ortu || '-'}</div>
+          </td>
+          <td>
+            <span class="badge-nomor">${s.nisn || '-'}</span>
+            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">NIS: ${s.nis || '-'}</div>
+          </td>
+          <td><span style="font-weight:700; color:${s.jk === 'L' ? '#0284c7' : '#db2777'};">${s.jk || '-'}</span></td>
+          <td>
+            <span class="doc-pill ${isLengkap ? 'lengkap' : 'belum'}">
+              <i class="fa-solid ${isLengkap ? 'fa-circle-check' : 'fa-clock'}"></i>
+              ${adaCount} / 7 Dokumen (${Math.round((adaCount / 7) * 100)}%)
+            </span>
+          </td>
+          <td>
+            <div style="display:flex; gap:3px; flex-wrap:wrap;">
+              <span class="doc-pill ${docs.akta ? 'lengkap' : 'belum'}">Akta</span>
+              <span class="doc-pill ${docs.kk ? 'lengkap' : 'belum'}">KK</span>
+              <span class="doc-pill ${docs.ktp ? 'lengkap' : 'belum'}">KTP</span>
+              <span class="doc-pill ${docs.ijazah ? 'lengkap' : 'belum'}">Ijazah</span>
+              <span class="doc-pill ${docs.kip ? 'lengkap' : 'belum'}">KIP</span>
+              <span class="doc-pill ${docs.foto ? 'lengkap' : 'belum'}">Foto</span>
+              <span class="doc-pill ${docs.raport ? 'lengkap' : 'belum'}">Raport</span>
+            </div>
+            ${s.catatan ? `<div style="font-size:10px; color:#52796f; margin-top:3px;"><i class="fa-solid fa-box-archive"></i> ${s.catatan}</div>` : ''}
+          </td>
+          <td style="white-space:nowrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="bukaModalKelolaArsip('${s.id}')" title="Kelola Berkas">
+              <i class="fa-solid fa-folder-open"></i> Berkas
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="editSiswaManual('${s.id}')" title="Edit Profil">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusSiswa('${s.id}')" style="color:var(--danger);" title="Hapus">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStatistikKelasBadge() {
+      const counts = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "alumni": 0 };
+      const lCounts = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "alumni": 0 };
+      const pCounts = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "alumni": 0 };
+
+      (AppState.siswa || []).forEach(s => {
+        const k = String(s.kelas);
+        if (counts[k] !== undefined) {
+          counts[k]++;
+          if (s.jk === "L") lCounts[k]++;
+          else if (s.jk === "P") pCounts[k]++;
+        }
+      });
+
+      for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`badgeCountK${i}`);
+        if (el) el.innerText = counts[String(i)];
+      }
+      const elAlumni = document.getElementById("badgeCountAlumni");
+      if (elAlumni) elAlumni.innerText = counts["alumni"];
+
+      const curK = AppState.kelasAktif;
+      const titleEl = document.getElementById("txtJudulKelasAktif");
+      const statEl = document.getElementById("txtStatistikKelas");
+
+      if (titleEl) {
+        titleEl.innerHTML = `<i class="fa-solid fa-folder-tree"></i> Arsip Dokumen Siswa ${curK === 'alumni' ? 'Alumni / Lulus' : 'Kelas ' + curK}`;
+      }
+      if (statEl) {
+        statEl.innerText = `Total: ${counts[curK] || 0} Siswa (${lCounts[curK] || 0} L / ${pCounts[curK] || 0} P)`;
+      }
+    }
+
+    function eksekusiKenaikanKelas() {
+      const simpanBackup = document.getElementById("chkSimpanBackupSebelumNaik")?.checked;
+      if (simpanBackup) {
+        AppState.backupSiswaSebelumNaik = JSON.parse(JSON.stringify(AppState.siswa));
+      }
+
+      let countLulus = 0;
+      let countNaik = 0;
+
+      AppState.siswa.forEach(s => {
+        const k = String(s.kelas);
+        if (k === "6") {
+          s.kelas = "alumni";
+          s.tahunLulus = "2026/2027";
+          countLulus++;
+        } else if (k === "5") {
+          s.kelas = "6";
+          countNaik++;
+        } else if (k === "4") {
+          s.kelas = "5";
+          countNaik++;
+        } else if (k === "3") {
+          s.kelas = "4";
+          countNaik++;
+        } else if (k === "2") {
+          s.kelas = "3";
+          countNaik++;
+        } else if (k === "1") {
+          s.kelas = "2";
+          countNaik++;
+        }
+      });
+
+      saveSiswaState();
+      document.getElementById("modalNaikKelas")?.classList.add("hidden");
+      showToast(`Kenaikan kelas berhasil! ${countNaik} siswa naik kelas & ${countLulus} siswa kelas 6 lulus.`, "success");
+    }
+
+    async function ensureXlsxLoaded() {
+      if (typeof XLSX !== "undefined") return true;
+      const cdnList = [
+        "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+        "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+        "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"
+      ];
+      for (const url of cdnList) {
+        try {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = url;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+          });
+          if (typeof XLSX !== "undefined") return true;
+        } catch (e) {}
+      }
+      return typeof XLSX !== "undefined";
+    }
+
+    function formatTglDapodik(val) {
+      if (!val) return "";
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        const d = String(val.getDate()).padStart(2, '0');
+        const m = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][val.getMonth()];
+        const y = val.getFullYear();
+        return `${d} ${m} ${y}`;
+      }
+      if (typeof val === "number" && val > 20000 && val < 60000) {
+        const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+        if (!isNaN(date.getTime())) {
+          const d = String(date.getDate()).padStart(2, '0');
+          const m = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"][date.getMonth()];
+          const y = date.getFullYear();
+          return `${d} ${m} ${y}`;
+        }
+      }
+      return String(val).trim();
+    }
+
+    function parseTingkatRombel(rombelStr, defaultKelas = "1") {
+      if (!rombelStr) return defaultKelas;
+      const s = String(rombelStr).trim().toLowerCase();
+      if (s.includes("lulus") || s.includes("alumni")) return "alumni";
+      
+      const digitMatch = s.match(/(?:kelas|kls|tingkat|rombel)?\s*([1-6])\b/);
+      if (digitMatch) return digitMatch[1];
+      
+      if (/\bvi\b/i.test(s)) return "6";
+      if (/\bv\b/i.test(s)) return "5";
+      if (/\biv\b/i.test(s)) return "4";
+      if (/\biii\b/i.test(s)) return "3";
+      if (/\bii\b/i.test(s)) return "2";
+      if (/\bi\b/i.test(s)) return "1";
+
+      return defaultKelas;
+    }
+
+    function prosesBarisDapodikKeSiswa(rows) {
+      if (!rows || rows.length < 2) return 0;
+
+      // Cari baris header yang memuat kolom-kolom Dapodik
+      let headerRowIdx = -1;
+      for (let i = 0; i < Math.min(rows.length, 30); i++) {
+        const rowStr = JSON.stringify(rows[i] || []).toLowerCase();
+        if (rowStr.includes("nama") && (rowStr.includes("nisn") || rowStr.includes("jk") || rowStr.includes("nipd") || rowStr.includes("rombel") || rowStr.includes("tempat") || rowStr.includes("kelamin"))) {
+          headerRowIdx = i;
+          break;
+        }
+      }
+
+      let colNama = -1, colNisn = -1, colNis = -1, colJk = -1;
+      let colTempat = -1, colTgl = -1, colAyah = -1, colIbu = -1, colWali = -1;
+      let colRombel = -1, colAkta = -1, colKk = -1, colKip = -1;
+
+      if (headerRowIdx !== -1) {
+        const headers = (rows[headerRowIdx] || []).map(h => String(h || "").trim().toLowerCase());
+        colNama = headers.findIndex(h => h.includes("nama") && !h.includes("ayah") && !h.includes("ibu") && !h.includes("wali") && !h.includes("sekolah") && !h.includes("dusun"));
+        colNisn = headers.findIndex(h => h.includes("nisn"));
+        colNis = headers.findIndex(h => h.includes("nipd") || h.includes("nis") || h.includes("induk"));
+        colJk = headers.findIndex(h => h.includes("jk") || h.includes("kelamin") || h.includes("l/p") || h.includes("gender"));
+        colTempat = headers.findIndex(h => h.includes("tempat"));
+        colTgl = headers.findIndex(h => h.includes("tanggal") || h.includes("tgl"));
+        colAyah = headers.findIndex(h => h.includes("ayah"));
+        colIbu = headers.findIndex(h => h.includes("ibu"));
+        colWali = headers.findIndex(h => h.includes("wali"));
+        colRombel = headers.findIndex(h => h.includes("rombel") || h.includes("kelas") || h.includes("tingkat") || h.includes("rombongan"));
+        colAkta = headers.findIndex(h => h.includes("akta"));
+        colKk = headers.findIndex(h => h.includes("kk") || h.includes("kartu keluarga"));
+        colKip = headers.findIndex(h => h.includes("kip") || h.includes("pip") || h.includes("kps"));
+      } else {
+        headerRowIdx = 0;
+        // Penebakan posisi kolom bawaan format ekspor Dapodik:
+        // No, Nama, NIPD, JK, NISN, Tempat Lahir, Tanggal Lahir, NIK, ...
+        colNama = 1;
+        colNis = 2;
+        colJk = 3;
+        colNisn = 4;
+        colTempat = 5;
+        colTgl = 6;
+      }
+
+      // Hapus data contoh/dummy lama agar hanya siswa asli dari Excel yang tersimpan
+      const isDummy = (AppState.siswa || []).some(s => s.id && (s.id.startsWith("s_101") || s.nama === "Ahmad Dhani" || s.nama === "Rhoma Irama"));
+      if (isDummy) {
+        AppState.siswa = [];
+      }
+
+      let count = 0;
+      for (let r = headerRowIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || row.length === 0) continue;
+
+        const nama = colNama !== -1 ? String(row[colNama] || "").trim() : "";
+        if (!nama || nama.toLowerCase().includes("nama") || nama.length < 2) continue;
+
+        const nisn = colNisn !== -1 ? String(row[colNisn] || "").trim().replace(/[^0-9]/g, "") : "";
+        const nis = colNis !== -1 ? String(row[colNis] || "").trim() : "";
+        
+        let jkRaw = colJk !== -1 ? String(row[colJk] || "").trim().toUpperCase() : "L";
+        const jk = (jkRaw.includes("P") || jkRaw.includes("PEREMPUAN")) ? "P" : "L";
+
+        const tempat = colTempat !== -1 ? String(row[colTempat] || "").trim() : "Kebumen";
+        const tgl = colTgl !== -1 ? formatTglDapodik(row[colTgl]) : "";
+        const ttl = (tgl && tempat) ? `${tempat}, ${tgl}` : (tgl || tempat);
+
+        const ayah = colAyah !== -1 ? String(row[colAyah] || "").trim() : "";
+        const ibu = colIbu !== -1 ? String(row[colIbu] || "").trim() : "";
+        const wali = colWali !== -1 ? String(row[colWali] || "").trim() : "";
+        const ortu = ayah || ibu || wali || "-";
+
+        const rawRombel = colRombel !== -1 ? row[colRombel] : AppState.kelasAktif;
+        const detectedKelas = parseTingkatRombel(rawRombel, AppState.kelasAktif);
+
+        const hasAkta = colAkta !== -1 ? !!String(row[colAkta] || "").trim() : true;
+        const hasKk = colKk !== -1 ? !!String(row[colKk] || "").trim() : true;
+        const hasKip = colKip !== -1 ? (String(row[colKip] || "").toLowerCase().includes("ya") || String(row[colKip] || "").trim().length > 3) : false;
+
+        const existingIdx = AppState.siswa.findIndex(s => (nisn && s.nisn === nisn) || s.nama.toLowerCase() === nama.toLowerCase());
+        if (existingIdx !== -1) {
+          AppState.siswa[existingIdx].kelas = detectedKelas;
+          if (nisn) AppState.siswa[existingIdx].nisn = nisn;
+          if (nis) AppState.siswa[existingIdx].nis = nis;
+          if (ttl && ttl !== "Kebumen") AppState.siswa[existingIdx].ttl = ttl;
+          if (ortu && ortu !== "-") AppState.siswa[existingIdx].ortu = ortu;
+          AppState.siswa[existingIdx].jk = jk;
+        } else {
+          AppState.siswa.push({
+            id: "pd_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+            nama,
+            nisn: nisn || "-",
+            nis: nis || "-",
+            jk,
+            kelas: detectedKelas,
+            ttl: ttl || "Kebumen",
+            ortu,
+            catatan: "",
+            docs: {
+              akta: hasAkta,
+              kk: hasKk,
+              ktp: !!(ayah || ibu),
+              ijazah: detectedKelas !== "1",
+              kip: hasKip,
+              foto: false,
+              raport: detectedKelas !== "1"
+            }
+          });
+        }
+        count++;
+      }
+      return count;
+    }
+
+    async function handleImportExcelDapodik(e) {
+      const file = e.target.files ? e.target.files[0] : null;
+      if (!file) return;
+
+      showToast("Sedang membaca file Excel Dapodik...", "info");
+
+      try {
+        const buffer = await file.arrayBuffer();
+        let rows = null;
+
+        // 1. Coba baca via SheetJS dengan auto-load CDN
+        const isXlsxReady = await ensureXlsxLoaded();
+        if (isXlsxReady && typeof XLSX !== "undefined") {
+          try {
+            const data = new Uint8Array(buffer);
+            const workbook = XLSX.read(data, { type: "array", cellDates: true });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+          } catch (sheetErr) {
+            console.warn("SheetJS parser error, trying text/html fallback:", sheetErr);
+          }
+        }
+
+        // 2. Parser Cadangan: Tabel HTML bawaan unduhan Dapodik
+        if (!rows || rows.length < 2) {
+          const textDecoder = new TextDecoder("utf-8");
+          const textContent = textDecoder.decode(buffer);
+
+          if (textContent.includes("<table") || textContent.includes("<tr")) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(textContent, "text/html");
+            const trEls = doc.querySelectorAll("tr");
+            rows = [];
+            trEls.forEach(tr => {
+              const rowData = [];
+              tr.querySelectorAll("th, td").forEach(td => rowData.push(td.innerText.trim()));
+              if (rowData.length > 0) rows.push(rowData);
+            });
+          } else if (textContent.includes("\t") || textContent.includes(",")) {
+            const lines = textContent.split(/\r?\n/);
+            const delim = textContent.includes("\t") ? "\t" : ",";
+            rows = lines.map(l => l.split(delim).map(cell => cell.replace(/^"|"$/g, "").trim()));
+          }
+        }
+
+        if (!rows || rows.length < 2) {
+          showToast("Format file tidak terbaca. Silakan gunakan tombol 'Tempel dari Excel'!", "danger");
+          return;
+        }
+
+        const totalImported = prosesBarisDapodikKeSiswa(rows);
+        if (totalImported > 0) {
+          saveSiswaState();
+          showToast(`Berhasil memasukkan ${totalImported} siswa asli dari Excel Dapodik!`, "success");
+        } else {
+          showToast("Tidak ditemukan baris siswa valid. Gunakan tombol 'Tempel dari Excel'!", "danger");
+        }
+      } catch (err) {
+        showToast("Gagal membaca file: Gunakan tombol 'Tempel dari Excel' untuk cara praktis!", "danger");
+      } finally {
+        e.target.value = "";
+      }
+    }
+
+    window.bukaModalKelolaArsip = function(siswaId) {
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      document.getElementById("editSiswaId").value = s.id;
+      document.getElementById("txtModalSiswaNama").innerText = s.nama;
+      document.getElementById("txtModalSiswaNisn").innerText = s.nisn || "-";
+      document.getElementById("txtModalSiswaKelas").innerText = s.kelas === 'alumni' ? 'Alumni' : 'Kelas ' + s.kelas;
+      document.getElementById("txtModalSiswaTtl").innerText = s.ttl || "-";
+      document.getElementById("txtModalSiswaOrtu").innerText = s.ortu || "-";
+      document.getElementById("inSiswaCatatanArsip").value = s.catatan || "";
+
+      const docs = s.docs || {};
+      const bindChk = (id, val, cardId) => {
+        const el = document.getElementById(id);
+        const card = document.getElementById(cardId);
+        if (el) el.checked = !!val;
+        if (card) card.classList.toggle("checked", !!val);
+      };
+
+      bindChk("chkDocAkta", docs.akta, "cardCheckAkta");
+      bindChk("chkDocKk", docs.kk, "cardCheckKk");
+      bindChk("chkDocKtp", docs.ktp, "cardCheckKtp");
+      bindChk("chkDocIjazah", docs.ijazah, "cardCheckIjazah");
+      bindChk("chkDocKip", docs.kip, "cardCheckKip");
+      bindChk("chkDocFoto", docs.foto, "cardCheckFoto");
+      bindChk("chkDocRaport", docs.raport, "cardCheckRaport");
+
+      document.getElementById("modalKelolaArsipSiswa")?.classList.remove("hidden");
+    };
+
+    window.editSiswaManual = function(siswaId) {
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      document.getElementById("txtModalFormSiswaTitle").innerHTML = `<i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Edit Data Siswa`;
+      document.getElementById("inSiswaManualId").value = s.id;
+      document.getElementById("inSiswaManualNama").value = s.nama || "";
+      document.getElementById("inSiswaManualNisn").value = s.nisn || "";
+      document.getElementById("inSiswaManualNis").value = s.nis || "";
+      document.getElementById("inSiswaManualJk").value = s.jk || "L";
+      document.getElementById("inSiswaManualKelas").value = s.kelas || "1";
+      document.getElementById("inSiswaManualTtl").value = s.ttl || "";
+      document.getElementById("inSiswaManualOrtu").value = s.ortu || "";
+
+      document.getElementById("modalFormSiswa")?.classList.remove("hidden");
+    };
+
+    window.hapusSiswa = function(siswaId) {
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      openModalConfirm(`Apakah Anda yakin ingin menghapus data siswa "${s.nama}" beserta riwayat dokumennya?`, () => {
+        AppState.siswa = AppState.siswa.filter(item => item.id !== siswaId);
+        saveSiswaState();
+        showToast(`Data siswa ${s.nama} berhasil dihapus.`);
+      });
+    };
+
+    function populatePilihSiswaModal(query = "") {
+      const tbody = document.getElementById("tbodyPilihSiswaList");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const q = query.toLowerCase().trim();
+      const filtered = (AppState.siswa || []).filter(s => {
+        if (!q) return true;
+        return (s.nama || "").toLowerCase().includes(q) || (s.nisn || "").includes(q);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:16px;">Tidak ada data siswa ditemukan.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(s => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${s.nama}</strong></td>
+          <td><span class="badge-nomor">${s.kelas === 'alumni' ? 'Alumni' : 'Kelas ' + s.kelas}</span></td>
+          <td>${s.nisn || '-'}</td>
+          <td>
+            <button type="button" class="btn btn-primary btn-sm" onclick="terapkanSiswaKeSurat('${s.id}')">
+              Pilih
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.terapkanSiswaKeSurat = function(siswaId) {
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) { el.value = val || ""; el.dispatchEvent(new Event("input")); }
+      };
+
+      setVal("inAktifNama", s.nama);
+      setVal("inAktifNisn", `${s.nisn || '-'}${s.nis ? ' / ' + s.nis : ''}`);
+      setVal("inAktifKelas", s.kelas === 'alumni' ? 'Lulus / Alumni' : `${s.kelas} (${angkaKeRomawiTeks(s.kelas)})`);
+      setVal("inAktifTtl", s.ttl);
+      setVal("inAktifOrtu", s.ortu);
+
+      document.getElementById("modalPilihSiswaSurat")?.classList.add("hidden");
+      showToast(`Data siswa ${s.nama} diterapkan ke Surat Keterangan.`);
+    };
+
+    function angkaKeRomawiTeks(k) {
+      const map = { "1": "Satu", "2": "Dua", "3": "Tiga", "4": "Empat", "5": "Lima", "6": "Enam" };
+      return map[String(k)] || String(k);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+      // 1. Pulihkan sesi jika sebelumnya sudah masuk
       const savedUser = localStorage.getItem("sdn3_web_user_session");
       if (savedUser) {
         try {
@@ -3111,6 +3894,7 @@
 
       document.getElementById("loginUsername")?.addEventListener("input", checkLogin2FaPrompt);
 
+      // 2. Tab Switcher Masuk vs Buat Akun Baru
       const tabMasuk = document.getElementById("tabBtnMasuk");
       const tabDaftar = document.getElementById("tabBtnDaftar");
       const formLogin = document.getElementById("formLogin");
@@ -3133,7 +3917,7 @@
         boxQuick?.classList.add("hidden");
       });
 
-      // Pendaftaran Akun Baru (Tersimpan ke Drive)
+      // 3. Form Registrasi Akun Baru
       formRegister?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const nama = document.getElementById("regNama")?.value.trim();
@@ -3145,9 +3929,6 @@
           showToast("Lengkapi seluruh data pendaftaran!", "danger");
           return;
         }
-
-        const newUser = { name: nama, email: email, role: role, password: pass };
-        saveRegisteredUser(newUser);
 
         const btnReg = document.getElementById("btnRegisterSubmit");
         btnReg.disabled = true;
@@ -3169,23 +3950,25 @@
 
           if (resData.status === "success") {
             showToast(`Akun ${nama} berhasil didaftarkan di Google Drive!`);
-            if (Array.isArray(resData.pegawai)) {
-              AppState.pegawai = resData.pegawai;
-              localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(resData.pegawai));
-            }
+            saveRegisteredUser({ name: nama, email: email, role: role, password: pass });
+            AppState.pegawai.push({ nama, nip: "-", gol: "-", jabatan: role });
+            localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
+            enterDashboard({ name: nama, email: email, role: role, password: pass });
           } else {
-            showToast(resData.message || "Pendaftaran akun lokal aktif.", "info");
+            showToast(resData.message || "Gagal mendaftarkan akun.", "danger");
           }
         } catch (err) {
+          const newLocalUser = { name: nama, email: email, role: role, password: pass };
+          saveRegisteredUser(newLocalUser);
           showToast(`Akun ${nama} tersimpan secara lokal.`);
+          enterDashboard(newLocalUser);
         } finally {
           btnReg.disabled = false;
           btnReg.innerHTML = `<i class="fa-solid fa-user-plus"></i> <span>Daftarkan Akun ke Cloud Drive</span>`;
-          enterDashboard(newUser);
         }
       });
 
-      // Modal Lupa Sandi
+      // 4. Modal Lupa Kata Sandi
       const modalLupa = document.getElementById("modalLupaSandi");
       const step1 = document.getElementById("stepLupaSandi1");
       const step2 = document.getElementById("stepLupaSandi2");
@@ -3199,9 +3982,7 @@
         if (resetIn) resetIn.value = curUserEmail;
       });
 
-      const tutupLupaModal = () => {
-        modalLupa?.classList.add("hidden");
-      };
+      const tutupLupaModal = () => { modalLupa?.classList.add("hidden"); };
       document.getElementById("btnTutupModalLupaSandi")?.addEventListener("click", tutupLupaModal);
       document.getElementById("btnBatalLupaSandi")?.addEventListener("click", tutupLupaModal);
 
@@ -3224,7 +4005,7 @@
           const res = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: "send_reset_code", email: email })
+            body: JSON.stringify({ action: "send_reset_code", email })
           });
           const resData = await res.json();
 
@@ -3276,16 +4057,10 @@
           const resData = await res.json();
 
           if (resData.status === "success") {
-            showToast("Kata sandi berhasil diperbarui! Silakan masuk.");
+            showToast("Kata sandi Anda berhasil diperbarui! Silakan masuk.");
             tutupLupaModal();
             document.getElementById("loginUsername").value = email;
             document.getElementById("loginPassword").value = newPass;
-            
-            const localUsers = getRegisteredUsers();
-            if (localUsers[email]) {
-              localUsers[email].password = newPass;
-              localStorage.setItem("sdn3_users_registry", JSON.stringify(localUsers));
-            }
           } else {
             showToast(resData.message || "Kode OTP salah atau telah kedaluwarsa!", "danger");
           }
@@ -3298,7 +4073,7 @@
         }
       });
 
-      // Navigasi Sidebar Tab
+      // 5. Navigasi Sidebar Tab
       document.querySelectorAll(".nav-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -3311,10 +4086,11 @@
 
           const titles = {
             "tab-surat": "Buat Surat Sekolah",
+            "tab-siswa": "Arsip Siswa per Kelas",
             "tab-arsip": "Arsip Dokumen PDF",
             "tab-pegawai": "Data Pegawai & Guru",
             "tab-kop": "Pengaturan Kop Sekolah",
-            "tab-akun": "Pengaturan Akun & Keamanan 2FA"
+            "tab-akun": "Pengaturan Akun & 2FA"
           };
           const titleEl = document.getElementById("headerTitle");
           if (titleEl) titleEl.innerText = titles[target] || "Sistem Surat";
@@ -3332,15 +4108,14 @@
         });
       });
 
-      const sidebarEl = document.getElementById("sidebar");
-      const backdropEl = document.getElementById("sidebarBackdrop");
       document.getElementById("btnToggleSidebar")?.addEventListener("click", () => {
-        sidebarEl?.classList.toggle("open");
-        backdropEl?.classList.toggle("active");
+        document.getElementById("sidebar")?.classList.toggle("open");
+        document.getElementById("sidebarBackdrop")?.classList.toggle("active");
       });
-      backdropEl?.addEventListener("click", () => {
-        sidebarEl?.classList.remove("open");
-        backdropEl?.classList.remove("active");
+
+      document.getElementById("sidebarBackdrop")?.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.remove("open");
+        document.getElementById("sidebarBackdrop")?.classList.remove("active");
       });
 
       document.getElementById("btnTogglePassword")?.addEventListener("click", () => {
@@ -3355,7 +4130,7 @@
         }
       });
 
-      // Login Masuk
+      // 6. Form Login Masuk
       document.getElementById("formLogin")?.addEventListener("submit", async (e) => {
         e.preventDefault();
         const u = document.getElementById("loginUsername").value.trim().toLowerCase();
@@ -3384,57 +4159,20 @@
           }
         }
 
-        const localUsers = getRegisteredUsers();
-        let userFound = localUsers[u];
+        const registry = getRegisteredUsers();
+        let targetUser = registry[u];
 
-        if (!userFound && GOOGLE_SCRIPT_URL) {
-          try {
-            const btnLogin = document.getElementById("btnLoginSubmit");
-            if (btnLogin) {
-              btnLogin.disabled = true;
-              btnLogin.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa Akun...`;
-            }
-            const res = await fetch(GOOGLE_SCRIPT_URL, {
-              method: "POST",
-              headers: { "Content-Type": "text/plain;charset=utf-8" },
-              body: JSON.stringify({ action: "login", email: u, password: p })
-            });
-            const resData = await res.json();
-            if (resData.status === "success" && resData.user) {
-              userFound = resData.user;
-              saveRegisteredUser(userFound);
-              if (Array.isArray(resData.pegawai)) {
-                AppState.pegawai = resData.pegawai;
-                localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(resData.pegawai));
-              }
-            }
-          } catch(err) {
-            console.warn("Koneksi cloud login:", err);
-          } finally {
-            const btnLogin = document.getElementById("btnLoginSubmit");
-            if (btnLogin) {
-              btnLogin.disabled = false;
-              btnLogin.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Masuk ke Sistem Persuratan</span>`;
-            }
-          }
+        if (!targetUser) {
+          const role = u.includes("kasmin") ? "Kepala Sekolah" : "Operator Sekolah";
+          const name = u.includes("kasmin") ? "Kasmin, S.Pd., M.M." : "Arif Prasetyo";
+          targetUser = { name, role, email: u, password: p };
+          saveRegisteredUser(targetUser);
         }
 
-        let name = "";
-        let role = "";
-        if (userFound) {
-          name = userFound.name;
-          role = userFound.role;
-        } else {
-          const cleanEmailName = u.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, l => l.toUpperCase());
-          name = u.includes("kasmin") ? "Kasmin, S.Pd., M.M." : (u.includes("arif") ? "Arif Prasetyo" : cleanEmailName);
-          role = u.includes("kasmin") ? "Kepala Sekolah" : (u.includes("arif") ? "Operator Sekolah" : "Guru / Pegawai");
-          saveRegisteredUser({ name, role, email: u, password: p });
-        }
-
-        enterDashboard({ name, role, email: u, password: p });
+        enterDashboard(targetUser);
       });
 
-      // Masuk Darurat
+      // 7. Modal Masuk Darurat
       document.getElementById("btnPakaiKodeCadangan")?.addEventListener("click", () => {
         document.getElementById("modalDaruratBackup")?.classList.remove("hidden");
       });
@@ -3445,7 +4183,7 @@
         document.getElementById("modalDaruratBackup")?.classList.add("hidden");
       });
       document.getElementById("btnSubmitDaruratLogin")?.addEventListener("click", () => {
-        const u = document.getElementById("loginUsername")?.value.trim().toLowerCase() || "arifprasetyo1543@gmail.com";
+        const u = document.getElementById("loginUsername")?.value.trim() || "arifprasetyo1543@gmail.com";
         const userKey = getUserKey(u);
         const code = document.getElementById("inBackupCodeLogin")?.value.trim();
 
@@ -3460,18 +4198,15 @@
           document.getElementById("modalDaruratBackup")?.classList.add("hidden");
           showToast("Kode cadangan darurat valid! Anda berhasil masuk.");
 
-          const localUsers = getRegisteredUsers();
-          const userFound = localUsers[u];
-          const name = userFound ? userFound.name : (u.includes("kasmin") ? "Kasmin, S.Pd., M.M." : (u.includes("arif") ? "Arif Prasetyo" : u.split("@")[0]));
-          const role = userFound ? userFound.role : (u.includes("kasmin") ? "Kepala Sekolah" : (u.includes("arif") ? "Operator Sekolah" : "Guru / Pegawai"));
-
-          enterDashboard({ name, role, email: u });
+          const registry = getRegisteredUsers();
+          const targetUser = registry[u] || { name: "Arif Prasetyo", role: "Operator Sekolah", email: u };
+          enterDashboard(targetUser);
         } else {
           showToast("Kode cadangan salah atau sudah pernah terpakai!", "danger");
         }
       });
 
-      // Keluar (Logout)
+      // 8. Keluar (Logout)
       document.getElementById("btnLogoutApp")?.addEventListener("click", () => {
         openModalConfirm("Apakah Anda yakin ingin keluar dari sistem?", () => {
           localStorage.removeItem("sdn3_web_user_session");
@@ -3480,15 +4215,16 @@
 
           document.getElementById("mainApp").style.display = "none";
           document.getElementById("loginScreen").style.display = "flex";
-          document.getElementById("loginOtpInput").value = "";
-          
+          const otpIn = document.getElementById("loginOtpInput");
+          if (otpIn) otpIn.value = "";
+
           renderTabelArsip();
           checkLogin2FaPrompt();
           showToast("Berhasil keluar dari akun.", "info");
         });
       });
 
-      // Stepper Penomoran Surat
+      // 9. Stepper Penomoran Surat (+ / -)
       const numUrut = document.getElementById("numUrut");
       document.getElementById("btnNumPlus")?.addEventListener("click", () => {
         let cur = parseInt(numUrut.value) || 100;
@@ -3504,7 +4240,7 @@
         document.getElementById(id)?.addEventListener("input", syncNomorDisplay);
       });
 
-      // Pilihan Dokumen
+      // 10. Ganti Jenis Format Dokumen
       document.getElementById("selectJenisSurat")?.addEventListener("change", (e) => {
         const val = e.target.value;
         document.getElementById("formSectionSPT").classList.add("hidden");
@@ -3533,7 +4269,7 @@
         }
       });
 
-      // Live Input
+      // 11. Live Input Binding Dokumen
       bindLiveInput("inSptUntuk", "viewSptUntuk");
       bindLiveInput("inSptTglBerangkat", "viewSptTglBerangkat");
       bindLiveInput("inSptTglKembali", "viewSptTglKembali");
@@ -3553,8 +4289,8 @@
       bindLiveInput("inUndanganTempat", "viewUndanganTempat");
       bindLiveInput("inUndanganAcara", "viewUndanganAcara");
 
-      bindLiveInput("inDikeluarkanDi", "viewDikeluarkanDi");
-      bindLiveInput("inPadaTanggal", "viewPadaTanggal");
+      bindLiveInput("inDikeluarkanDi", "viewDikeluarkanDi", "Nogoraji");
+      bindLiveInput("inPadaTanggal", "viewPadaTanggal", "20 Oktober 2026");
 
       const inTempat = document.getElementById("inDikeluarkanDi");
       const inTgl = document.getElementById("inPadaTanggal");
@@ -3572,6 +4308,7 @@
         syncPenerimaView(AppState.pegawai[e.target.value]);
       });
 
+      // 12. Cetak Dokumen A4 & Simpan Arsip
       document.getElementById("btnPrintSurat")?.addEventListener("click", () => {
         window.print();
       });
@@ -3601,6 +4338,7 @@
         showToast(`Dokumen No. ${no} berhasil disimpan ke Brankas Akun Anda.`);
       });
 
+      // 13. Unggah Berkas PDF Fisik
       document.getElementById("btnUploadDrive")?.addEventListener("click", async () => {
         const no = document.getElementById("inDocNomor").value.trim() || getFullNomorSurat();
         const judul = document.getElementById("inDocTitle").value.trim();
@@ -3632,7 +4370,6 @@
           });
 
           const cleanName = `[${curUserTag}]__${no.replace(/[/\\?%*:|"<>]/g, "-")}_${judul}.pdf`;
-          
           const res = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -3661,7 +4398,7 @@
         renderTabelArsip(e.target.value);
       });
 
-      // 14. Tambah Data Pegawai (Simpan Lokal + Sinkron ke Google Drive)
+      // 14. Tambah & Edit Data Pegawai
       document.getElementById("btnSimpanPegawai")?.addEventListener("click", () => {
         const nama = document.getElementById("newPegNama").value.trim();
         const nip = document.getElementById("newPegNip").value.trim() || "-";
@@ -3676,30 +4413,24 @@
         AppState.pegawai.push({ nama, nip, gol, jabatan: jab });
         localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
         refreshUI();
-        syncPegawaiToCloud(); // Simpan ke Google Drive
 
         document.getElementById("newPegNama").value = "";
         document.getElementById("newPegNip").value = "";
         document.getElementById("newPegGol").value = "";
         document.getElementById("newPegJabatan").value = "";
-        showToast(`Pegawai ${nama} berhasil disimpan ke sistem & Google Drive!`);
+        showToast(`Pegawai ${nama} berhasil ditambahkan!`);
       });
 
-      // 15. Modal Edit Data Pegawai (Update Lokal + Sinkron ke Google Drive)
-      const modalEditPeg = document.getElementById("modalEditPegawai");
-      const tutupEditModal = () => {
-        modalEditPeg?.classList.add("hidden");
-      };
-
-      document.getElementById("btnTutupModalEditPeg")?.addEventListener("click", tutupEditModal);
-      document.getElementById("btnBatalEditPeg")?.addEventListener("click", tutupEditModal);
+      const tutupModalEditPeg = () => { document.getElementById("modalEditPegawai")?.classList.add("hidden"); };
+      document.getElementById("btnTutupModalEditPeg")?.addEventListener("click", tutupModalEditPeg);
+      document.getElementById("btnBatalEditPeg")?.addEventListener("click", tutupModalEditPeg);
 
       document.getElementById("btnSimpanEditPeg")?.addEventListener("click", () => {
         const idx = parseInt(document.getElementById("editPegIndex").value, 10);
         const nama = document.getElementById("editPegNama").value.trim();
         const nip = document.getElementById("editPegNip").value.trim() || "-";
         const gol = document.getElementById("editPegGol").value.trim() || "-";
-        const jab = document.getElementById("editPegJabatan").value.trim() || "Guru / Tenaga Pendidik";
+        const jab = document.getElementById("editPegJabatan").value.trim() || "Guru / Pegawai";
 
         if (!nama) {
           showToast("Nama lengkap pegawai wajib diisi!", "danger");
@@ -3710,13 +4441,12 @@
           AppState.pegawai[idx] = { nama, nip, gol, jabatan: jab };
           localStorage.setItem("sdn3_cached_pegawai", JSON.stringify(AppState.pegawai));
           refreshUI();
-          syncPegawaiToCloud(); // Simpan perubahan ke Google Drive
-          tutupEditModal();
-          showToast(`Data pegawai ${nama} berhasil diperbarui di Google Drive!`);
+          tutupModalEditPeg();
+          showToast(`Identitas pegawai ${nama} berhasil diperbarui!`);
         }
       });
 
-      // 16. Simpan Pengaturan Kop (Lokal + Google Drive)
+      // 15. Simpan Pengaturan Kop
       document.getElementById("btnSimpanKop")?.addEventListener("click", () => {
         AppState.kop.baris1 = document.getElementById("cfgKopBaris1").value.trim();
         AppState.kop.baris2 = document.getElementById("cfgKopBaris2").value.trim();
@@ -3726,11 +4456,10 @@
         AppState.kop.logoUrl = document.getElementById("cfgKopLogoUrl").value.trim();
         localStorage.setItem("sdn3_cached_kop", JSON.stringify(AppState.kop));
         renderKopSuratView();
-        syncKopToCloud(); // Simpan ke Google Drive
-        showToast("Pengaturan kop sekolah tersimpan di Google Drive!");
+        showToast("Pengaturan kop surat sekolah berhasil diperbarui!");
       });
 
-      // 17. Simpan Profil Akun
+      // 16. Simpan Profil Akun
       document.getElementById("btnSimpanProfilAkun")?.addEventListener("click", () => {
         const nama = document.getElementById("cfgAccNama").value.trim();
         const role = document.getElementById("cfgAccRole").value.trim();
@@ -3745,20 +4474,18 @@
           AppState.currentUser.name = nama;
           AppState.currentUser.role = role;
           if (pass) AppState.currentUser.password = pass;
-
-          localStorage.setItem("sdn3_web_user_session", JSON.stringify(AppState.currentUser));
           saveRegisteredUser(AppState.currentUser);
+          localStorage.setItem("sdn3_web_user_session", JSON.stringify(AppState.currentUser));
 
           document.getElementById("sidebarUserName").innerText = nama;
           document.getElementById("sidebarUserRole").innerText = role;
           document.getElementById("sidebarUserAvatar").innerText = nama[0].toUpperCase();
-          document.getElementById("badgeOwnerArchive").innerText = `Brankas: ${nama}`;
           document.getElementById("cfgAccNewPass").value = "";
           showToast("Profil akun Anda berhasil diperbarui!");
         }
       });
 
-      // 18. Toggle 2FA
+      // 17. Toggle Aktif/Nonaktif 2FA & Salin Key
       document.getElementById("btnToggle2FaActive")?.addEventListener("click", () => {
         if (!AppState.security.is2FAEnabled) {
           AppState.security.is2FAEnabled = true;
@@ -3775,30 +4502,21 @@
         }
       });
 
-      // 19. Salin Kunci Teks 2FA
       document.getElementById("btnSalinKey")?.addEventListener("click", () => {
         navigator.clipboard.writeText(AppState.security.secretKey);
         showToast("Kunci penyiapan disalin! Masukkan ke Google Authenticator di HP mana pun.");
       });
 
-      // 20. Salin Semua Kode Cadangan
-      document.getElementById("btnSalinSemuaBackup")?.addEventListener("click", () => {
-        const text = AppState.security.backupCodes.join("\n");
-        navigator.clipboard.writeText(text);
-        showToast("6 kode cadangan pemulihan disalin ke clipboard!");
-      });
-
-      // 21. Uji Coba OTP
       document.getElementById("btnUjiCobaOtp")?.addEventListener("click", async () => {
         const inp = document.getElementById("inUjiCobaOtp")?.value.trim();
         if (!inp || inp.length !== 6) {
-          showToast("Masukkan 6 digit angka dari aplikasi Google Authenticator HP Anda!", "danger");
+          showToast("Masukkan 6 digit angka dari Google Authenticator HP Anda!", "danger");
           return;
         }
 
         const ok = await TOTP_ENGINE.verify(AppState.security.secretKey, inp);
         if (ok) {
-          showToast("KODE COCOK 100%! Google Authenticator di HP Anda sudah tersambung sempurna.");
+          showToast("KODE COCOK 100%! Google Authenticator HP Anda tersambung sempurna.");
         } else {
           showToast("Kode tidak cocok atau waktu HP Anda meleset. Cek kode berikutnya di HP.", "danger");
         }
@@ -3810,12 +4528,173 @@
       });
 
       document.getElementById("btnTutupModalPdf")?.addEventListener("click", () => {
-        document.getElementById("modalPdfViewer").classList.add("hidden");
-        document.getElementById("modalPdfFrame").src = "about:blank";
+        document.getElementById("modalPdfViewer")?.classList.add("hidden");
+        const iframe = document.getElementById("modalPdfFrame");
+        if (iframe) iframe.src = "about:blank";
       });
 
-      // Tarik berkas dan data master saat awal buka halaman
-      fetchDriveFilesLive();
+      // 18. Inisialisasi Pengelolaan Siswa & Kenaikan Kelas
+      document.querySelectorAll(".kelas-pill-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".kelas-pill-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          AppState.kelasAktif = btn.getAttribute("data-kelas");
+          renderTabelSiswa();
+          updateStatistikKelasBadge();
+        });
+      });
+
+      document.getElementById("inCariSiswa")?.addEventListener("input", (e) => {
+        renderTabelSiswa(e.target.value);
+      });
+
+      document.getElementById("inExcelDapodik")?.addEventListener("change", handleImportExcelDapodik);
+
+      document.getElementById("btnTambahSiswaManual")?.addEventListener("click", () => {
+        document.getElementById("txtModalFormSiswaTitle").innerHTML = `<i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> Tambah Siswa Baru`;
+        document.getElementById("inSiswaManualId").value = "";
+        document.getElementById("inSiswaManualNama").value = "";
+        document.getElementById("inSiswaManualNisn").value = "";
+        document.getElementById("inSiswaManualNis").value = "";
+        document.getElementById("inSiswaManualKelas").value = AppState.kelasAktif;
+        document.getElementById("inSiswaManualTtl").value = "Kebumen, ";
+        document.getElementById("inSiswaManualOrtu").value = "";
+        document.getElementById("modalFormSiswa")?.classList.remove("hidden");
+      });
+
+      const tutupFormSiswa = () => document.getElementById("modalFormSiswa")?.classList.add("hidden");
+      document.getElementById("btnTutupModalFormSiswa")?.addEventListener("click", tutupFormSiswa);
+      document.getElementById("btnBatalFormSiswa")?.addEventListener("click", tutupFormSiswa);
+
+      document.getElementById("btnSimpanFormSiswa")?.addEventListener("click", () => {
+        const id = document.getElementById("inSiswaManualId")?.value;
+        const nama = document.getElementById("inSiswaManualNama")?.value.trim();
+        const nisn = document.getElementById("inSiswaManualNisn")?.value.trim();
+        const nis = document.getElementById("inSiswaManualNis")?.value.trim();
+        const jk = document.getElementById("inSiswaManualJk")?.value;
+        const kelas = document.getElementById("inSiswaManualKelas")?.value;
+        const ttl = document.getElementById("inSiswaManualTtl")?.value.trim();
+        const ortu = document.getElementById("inSiswaManualOrtu")?.value.trim();
+
+        if (!nama) {
+          showToast("Nama lengkap siswa wajib diisi!", "danger");
+          return;
+        }
+
+        if (id) {
+          const s = AppState.siswa.find(item => item.id === id);
+          if (s) {
+            s.nama = nama; s.nisn = nisn; s.nis = nis; s.jk = jk; s.kelas = kelas; s.ttl = ttl; s.ortu = ortu;
+          }
+        } else {
+          AppState.siswa.push({
+            id: "s_" + Date.now(),
+            nama, nisn, nis, jk, kelas, ttl, ortu,
+            catatan: "",
+            docs: { akta: true, kk: true, ktp: false, ijazah: false, kip: false, foto: false, raport: false }
+          });
+        }
+
+        saveSiswaState();
+        tutupFormSiswa();
+        showToast(`Data siswa ${nama} berhasil disimpan.`);
+      });
+
+      const tutupArsipSiswa = () => document.getElementById("modalKelolaArsipSiswa")?.classList.add("hidden");
+      document.getElementById("btnTutupModalArsipSiswa")?.addEventListener("click", tutupArsipSiswa);
+      document.getElementById("btnBatalArsipSiswa")?.addEventListener("click", tutupArsipSiswa);
+
+      ["Akta", "Kk", "Ktp", "Ijazah", "Kip", "Foto", "Raport"].forEach(k => {
+        document.getElementById(`chkDoc${k}`)?.addEventListener("change", (e) => {
+          document.getElementById(`cardCheck${k}`)?.classList.toggle("checked", e.target.checked);
+        });
+      });
+
+      document.getElementById("btnSimpanArsipSiswa")?.addEventListener("click", () => {
+        const id = document.getElementById("editSiswaId")?.value;
+        const s = AppState.siswa.find(item => item.id === id);
+        if (!s) return;
+
+        s.docs = {
+          akta: document.getElementById("chkDocAkta").checked,
+          kk: document.getElementById("chkDocKk").checked,
+          ktp: document.getElementById("chkDocKtp").checked,
+          ijazah: document.getElementById("chkDocIjazah").checked,
+          kip: document.getElementById("chkDocKip").checked,
+          foto: document.getElementById("chkDocFoto").checked,
+          raport: document.getElementById("chkDocRaport").checked
+        };
+        s.catatan = document.getElementById("inSiswaCatatanArsip")?.value.trim() || "";
+
+        saveSiswaState();
+        tutupArsipSiswa();
+        showToast(`Kelengkapan berkas siswa ${s.nama} berhasil diperbarui!`);
+      });
+
+      document.getElementById("btnBukaModalNaikKelas")?.addEventListener("click", () => {
+        document.getElementById("modalNaikKelas")?.classList.remove("hidden");
+      });
+      const tutupModalNaik = () => document.getElementById("modalNaikKelas")?.classList.add("hidden");
+      document.getElementById("btnTutupModalNaikKelas")?.addEventListener("click", tutupModalNaik);
+      document.getElementById("btnBatalNaikKelas")?.addEventListener("click", tutupModalNaik);
+      document.getElementById("btnEksekusiNaikKelas")?.addEventListener("click", eksekusiKenaikanKelas);
+
+      document.getElementById("btnPilihSiswaDariArsip")?.addEventListener("click", () => {
+        populatePilihSiswaModal();
+        document.getElementById("modalPilihSiswaSurat")?.classList.remove("hidden");
+      });
+      const tutupPilihSiswa = () => document.getElementById("modalPilihSiswaSurat")?.classList.add("hidden");
+      document.getElementById("btnTutupModalPilihSiswa")?.addEventListener("click", tutupPilihSiswa);
+      document.getElementById("btnBatalPilihSiswa")?.addEventListener("click", tutupPilihSiswa);
+      document.getElementById("inCariPilihSiswa")?.addEventListener("input", (e) => {
+        populatePilihSiswaModal(e.target.value);
+      });
+
+      // Modal Tempel Data Excel (Copy-Paste)
+      const modalPaste = document.getElementById("modalPasteExcel");
+      document.getElementById("btnBukaModalPasteExcel")?.addEventListener("click", () => {
+        const area = document.getElementById("txtRawExcelData");
+        if (area) area.value = "";
+        modalPaste?.classList.remove("hidden");
+      });
+      const tutupModalPaste = () => modalPaste?.classList.add("hidden");
+      document.getElementById("btnTutupModalPasteExcel")?.addEventListener("click", tutupModalPaste);
+      document.getElementById("btnBatalPasteExcel")?.addEventListener("click", tutupModalPaste);
+
+      document.getElementById("btnProsesPasteExcel")?.addEventListener("click", () => {
+        const text = document.getElementById("txtRawExcelData")?.value.trim();
+        if (!text) {
+          showToast("Silakan tempelkan data hasil salinan Excel terlebih dahulu!", "danger");
+          return;
+        }
+
+        const lines = text.split(/\r?\n/);
+        const delim = text.includes("\t") ? "\t" : (text.includes(";") ? ";" : ",");
+        const rows = lines.map(line => line.split(delim).map(c => c.replace(/^"|"$/g, "").trim()));
+
+        const count = prosesBarisDapodikKeSiswa(rows);
+        if (count > 0) {
+          saveSiswaState();
+          tutupModalPaste();
+          showToast(`Berhasil memasukkan ${count} siswa asli dari salinan Excel!`, "success");
+        } else {
+          showToast("Gagal mengurai kolom siswa. Pastikan baris nama ikut tersalin.", "danger");
+        }
+      });
+
+      // Tombol Reset / Muat Ulang Master Siswa Lengkap
+      document.getElementById("btnMuatUlangSemuaSiswa")?.addEventListener("click", () => {
+        openModalConfirm("Muat ulang master data siswa awal SDN 3 Nogoraji?", () => {
+          AppState.siswa = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+          saveSiswaState();
+          showToast(`Data siswa awal berhasil dimuat.`);
+        });
+      });
+
+      // Render pertama kali
+      refreshUI();
+      renderTabelSiswa();
+      updateStatistikKelasBadge();
       checkLogin2FaPrompt();
     });
   </script>
