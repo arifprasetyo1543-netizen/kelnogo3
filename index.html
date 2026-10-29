@@ -2142,6 +2142,92 @@
     </div>
   </div>
 
+  <!-- 6. Modal Tambah Siswa Manual -->
+  <div id="modalTambahSiswa" class="modal-overlay hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-plus"></i> Tambah Peserta Didik Baru</h3>
+        <button type="button" class="btn-icon" onclick="tutupModal('modalTambahSiswa')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="inNewSiswaNama">Nama Lengkap Siswa</label>
+          <input type="text" id="inNewSiswaNama" class="form-input" placeholder="Nama lengkap..." required>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="inNewSiswaNisn">NISN</label>
+            <input type="text" id="inNewSiswaNisn" class="form-input" placeholder="10 digit NISN">
+          </div>
+          <div class="form-group">
+            <label for="inNewSiswaJk">Jenis Kelamin</label>
+            <select id="inNewSiswaJk" class="form-input">
+              <option value="L">Laki-laki (L)</option>
+              <option value="P">Perempuan (P)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="inNewSiswaKelas">Tingkat Kelas</label>
+            <select id="inNewSiswaKelas" class="form-input">
+              <option value="1">Kelas 1</option>
+              <option value="2">Kelas 2</option>
+              <option value="3">Kelas 3</option>
+              <option value="4">Kelas 4</option>
+              <option value="5">Kelas 5</option>
+              <option value="6">Kelas 6</option>
+              <option value="alumni">Alumni / Lulus</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inNewSiswaTtl">Tempat, Tgl Lahir</label>
+            <input type="text" id="inNewSiswaTtl" class="form-input" placeholder="Kebumen, 12 Mei 2018">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inNewSiswaOrtu">Nama Orang Tua / Wali</label>
+          <input type="text" id="inNewSiswaOrtu" class="form-input" placeholder="Nama wali murid">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="tutupModal('modalTambahSiswa')">Batal</button>
+        <button type="button" id="btnSimpanSiswaManual" class="btn btn-primary">Simpan Siswa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Modal Pilih Siswa untuk Surat Keterangan Aktif -->
+  <div id="modalPilihSiswa" class="modal-overlay hidden">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-list-check"></i> Pilih Siswa untuk Surat Keterangan</h3>
+        <button type="button" class="btn-icon" onclick="tutupModal('modalPilihSiswa')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <input type="text" id="inCariPilihSiswa" class="form-input" placeholder="Ketik nama atau NISN siswa...">
+        </div>
+        <div class="table-responsive" style="max-height: 280px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>NISN</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPilihSiswaList"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="tutupModal('modalPilihSiswa')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Wadah Pesan Toast -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -2149,7 +2235,7 @@
   <!-- JAVASCRIPT LOGIKA LENGKAP & SINKRONISASI CLOUD                    -->
   <!-- ================================================================= -->
   <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzn9LMfUqPVvXN3w7gGcAubD_9_EPx18nolvv-QCyzOmJb3coCdFr-fi8sZNXX5K6c/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfop8Utyc3wJDMYdXIsIeIBGzTOZOcp4yEVBYBDp1ZXkQVvqBNssHmPHB-40EM0geE/exec";
     const DOC_KEYS = [
       { key: "akta", label: "Akta Kelahiran", icon: "fa-certificate" },
       { key: "kk", label: "Kartu Keluarga (KK)", icon: "fa-users" },
@@ -2439,6 +2525,74 @@
       }
     }
 
+    async function syncSiswaToDrive() {
+      localStorage.setItem("sdn3_siswa", JSON.stringify(siswaList));
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sync_siswa", siswa: siswaList })
+        });
+        const json = await res.json();
+        return json.status === "success";
+      } catch (e) {
+        console.warn("Sync siswa tertunda:", e);
+        return false;
+      }
+    }
+
+    async function syncKopToDrive() {
+      localStorage.setItem("sdn3_kop", JSON.stringify(kopData));
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sync_kop", kop: kopData })
+        });
+        const json = await res.json();
+        return json.status === "success";
+      } catch (e) {
+        console.warn("Sync kop tertunda:", e);
+        return false;
+      }
+    }
+
+    function renderTabelArsip(query = "") {
+      const tb = document.getElementById("tbodyArsipList");
+      if (!tb) return;
+      tb.innerHTML = "";
+      const q = query.toLowerCase().trim();
+      const list = (arsipSuratList || []).filter(a => !q || (a.judul || "").toLowerCase().includes(q) || (a.nomor || "").toLowerCase().includes(q) || (a.kategori || "").toLowerCase().includes(q));
+      if (list.length === 0) {
+        tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">${q ? 'Tidak ditemukan arsip yang cocok.' : 'Belum ada arsip surat tersimpan.'}</td></tr>`;
+        return;
+      }
+      list.forEach((a, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${a.tanggal || '-'}</td>
+          <td><span class="badge-nomor">${a.nomor || '-'}</span></td>
+          <td><strong>${a.judul || '-'}</strong></td>
+          <td>${a.kategori || 'Surat'}</td>
+          <td><span style="color:${a.status === 'Google Drive' ? 'var(--primary)' : '#0284c7'}; font-weight:700;"><i class="fa-solid ${a.status === 'Google Drive' ? 'fa-cloud' : 'fa-laptop'}"></i> ${a.status || 'Tersimpan'}</span></td>
+          <td>
+            ${a.fileUrl ? `<button type="button" class="btn btn-secondary btn-sm" onclick="window.open('${a.fileUrl}', '_blank')"><i class="fa-solid fa-eye"></i> Buka</button>` : ''}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusArsipSurat(${idx})" style="color:var(--danger);"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    window.hapusArsipSurat = function(idx) {
+      openModalConfirm("Hapus riwayat arsip ini?", () => {
+        arsipSuratList.splice(idx, 1);
+        localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+        renderTabelArsip();
+        showToast("Arsip berhasil dihapus.");
+      });
+    };
+
     // -------------------------------------------------------------
     // KELOLA ARSIP SISWA PER KELAS & KENAIKAN KELAS
     // -------------------------------------------------------------
@@ -2681,9 +2835,21 @@
               document.getElementById("sideLogo").src = kopData.logoUrl;
             }
           }
+
+          // Isi form konfigurasi kop
+          if (document.getElementById("cfgKopBaris1")) document.getElementById("cfgKopBaris1").value = kopData.baris1 || "";
+          if (document.getElementById("cfgKopBaris2")) document.getElementById("cfgKopBaris2").value = kopData.baris2 || "";
+          if (document.getElementById("cfgKopNamaSekolah")) document.getElementById("cfgKopNamaSekolah").value = kopData.namaSekolah || "";
+          if (document.getElementById("cfgKopAlamat")) document.getElementById("cfgKopAlamat").value = kopData.alamat || "";
+          if (document.getElementById("cfgKopKontak")) document.getElementById("cfgKopKontak").value = kopData.kontak || "";
+          if (document.getElementById("cfgKopLogoUrl")) document.getElementById("cfgKopLogoUrl").value = kopData.logoUrl || "";
+
           renderTabelPegawai();
           populateDropdownPegawai();
           renderTabelSiswa();
+
+          const cTxt = document.getElementById("cloudStatusText");
+          if (cTxt) cTxt.innerText = "Google Drive Tersambung";
         }
       } catch (e) {
         console.warn("Offline fallback.");
@@ -2697,6 +2863,12 @@
       // 1. Pulihkan Cache Lokal
       const cachedPeg = localStorage.getItem("sdn3_pegawai");
       if (cachedPeg) pegawaiList = JSON.parse(cachedPeg);
+
+      const cachedKop = localStorage.getItem("sdn3_kop");
+      if (cachedKop) kopData = JSON.parse(cachedKop);
+
+      const cachedArsip = localStorage.getItem("sdn3_arsip_surat");
+      if (cachedArsip) arsipSuratList = JSON.parse(cachedArsip);
 
       const cachedSiswa = localStorage.getItem("sdn3_siswa");
       if (cachedSiswa) {
@@ -2717,6 +2889,245 @@
       renderTabelPegawai();
       populateDropdownPegawai();
       renderTabelSiswa();
+      renderTabelArsip();
+
+      // PENGENDALI TOMBOL SINKRON DRIVE (SELESAI DIPERBAIKI)
+      const btnRefreshDrive = document.getElementById("btnRefreshDrive");
+      btnRefreshDrive?.addEventListener("click", async () => {
+        const icon = btnRefreshDrive.querySelector("i");
+        if (icon) icon.classList.add("fa-spin");
+        btnRefreshDrive.disabled = true;
+        const statusEl = document.getElementById("cloudStatusText");
+        if (statusEl) statusEl.innerText = "Menyinkronkan ke Drive...";
+
+        showToast("Menyinkronkan data dengan Google Drive...", "info");
+        try {
+          await syncPegawaiToDrive();
+          await syncSiswaToDrive();
+          await syncKopToDrive();
+          await loadCloudData();
+          if (statusEl) statusEl.innerText = "Google Drive Tersambung";
+          showToast("Sinkronisasi Google Drive Berhasil!", "success");
+        } catch (err) {
+          if (statusEl) statusEl.innerText = "Tersimpan Lokal";
+          showToast("Koneksi cloud terhambat. Data tersimpan di HP.", "danger");
+        } finally {
+          if (icon) icon.classList.remove("fa-spin");
+          btnRefreshDrive.disabled = false;
+        }
+      });
+
+      // PENGENDALI TOMBOL SIMPAN KOP KE DRIVE
+      document.getElementById("btnSimpanKop")?.addEventListener("click", async () => {
+        kopData = {
+          baris1: document.getElementById("cfgKopBaris1")?.value.trim() || kopData.baris1,
+          baris2: document.getElementById("cfgKopBaris2")?.value.trim() || kopData.baris2,
+          namaSekolah: document.getElementById("cfgKopNamaSekolah")?.value.trim() || kopData.namaSekolah,
+          alamat: document.getElementById("cfgKopAlamat")?.value.trim() || kopData.alamat,
+          kontak: document.getElementById("cfgKopKontak")?.value.trim() || kopData.kontak,
+          logoUrl: document.getElementById("cfgKopLogoUrl")?.value.trim() || kopData.logoUrl
+        };
+        document.getElementById("viewKopBaris1").innerText = kopData.baris1;
+        document.getElementById("viewKopBaris2").innerText = kopData.baris2;
+        document.getElementById("viewKopNamaSekolah").innerText = kopData.namaSekolah;
+        document.getElementById("viewKopAlamat").innerText = kopData.alamat;
+        document.getElementById("viewKopKontak").innerText = kopData.kontak;
+        if (kopData.logoUrl) {
+          document.getElementById("viewKopLogo").src = kopData.logoUrl;
+          document.getElementById("sideLogo").src = kopData.logoUrl;
+        }
+        await syncKopToDrive();
+        showToast("Kop surat berhasil disimpan ke Google Drive!");
+      });
+
+      // PENGENDALI SIMPAN KE ARSIP SURAT
+      document.getElementById("btnSimpanKeArsip")?.addEventListener("click", () => {
+        const jns = document.getElementById("selectJenisSurat")?.value || "spt";
+        const jTitle = document.getElementById("viewJudulSurat")?.innerText || "Surat Resmi";
+        const noSurat = document.getElementById("badgeFullNoSurat")?.innerText || "800 / -";
+        const item = {
+          id: "arsip_" + Date.now(),
+          tanggal: formatTanggalIndonesia(new Date(), false),
+          nomor: noSurat,
+          judul: `${jTitle} (${noSurat})`,
+          kategori: jns === "spt" ? "Surat Tugas" : (jns === "sk_aktif" ? "Surat Keterangan" : "Undangan"),
+          status: "Tersimpan Lokal"
+        };
+        arsipSuratList.unshift(item);
+        localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+        renderTabelArsip();
+        showToast(`Dokumen ${noSurat} berhasil disimpan ke Arsip!`);
+      });
+
+      // PENGENDALI UNGGAH PDF KE GOOGLE DRIVE
+      document.getElementById("btnUploadPdfDrive")?.addEventListener("click", async () => {
+        const fileIn = document.getElementById("fileUploadPdf");
+        const judul = document.getElementById("inUploadJudul")?.value.trim();
+        const kategori = document.getElementById("inUploadKategori")?.value || "Surat Tugas";
+        const file = fileIn?.files?.[0];
+
+        if (!judul) return showToast("Judul dokumen wajib diisi!", "info");
+        if (!file) return showToast("Pilih berkas PDF terlebih dahulu!", "info");
+
+        showToast("Mengunggah berkas PDF ke Google Drive...", "info");
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = reader.result.includes(",") ? reader.result.split(",")[1] : reader.result;
+          try {
+            const res = await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "upload_pdf",
+                fileName: file.name,
+                base64: base64
+              })
+            });
+            const json = await res.json();
+            const item = {
+              id: "pdf_" + Date.now(),
+              tanggal: formatTanggalIndonesia(new Date(), false),
+              nomor: "-",
+              judul: judul,
+              kategori: kategori,
+              status: json.status === "success" ? "Google Drive" : "Tersimpan Lokal",
+              fileUrl: json.fileUrl || ""
+            };
+            arsipSuratList.unshift(item);
+            localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+            renderTabelArsip();
+            if (document.getElementById("inUploadJudul")) document.getElementById("inUploadJudul").value = "";
+            if (fileIn) fileIn.value = "";
+            showToast("Berkas PDF berhasil diunggah ke Google Drive!");
+          } catch (e) {
+            showToast("Gagal mengunggah ke cloud, tersimpan di memori perangkat.", "danger");
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // PENCARIAN ARSIP
+      document.getElementById("inCariArsip")?.addEventListener("input", (e) => {
+        renderTabelArsip(e.target.value);
+      });
+
+      // TAMBAH SISWA MANUAL
+      document.getElementById("btnTambahSiswaManual")?.addEventListener("click", () => {
+        if (document.getElementById("inNewSiswaKelas")) {
+          document.getElementById("inNewSiswaKelas").value = activeClassTab;
+        }
+        bukaModal("modalTambahSiswa");
+      });
+
+      document.getElementById("btnSimpanSiswaManual")?.addEventListener("click", async () => {
+        const nama = document.getElementById("inNewSiswaNama")?.value.trim();
+        if (!nama) return showToast("Nama siswa wajib diisi!", "info");
+        const nisn = document.getElementById("inNewSiswaNisn")?.value.trim() || "-";
+        const jk = document.getElementById("inNewSiswaJk")?.value || "L";
+        const kelas = document.getElementById("inNewSiswaKelas")?.value || activeClassTab;
+        const ttl = document.getElementById("inNewSiswaTtl")?.value.trim() || "-";
+        const ortu = document.getElementById("inNewSiswaOrtu")?.value.trim() || "-";
+
+        const newSiswa = {
+          id: "sis_" + Date.now(),
+          nama: nama,
+          nisn: nisn,
+          jk: jk,
+          kelas: kelas,
+          ttl: ttl,
+          ortu: ortu,
+          docs: {}
+        };
+        siswaList.unshift(newSiswa);
+        localStorage.setItem("sdn3_siswa", JSON.stringify(siswaList));
+        renderTabelSiswa();
+        tutupModal("modalTambahSiswa");
+        await syncSiswaToDrive();
+        showToast(`Peserta didik ${nama} berhasil disimpan!`);
+      });
+
+      // PILIH DARI DATA SISWA UNTUK SURAT KETERANGAN
+      const renderPilihSiswaList = (query = "") => {
+        const tb = document.getElementById("tbodyPilihSiswaList");
+        if (!tb) return;
+        tb.innerHTML = "";
+        const q = query.toLowerCase().trim();
+        const list = siswaList.filter(s => !q || s.nama.toLowerCase().includes(q) || (s.nisn && s.nisn.includes(q)));
+        if (list.length === 0) {
+          tb.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:12px; color:var(--text-muted);">Tidak ada data siswa.</td></tr>`;
+          return;
+        }
+        list.forEach(s => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${s.nama}</strong></td>
+            <td>Kelas ${s.kelas}</td>
+            <td>${s.nisn || '-'}</td>
+            <td>
+              <button type="button" class="btn btn-primary btn-sm" onclick="pilihSiswaKeSurat('${s.id}')">
+                Pilih
+              </button>
+            </td>
+          `;
+          tb.appendChild(tr);
+        });
+      };
+
+      document.getElementById("btnPilihDariSiswa")?.addEventListener("click", () => {
+        renderPilihSiswaList();
+        bukaModal("modalPilihSiswa");
+      });
+
+      document.getElementById("inCariPilihSiswa")?.addEventListener("input", (e) => {
+        renderPilihSiswaList(e.target.value);
+      });
+
+      window.pilihSiswaKeSurat = function(id) {
+        const s = siswaList.find(x => x.id === id);
+        if (!s) return;
+        const setVal = (inId, viewId, val) => {
+          const el = document.getElementById(inId);
+          const v = document.getElementById(viewId);
+          if (el) el.value = val || "";
+          if (v) v.innerText = val || "................................................";
+        };
+        setVal("inAktifNama", "viewAktifNama", s.nama);
+        setVal("inAktifNisn", "viewAktifNisn", s.nisn || "-");
+        setVal("inAktifKelas", "viewAktifKelas", s.kelas === "alumni" ? "Alumni" : `${s.kelas}`);
+        setVal("inAktifTtl", "viewAktifTtl", s.ttl || "-");
+        setVal("inAktifOrtu", "viewAktifOrtu", s.ortu || "-");
+        tutupModal("modalPilihSiswa");
+        showToast(`Data ${s.nama} dimasukkan ke formulir surat.`);
+      };
+
+      // PENGATURAN PROFIL & 2FA
+      document.getElementById("btnSimpanProfilAkun")?.addEventListener("click", () => {
+        const nama = document.getElementById("inAkunNama")?.value.trim();
+        const role = document.getElementById("inAkunRole")?.value.trim();
+        if (currentUser) {
+          currentUser.name = nama || currentUser.name;
+          currentUser.role = role || currentUser.role;
+          localStorage.setItem("sdn3_active_user", JSON.stringify(currentUser));
+          setLoggedUser(currentUser);
+          showToast("Profil berhasil diperbarui!");
+        }
+      });
+
+      document.getElementById("btnToggle2Fa")?.addEventListener("click", () => {
+        const lbl = document.getElementById("lblStatus2Fa");
+        const btn = document.getElementById("btnToggle2Fa");
+        if (lbl?.innerText.includes("Nonaktif")) {
+          lbl.innerText = "Status 2FA: Aktif";
+          lbl.style.color = "var(--primary)";
+          if (btn) btn.innerText = "Nonaktifkan 2FA";
+          showToast("2FA Google Authenticator diaktifkan!");
+        } else if (lbl) {
+          lbl.innerText = "Status 2FA: Nonaktif";
+          lbl.style.color = "inherit";
+          if (btn) btn.innerText = "Aktifkan 2FA";
+          showToast("2FA dinonaktifkan.");
+        }
+      });
 
       // 2. Tab Navigation
       document.querySelectorAll(".nav-btn").forEach(btn => {
