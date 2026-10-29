@@ -3305,6 +3305,91 @@
 
     const DOC_KEYS = ["Akta", "Kk", "Ktp", "Ijazah", "Kip", "Foto", "Raport"];
 
+    async function simpanFileDokumenSiswa(siswaId, docKey, file) {
+      if (!siswaId || !docKey || !file) return;
+      const lower = docKey.toLowerCase();
+      const fileKey = `sdoc_${siswaId}_${lower}`;
+      
+      // 1. Simpan salinan lokal ke IndexedDB untuk akses offline instan
+      await PdfStorage.saveFile(fileKey, file);
+
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      if (!s.docs) s.docs = {};
+      if (!s.docDetails) s.docDetails = {};
+      if (!s.docDetails[lower]) s.docDetails[lower] = {};
+
+      s.docs[lower] = true;
+      s.docDetails[lower].fileName = file.name;
+      s.docDetails[lower].fileType = file.type;
+      s.docDetails[lower].hasFile = true;
+      s.docDetails[lower].uploadDate = new Date().toLocaleDateString("id-ID");
+
+      // 2. Jika foto 3x4, buat Base64 terkompresi agar langsung tampil di semua HP seketika
+      if (lower === "foto" && file.type.startsWith("image/")) {
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            s.fotoBase64 = e.target.result;
+            const imgFoto = document.getElementById("imgModalSiswaFoto");
+            const phFoto = document.getElementById("phModalSiswaFoto");
+            if (imgFoto && phFoto) {
+              imgFoto.src = s.fotoBase64;
+              imgFoto.classList.remove("hidden");
+              phFoto.classList.add("hidden");
+            }
+          };
+          reader.readAsDataURL(file);
+        } catch (e) {}
+      }
+
+      // 3. Unggah berkas ke Google Drive agar bisa dilihat dan diunduh oleh semua akun di perangkat lain
+      if (typeof GOOGLE_SCRIPT_URL !== "undefined") {
+        const statusTxt = document.getElementById("cloudStatusText");
+        try {
+          if (statusTxt) statusTxt.innerText = `Mengunggah berkas ${docKey} ke Drive...`;
+          
+          const base64 = await new Promise((resolve) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result.includes(",") ? r.result.split(",")[1] : r.result);
+            r.readAsDataURL(file);
+          });
+
+          const cleanFileName = `[SISWA]__${siswaId}_${lower}_${file.name.replace(/[/\\?%*:|"<>]/g, "-")}`;
+          
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "upload_doc_siswa",
+              siswaId: siswaId,
+              docKey: lower,
+              fileName: cleanFileName,
+              mimeType: file.type || "application/pdf",
+              base64: base64
+            })
+          });
+
+          const resData = await res.json();
+          if (resData.status === "success") {
+            s.docDetails[lower].fileId = resData.fileId;
+            s.docDetails[lower].driveUrl = resData.fileUrl;
+            s.docDetails[lower].viewUrl = resData.viewUrl;
+            s.docDetails[lower].directUrl = resData.directUrl;
+            showToast(`Berkas ${docKey} tersimpan di Google Drive & siap dilihat semua akun!`);
+          }
+        } catch (err) {
+          console.warn("Gagal unggah berkas siswa ke Drive, tersimpan di lokal:", err);
+        } finally {
+          if (statusTxt) statusTxt.innerText = "Google Drive Tersambung";
+        }
+      }
+
+      // 4. Sinkronkan seluruh data siswa ke Drive
+      saveSiswaState(true);
+    }
+
     window.bukaModalKelolaArsip = async function(siswaId) {
       const s = (AppState.siswa || []).find(item => item.id === siswaId);
       if (!s) return;
@@ -3353,8 +3438,10 @@
 
         const fileKey = `sdoc_${s.id}_${lower}`;
         const savedBlob = await PdfStorage.getFile(fileKey);
+        const hasCloudFile = docDetails[lower] && (docDetails[lower].driveUrl || docDetails[lower].viewUrl || docDetails[lower].hasFile);
 
-        if (savedBlob) {
+        // Tombol lihat berkas aktif jika tersimpan di Google Drive ATAU di memori lokal
+        if (hasCloudFile || savedBlob) {
           if (btnPrev) { btnPrev.disabled = false; btnPrev.classList.add("btn-primary"); btnPrev.classList.remove("btn-secondary"); }
           if (btnDel) btnDel.disabled = false;
         } else {
@@ -3363,19 +3450,34 @@
         }
       }
 
-      const fotoKey = `sdoc_${s.id}_foto`;
-      const fotoBlob = await PdfStorage.getFile(fotoKey);
+      // Tampilkan Pas Foto dari Base64, Google Drive, atau Salinan Lokal
       const imgFoto = document.getElementById("imgModalSiswaFoto");
       const phFoto = document.getElementById("phModalSiswaFoto");
 
-      if (fotoBlob && imgFoto && phFoto) {
-        imgFoto.src = URL.createObjectURL(fotoBlob);
-        imgFoto.classList.remove("hidden");
-        phFoto.classList.add("hidden");
-      } else if (imgFoto && phFoto) {
-        imgFoto.src = "";
-        imgFoto.classList.add("hidden");
-        phFoto.classList.remove("hidden");
+      if (s.fotoBase64) {
+        if (imgFoto && phFoto) {
+          imgFoto.src = s.fotoBase64;
+          imgFoto.classList.remove("hidden");
+          phFoto.classList.add("hidden");
+        }
+      } else if (docDetails.foto && (docDetails.foto.directUrl || docDetails.foto.driveUrl)) {
+        if (imgFoto && phFoto) {
+          imgFoto.src = docDetails.foto.directUrl || docDetails.foto.driveUrl;
+          imgFoto.classList.remove("hidden");
+          phFoto.classList.add("hidden");
+        }
+      } else {
+        const fotoKey = `sdoc_${s.id}_foto`;
+        const fotoBlob = await PdfStorage.getFile(fotoKey);
+        if (fotoBlob && imgFoto && phFoto) {
+          imgFoto.src = URL.createObjectURL(fotoBlob);
+          imgFoto.classList.remove("hidden");
+          phFoto.classList.add("hidden");
+        } else if (imgFoto && phFoto) {
+          imgFoto.src = "";
+          imgFoto.classList.add("hidden");
+          phFoto.classList.remove("hidden");
+        }
       }
 
       const badgeModal = document.getElementById("badgeKelengkapanModal");
@@ -3388,32 +3490,17 @@
       document.getElementById("modalKelolaArsipSiswa")?.classList.remove("hidden");
     };
 
-    async function simpanFileDokumenSiswa(siswaId, docKey, file) {
-      if (!siswaId || !docKey || !file) return;
-      const fileKey = `sdoc_${siswaId}_${docKey.toLowerCase()}`;
-      await PdfStorage.saveFile(fileKey, file);
-
-      const s = (AppState.siswa || []).find(item => item.id === siswaId);
-      if (s) {
-        if (!s.docDetails) s.docDetails = {};
-        if (!s.docDetails[docKey.toLowerCase()]) s.docDetails[docKey.toLowerCase()] = {};
-        s.docDetails[docKey.toLowerCase()].fileName = file.name;
-        s.docDetails[docKey.toLowerCase()].fileType = file.type;
-        s.docDetails[docKey.toLowerCase()].hasFile = true;
-        s.docDetails[docKey.toLowerCase()].uploadDate = new Date().toLocaleDateString("id-ID");
-      }
-    }
-
     async function bukaPreviewDokumenSiswa(docTitle, docKey) {
       const siswaId = document.getElementById("editSiswaId")?.value;
       if (!siswaId) return;
 
-      const fileKey = `sdoc_${siswaId}_${docKey.toLowerCase()}`;
-      const blob = await PdfStorage.getFile(fileKey);
-      if (!blob) {
-        showToast("Belum ada berkas terlampir untuk dokumen ini.", "info");
-        return;
-      }
+      const s = (AppState.siswa || []).find(item => item.id === siswaId);
+      if (!s) return;
+
+      const lower = docKey.toLowerCase();
+      const detail = s.docDetails ? s.docDetails[lower] : null;
+      const fileKey = `sdoc_${siswaId}_${lower}`;
+      const localBlob = await PdfStorage.getFile(fileKey);
 
       const modal = document.getElementById("modalPreviewDocSiswa");
       const titleEl = document.getElementById("txtPreviewDocTitle");
@@ -3421,23 +3508,46 @@
       const img = document.getElementById("imgPreviewDocSiswa");
       const btnDownload = document.getElementById("btnUnduhDocSiswa");
 
-      const s = (AppState.siswa || []).find(item => item.id === siswaId);
       const studentName = s ? s.nama : "Siswa";
       if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-file-shield"></i> ${docTitle} &bull; ${studentName}`;
 
-      const blobUrl = URL.createObjectURL(blob);
-      if (btnDownload) {
-        btnDownload.href = blobUrl;
-        btnDownload.download = `${docKey}_${studentName.replace(/\s+/g, '_')}`;
+      let previewUrl = "";
+      let isImage = false;
+
+      // Prioritas 1: Muat dari Google Drive (berlaku untuk semua akun & semua HP)
+      if (detail && (detail.viewUrl || detail.driveUrl)) {
+        isImage = (detail.fileType && detail.fileType.startsWith("image/")) ||
+                  (detail.fileName && /\.(jpg|jpeg|png|webp|gif)$/i.test(detail.fileName));
+        
+        previewUrl = isImage ? (detail.directUrl || detail.driveUrl) : (detail.viewUrl || detail.driveUrl);
+        
+        if (btnDownload) {
+          btnDownload.href = detail.driveUrl;
+          btnDownload.target = "_blank";
+        }
+      } else if (localBlob) {
+        // Prioritas 2: Muat dari memori lokal jika offline
+        previewUrl = URL.createObjectURL(localBlob);
+        isImage = localBlob.type.startsWith("image/");
+        if (btnDownload) {
+          btnDownload.href = previewUrl;
+          btnDownload.download = `${docKey}_${studentName.replace(/\s+/g, '_')}`;
+        }
+      } else if (lower === "foto" && s.fotoBase64) {
+        previewUrl = s.fotoBase64;
+        isImage = true;
       }
 
-      const isImage = blob.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp"].some(ext => blob.name?.toLowerCase().endsWith(ext));
+      if (!previewUrl) {
+        showToast("Belum ada berkas terlampir untuk dokumen ini.", "info");
+        return;
+      }
 
       if (isImage) {
-        if (img) { img.src = blobUrl; img.classList.remove("hidden"); }
+        if (img) { img.src = previewUrl; img.classList.remove("hidden"); }
         if (iframe) { iframe.src = "about:blank"; iframe.classList.add("hidden"); }
       } else {
-        if (iframe) { iframe.src = blobUrl; iframe.classList.remove("hidden"); }
+        if (iframe) { iframe.src = previewUrl; iframe.classList.remove("hidden"); }
         if (img) { img.src = ""; img.classList.add("hidden"); }
       }
 
@@ -3449,28 +3559,39 @@
       if (!siswaId) return;
 
       openModalConfirm(`Hapus lampiran berkas ${docTitle} untuk siswa ini?`, async () => {
-        const fileKey = `sdoc_${siswaId}_${docKey.toLowerCase()}`;
+        const lower = docKey.toLowerCase();
+        const fileKey = `sdoc_${siswaId}_${lower}`;
         await PdfStorage.deleteFile(fileKey);
 
         const s = (AppState.siswa || []).find(item => item.id === siswaId);
-        if (s && s.docDetails && s.docDetails[docKey.toLowerCase()]) {
-          s.docDetails[docKey.toLowerCase()].hasFile = false;
-          s.docDetails[docKey.toLowerCase()].fileName = "";
+        if (s && s.docDetails && s.docDetails[lower]) {
+          s.docDetails[lower].hasFile = false;
+          s.docDetails[lower].fileName = "";
+          s.docDetails[lower].driveUrl = "";
+          s.docDetails[lower].viewUrl = "";
+          s.docDetails[lower].directUrl = "";
         }
+        if (s && s.docs) {
+          s.docs[lower] = false;
+        }
+
+        const chk = document.getElementById(`chkDoc${docKey}`);
+        if (chk) chk.checked = false;
 
         const btnPrev = document.getElementById(`btnPreview${docKey}`);
         const btnDel = document.getElementById(`btnHapusFile${docKey}`);
         if (btnPrev) { btnPrev.disabled = true; btnPrev.classList.remove("btn-primary"); btnPrev.classList.add("btn-secondary"); }
         if (btnDel) btnDel.disabled = true;
 
-        if (docKey.toLowerCase() === "foto") {
+        if (lower === "foto") {
+          if (s) s.fotoBase64 = "";
           const imgFoto = document.getElementById("imgModalSiswaFoto");
           const phFoto = document.getElementById("phModalSiswaFoto");
           if (imgFoto) { imgFoto.src = ""; imgFoto.classList.add("hidden"); }
           if (phFoto) phFoto.classList.remove("hidden");
         }
 
-        saveSiswaState();
+        saveSiswaState(true);
         showToast(`Lampiran ${docTitle} berhasil dihapus.`);
       });
     }
@@ -3691,6 +3812,20 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
+      // 0. Ambil data siswa & dokumen terbaru dari Google Drive saat aplikasi pertama dibuka
+      if (typeof GOOGLE_SCRIPT_URL !== "undefined") {
+        fetch(`${GOOGLE_SCRIPT_URL}?action=get_files&_t=${Date.now()}`)
+          .then(res => res.json())
+          .then(result => {
+            if (result && result.status === "success" && Array.isArray(result.siswa) && result.siswa.length > 0) {
+              AppState.siswa = result.siswa;
+              localStorage.setItem("sdn3_cached_siswa_v3", JSON.stringify(AppState.siswa));
+              renderTabelSiswa();
+            }
+          })
+          .catch(() => {});
+      }
+
       // Setup Tab Kelas Siswa
       document.querySelectorAll(".btn-kelas-tab").forEach(btn => {
         btn.addEventListener("click", () => {
