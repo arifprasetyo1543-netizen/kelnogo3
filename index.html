@@ -1740,21 +1740,14 @@
                     <p style="margin-top: 6px; text-indent: 28px;">Surat keterangan ini dipergunakan untuk: <strong id="viewAktifKeperluan">Kelengkapan Administrasi</strong>.</p>
                   </div>
 
-                  <!-- Tanda Tangan & Stempel Resmi -->
+                  <!-- Tanda Tangan Resmi (Ruang Tanda Tangan Basah & Cap Asli) -->
                   <div class="letter-footer-sign">
                     <div class="sign-box">
                       <p>Dikeluarkan di : <span id="viewDikeluarkanDi">Nogoraji</span></p>
                       <p>Pada tanggal : <span id="viewPadaTanggal">20 Oktober 2026</span></p>
                       <p class="sign-job" id="viewJabatanTtd">Kepala Sekolah,</p>
-                      <div class="stamp-and-sig-area">
-                        <div class="stamp-round">
-                          <span class="stamp-text-curve" id="stampTextSekolah">★ SDN 3 NOGORAJI ★</span>
-                          <span class="stamp-core">KEBUMEN</span>
-                        </div>
-                        <svg class="svg-ttd" viewBox="0 0 160 80" width="130" height="55">
-                          <path d="M15,48 Q40,15 65,42 T110,32 Q135,15 150,52" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linecap="round"/>
-                        </svg>
-                      </div>
+                      <!-- Ruang tanda tangan basah & stempel manual (gambar stempel & ttd digital telah dihapus) -->
+                      <div style="height: 65px;"></div>
                       <strong class="sign-name" id="viewNamaTtd"><span class="placeholder-dots">................................................</span></strong>
                       <span class="sign-nip" id="viewNipTtd">NIP. -</span>
                     </div>
@@ -2420,11 +2413,12 @@
         showToast("Minimal harus tersisa 1 orang pegawai di sistem!", "info");
         return;
       }
-      openModalConfirm(`Hapus pegawai "${pegawaiList[idx].nama}"?`, () => {
+      openModalConfirm(`Hapus pegawai "${pegawaiList[idx].nama}"?`, async () => {
         pegawaiList.splice(idx, 1);
+        localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
         renderTabelPegawai();
         populateDropdownPegawai();
-        syncPegawaiToDrive();
+        await syncPegawaiToDrive();
         showToast("Data pegawai berhasil dihapus.");
       });
     };
@@ -2432,13 +2426,16 @@
     async function syncPegawaiToDrive() {
       localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
       try {
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "sync_pegawai", pegawai: pegawaiList })
         });
+        const json = await res.json();
+        return json.status === "success";
       } catch (e) {
         console.warn("Sync pegawai tertunda:", e);
+        return false;
       }
     }
 
@@ -2650,8 +2647,25 @@
         const data = await res.json();
         if (data.status === "success") {
           if (Array.isArray(data.pegawai) && data.pegawai.length > 0) {
-            pegawaiList = data.pegawai;
+            // Gabungkan data cloud dan data lokal agar pegawai baru tidak terhapus saat refresh
+            const mergedMap = new Map();
+            data.pegawai.forEach(p => {
+              if (p && p.nama) mergedMap.set(p.nama.trim().toLowerCase(), p);
+            });
+            pegawaiList.forEach(p => {
+              if (p && p.nama) mergedMap.set(p.nama.trim().toLowerCase(), p);
+            });
+            pegawaiList = Array.from(mergedMap.values());
+            localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
+
+            // Jika ada data lokal baru yang belum masuk ke Drive, sinkronkan balik
+            if (pegawaiList.length !== data.pegawai.length) {
+              syncPegawaiToDrive();
+            }
+          } else if (pegawaiList.length > 0) {
+            syncPegawaiToDrive();
           }
+
           if (Array.isArray(data.siswa) && data.siswa.length > 0) {
             siswaList = data.siswa;
           }
@@ -2874,7 +2888,7 @@
       updateNomorSuratDisplay();
 
       // 11. Modal Edit Pegawai Handler
-      document.getElementById("btnSimpanEditPegawai")?.addEventListener("click", () => {
+      document.getElementById("btnSimpanEditPegawai")?.addEventListener("click", async () => {
         const idx = document.getElementById("editPegIndex").value;
         const nama = document.getElementById("editPegNama").value.trim();
         if (!nama) return showToast("Nama wajib diisi!", "info");
@@ -2885,32 +2899,55 @@
           gol: document.getElementById("editPegGol").value.trim() || "-",
           jabatan: document.getElementById("editPegJabatan").value.trim() || "Guru / Tenaga Pendidik"
         };
+        localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
         renderTabelPegawai();
         populateDropdownPegawai();
         tutupModal("modalEditPegawai");
-        syncPegawaiToDrive();
+        await syncPegawaiToDrive();
         showToast("Identitas pegawai berhasil diperbarui!");
       });
 
       // 12. Tambah Pegawai Baru
-      document.getElementById("btnSimpanPegawai")?.addEventListener("click", () => {
-        const nama = document.getElementById("newPegNama").value.trim();
+      document.getElementById("btnSimpanPegawai")?.addEventListener("click", async () => {
+        const inNama = document.getElementById("newPegNama");
+        const inNip = document.getElementById("newPegNip");
+        const inGol = document.getElementById("newPegGol");
+        const inJabatan = document.getElementById("newPegJabatan");
+        const btnSimpan = document.getElementById("btnSimpanPegawai");
+
+        const nama = inNama?.value.trim();
         if (!nama) return showToast("Nama wajib diisi!", "info");
 
-        pegawaiList.push({
+        if (btnSimpan) {
+          btnSimpan.disabled = true;
+          btnSimpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan ke Google Drive...';
+        }
+
+        const newPeg = {
           nama: nama,
-          nip: document.getElementById("newPegNip").value.trim() || "-",
-          gol: document.getElementById("newPegGol").value.trim() || "-",
-          jabatan: document.getElementById("newPegJabatan").value.trim() || "Guru / Tenaga Pendidik"
-        });
-        document.getElementById("newPegNama").value = "";
-        document.getElementById("newPegNip").value = "";
-        document.getElementById("newPegGol").value = "";
-        document.getElementById("newPegJabatan").value = "";
+          nip: inNip?.value.trim() || "-",
+          gol: inGol?.value.trim() || "-",
+          jabatan: inJabatan?.value.trim() || "Guru / Tenaga Pendidik"
+        };
+
+        pegawaiList.push(newPeg);
+        localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
         renderTabelPegawai();
         populateDropdownPegawai();
-        syncPegawaiToDrive();
-        showToast("Pegawai baru berhasil ditambahkan!");
+
+        if (inNama) inNama.value = "";
+        if (inNip) inNip.value = "";
+        if (inGol) inGol.value = "";
+        if (inJabatan) inJabatan.value = "";
+
+        await syncPegawaiToDrive();
+
+        if (btnSimpan) {
+          btnSimpan.disabled = false;
+          btnSimpan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Pegawai ke Google Drive';
+        }
+
+        showToast(`Pegawai ${nama} berhasil disimpan permanen!`);
       });
 
       // 13. Cetak Surat
