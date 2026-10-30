@@ -2557,6 +2557,22 @@
       }
     }
 
+    async function syncArsipToDrive() {
+      localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sync_arsip", arsip: arsipSuratList })
+        });
+        const json = await res.json();
+        return json.status === "success";
+      } catch (e) {
+        console.warn("Sync arsip tertunda:", e);
+        return false;
+      }
+    }
+
     function renderTabelArsip(query = "") {
       const tb = document.getElementById("tbodyArsipList");
       if (!tb) return;
@@ -2574,7 +2590,7 @@
           <td><span class="badge-nomor">${a.nomor || '-'}</span></td>
           <td><strong>${a.judul || '-'}</strong></td>
           <td>${a.kategori || 'Surat'}</td>
-          <td><span style="color:${a.status === 'Google Drive' ? 'var(--primary)' : '#0284c7'}; font-weight:700;"><i class="fa-solid ${a.status === 'Google Drive' ? 'fa-cloud' : 'fa-laptop'}"></i> ${a.status || 'Tersimpan'}</span></td>
+          <td><span style="color:${a.status === 'Google Drive' ? 'var(--primary)' : '#0284c7'}; font-weight:700;"><i class="fa-solid ${a.status === 'Google Drive' ? 'fa-cloud' : 'fa-laptop'}"></i> ${a.status || 'Google Drive'}</span></td>
           <td>
             ${a.fileUrl ? `<button type="button" class="btn btn-secondary btn-sm" onclick="window.open('${a.fileUrl}', '_blank')"><i class="fa-solid fa-eye"></i> Buka</button>` : ''}
             <button type="button" class="btn btn-secondary btn-sm" onclick="hapusArsipSurat(${idx})" style="color:var(--danger);"><i class="fa-solid fa-trash"></i></button>
@@ -2585,10 +2601,11 @@
     }
 
     window.hapusArsipSurat = function(idx) {
-      openModalConfirm("Hapus riwayat arsip ini?", () => {
+      openModalConfirm("Hapus riwayat arsip ini?", async () => {
         arsipSuratList.splice(idx, 1);
         localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
         renderTabelArsip();
+        await syncArsipToDrive();
         showToast("Arsip berhasil dihapus.");
       });
     };
@@ -2823,6 +2840,18 @@
           if (Array.isArray(data.siswa) && data.siswa.length > 0) {
             siswaList = data.siswa;
           }
+          if (Array.isArray(data.arsip)) {
+            // Gabungkan riwayat arsip dari cloud dengan arsip lokal agar tidak ada yang hilang
+            const mergedMap = new Map();
+            data.arsip.forEach(a => {
+              if (a && a.id) mergedMap.set(String(a.id), a);
+            });
+            arsipSuratList.forEach(a => {
+              if (a && a.id && !mergedMap.has(String(a.id))) mergedMap.set(String(a.id), a);
+            });
+            arsipSuratList = Array.from(mergedMap.values());
+            localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+          }
           if (data.kop) {
             kopData = data.kop;
             document.getElementById("viewKopBaris1").innerText = kopData.baris1;
@@ -2847,6 +2876,7 @@
           renderTabelPegawai();
           populateDropdownPegawai();
           renderTabelSiswa();
+          renderTabelArsip();
 
           const cTxt = document.getElementById("cloudStatusText");
           if (cTxt) cTxt.innerText = "Google Drive Tersambung";
@@ -2905,6 +2935,7 @@
           await syncPegawaiToDrive();
           await syncSiswaToDrive();
           await syncKopToDrive();
+          await syncArsipToDrive();
           await loadCloudData();
           if (statusEl) statusEl.innerText = "Google Drive Tersambung";
           showToast("Sinkronisasi Google Drive Berhasil!", "success");
@@ -2941,7 +2972,7 @@
       });
 
       // PENGENDALI SIMPAN KE ARSIP SURAT
-      document.getElementById("btnSimpanKeArsip")?.addEventListener("click", () => {
+      document.getElementById("btnSimpanKeArsip")?.addEventListener("click", async () => {
         const jns = document.getElementById("selectJenisSurat")?.value || "spt";
         const jTitle = document.getElementById("viewJudulSurat")?.innerText || "Surat Resmi";
         const noSurat = document.getElementById("badgeFullNoSurat")?.innerText || "800 / -";
@@ -2951,12 +2982,14 @@
           nomor: noSurat,
           judul: `${jTitle} (${noSurat})`,
           kategori: jns === "spt" ? "Surat Tugas" : (jns === "sk_aktif" ? "Surat Keterangan" : "Undangan"),
-          status: "Tersimpan Lokal"
+          status: "Google Drive"
         };
         arsipSuratList.unshift(item);
         localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
         renderTabelArsip();
-        showToast(`Dokumen ${noSurat} berhasil disimpan ke Arsip!`);
+        showToast(`Menyimpan dokumen ${noSurat} ke Google Drive...`, "info");
+        await syncArsipToDrive();
+        showToast(`Dokumen ${noSurat} berhasil tersimpan ke Google Drive!`);
       });
 
       // PENGENDALI UNGGAH PDF KE GOOGLE DRIVE
@@ -2964,6 +2997,7 @@
         const fileIn = document.getElementById("fileUploadPdf");
         const judul = document.getElementById("inUploadJudul")?.value.trim();
         const kategori = document.getElementById("inUploadKategori")?.value || "Surat Tugas";
+        const noSurat = document.getElementById("badgeFullNoSurat")?.innerText || "-";
         const file = fileIn?.files?.[0];
 
         if (!judul) return showToast("Judul dokumen wajib diisi!", "info");
@@ -2979,6 +3013,9 @@
               headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({
                 action: "upload_pdf",
+                nomor: noSurat,
+                judul: judul,
+                kategori: kategori,
                 fileName: file.name,
                 base64: base64
               })
@@ -2987,10 +3024,10 @@
             const item = {
               id: "pdf_" + Date.now(),
               tanggal: formatTanggalIndonesia(new Date(), false),
-              nomor: "-",
+              nomor: noSurat,
               judul: judul,
               kategori: kategori,
-              status: json.status === "success" ? "Google Drive" : "Tersimpan Lokal",
+              status: "Google Drive",
               fileUrl: json.fileUrl || ""
             };
             arsipSuratList.unshift(item);
@@ -2998,7 +3035,8 @@
             renderTabelArsip();
             if (document.getElementById("inUploadJudul")) document.getElementById("inUploadJudul").value = "";
             if (fileIn) fileIn.value = "";
-            showToast("Berkas PDF berhasil diunggah ke Google Drive!");
+            await syncArsipToDrive();
+            showToast("Berkas PDF berhasil diunggah & tercatat di Google Drive!");
           } catch (e) {
             showToast("Gagal mengunggah ke cloud, tersimpan di memori perangkat.", "danger");
           }
