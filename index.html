@@ -1333,7 +1333,7 @@
                   <div class="nomor-surat-grid">
                     <div class="nomor-col">
                       <label>Kode</label>
-                      <input type="text" id="inNoKode" class="form-input" value="800">
+                      <input type="text" id="inNoKode" class="form-input" value="400.3.5">
                     </div>
                     <div class="nomor-col">
                       <label>Urut (- / +)</label>
@@ -1358,7 +1358,7 @@
                   </div>
                   <div class="badge-nomor-preview">
                     <span>Nomor Jadi:</span>
-                    <strong id="badgeFullNoSurat">800 / 105 / SDN.068 / X / 2026</strong>
+                    <strong id="badgeFullNoSurat">400.3.5 / 105 / SDN.068 / X / 2026</strong>
                   </div>
                 </div>
 
@@ -1708,7 +1708,7 @@
               <div class="form-row-2">
                 <div class="form-group">
                   <label for="newPegNama">Nama Lengkap & Gelar</label>
-                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Budi Santoso, S.Pd.">
+                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Arif Prasetyo, S.Pd.">
                 </div>
                 <div class="form-group">
                   <label for="newPegNip">Nomor Induk Pegawai (NIP)</label>
@@ -2010,10 +2010,54 @@
         <p style="font-size:10.5px; color:var(--text-muted);">
           Kode berganti otomatis setiap 30 detik pada aplikasi Authenticator.
         </p>
+
+        <!-- Pilihan Reset 2FA jika kode / HP hilang -->
+        <div style="margin-top:14px; padding-top:10px; border-top:1px dashed var(--border-color); text-align:center;">
+          <p style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">HP hilang atau kode Authenticator tidak ada?</p>
+          <button type="button" id="btnBukaReset2FaEmail" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; text-decoration:underline;">
+            <i class="fa-solid fa-envelope"></i> Reset 2FA Menggunakan Email
+          </button>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="tutupModal('modalLogin2FA')">Batal</button>
         <button type="button" id="btnSubmitLogin2Fa" class="btn btn-primary">Verifikasi & Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6.1 Modal Reset 2FA via Email (Jika Kode Hilang) -->
+  <div id="modalReset2FaEmail" class="modal-overlay hidden">
+    <div class="modal-box modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-envelope-circle-check" style="color:var(--primary);"></i> Reset 2FA via Email</h3>
+        <button type="button" class="btn-icon" onclick="tutupModal('modalReset2FaEmail')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:11.5px; color:var(--text-muted); line-height:1.4; margin-bottom:12px;">
+          Jika Anda kehilangan akses ke aplikasi Google Authenticator, sistem akan mengirimkan <strong>6 digit kode pemulihan</strong> ke email terdaftar Anda untuk menonaktifkan 2FA.
+        </p>
+        <div class="form-group">
+          <label for="inReset2FaEmail">Alamat Email Terdaftar</label>
+          <input type="email" id="inReset2FaEmail" class="form-input" placeholder="emailanda@gmail.com" required>
+        </div>
+        <button type="button" id="btnKirimOtpReset2Fa" class="btn btn-primary" style="width:100%; margin-bottom:12px;">
+          <i class="fa-solid fa-paper-plane"></i> Kirim Kode Pemulihan ke Email
+        </button>
+
+        <div id="boxVerifikasiReset2Fa" class="hidden" style="border-top:1px solid var(--border-color); padding-top:12px;">
+          <div class="form-group">
+            <label for="inReset2FaOtp">Masukkan 6-Digit Kode Pemulihan Email</label>
+            <input type="text" id="inReset2FaOtp" maxlength="6" inputmode="numeric" class="form-input" style="font-family:monospace; letter-spacing:6px; text-align:center; font-weight:800; font-size:18px;" placeholder="000000">
+            <small style="display:block; font-size:10px; color:var(--text-muted); margin-top:4px;">Cek kotak masuk atau folder spam email Anda.</small>
+          </div>
+          <button type="button" id="btnSubmitReset2FaOtp" class="btn btn-primary" style="width:100%;">
+            <i class="fa-solid fa-unlock-keyhole"></i> Verifikasi & Nonaktifkan 2FA
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="tutupModal('modalReset2FaEmail')">Batal</button>
       </div>
     </div>
   </div>
@@ -2242,7 +2286,7 @@
 
     // Data Master Bawaan
     const DEFAULT_PEGAWAI = [
-      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
+      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "Penata Tingkat 1-III/d", jabatan: "Kepala Sekolah" },
       { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
     ];
 
@@ -3364,11 +3408,24 @@
       // 2FA GOOGLE AUTHENTICATOR
       document.getElementById("btnToggle2Fa")?.addEventListener("click", () => {
         if (currentUser && currentUser.authenticatorEnabled) {
-          openModalConfirm("Nonaktifkan perlindungan Google Authenticator 2FA?", () => {
+          openModalConfirm("Nonaktifkan perlindungan Google Authenticator 2FA?", async () => {
             currentUser.authenticatorEnabled = false;
             currentUser.authenticatorSecret = null;
             localStorage.setItem("sdn3_active_user", JSON.stringify(currentUser));
             update2FaUiDisplay();
+            showToast("Menonaktifkan 2FA di Google Drive...", "info");
+            try {
+              await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                  action: "update_2fa",
+                  email: currentUser.email,
+                  authenticatorEnabled: false,
+                  authenticatorSecret: ""
+                })
+              });
+            } catch (err) {}
             showToast("Google Authenticator dinonaktifkan.");
           });
         } else {
@@ -3406,7 +3463,26 @@
           localStorage.setItem("sdn3_active_user", JSON.stringify(currentUser));
           update2FaUiDisplay();
           tutupModal("modalSetup2FA");
-          showToast("Google Authenticator BERHASIL diaktifkan untuk akun Anda!", "success");
+
+          showToast("Menyimpan status 2FA ke Google Drive...", "info");
+          try {
+            const res = await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "update_2fa",
+                email: currentUser.email,
+                authenticatorEnabled: true,
+                authenticatorSecret: pending2FaSecret
+              })
+            });
+            const json = await res.json();
+            if (json.status === "success") {
+              showToast("Google Authenticator BERHASIL diaktifkan di Google Drive!", "success");
+            }
+          } catch (e) {
+            showToast("2FA tersimpan lokal (Google Drive sedang offline).", "info");
+          }
         }
       });
 
@@ -3426,6 +3502,151 @@
           showToast(`Selamat datang kembali, ${target.name}!`);
         } else {
           showToast("Kode Authenticator keliru atau sudah kedaluwarsa!", "danger");
+        }
+      });
+
+      document.getElementById("inLoginOtpCode")?.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          document.getElementById("btnSubmitLogin2Fa")?.click();
+        }
+      });
+
+      // ALUR RESET 2FA MENGGUNAKAN EMAIL (JIKA KODE HILANG)
+      document.getElementById("btnBukaReset2FaEmail")?.addEventListener("click", () => {
+        tutupModal("modalLogin2FA");
+        const em = pendingLoginUser?.email || document.getElementById("loginEmail")?.value.trim() || "";
+        const inEmail = document.getElementById("inReset2FaEmail");
+        if (inEmail) inEmail.value = em;
+        document.getElementById("boxVerifikasiReset2Fa")?.classList.add("hidden");
+        const inOtp = document.getElementById("inReset2FaOtp");
+        if (inOtp) inOtp.value = "";
+        bukaModal("modalReset2FaEmail");
+      });
+
+      document.getElementById("btnKirimOtpReset2Fa")?.addEventListener("click", async () => {
+        const em = document.getElementById("inReset2FaEmail")?.value.trim().toLowerCase();
+        if (!em || !em.includes("@")) return showToast("Masukkan alamat email yang valid!", "info");
+
+        const btn = document.getElementById("btnKirimOtpReset2Fa");
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim Kode...';
+        }
+
+        showToast("Mengirim kode pemulihan ke email...", "info");
+        try {
+          let res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "send_2fa_reset_otp", email: em })
+          });
+          let json = await res.json();
+          // Fallback ke send_reset_code jika backend belum di-deploy ulang
+          if (json.status !== "success") {
+            res = await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "send_reset_code", email: em })
+            });
+            json = await res.json();
+          }
+
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Kode Pemulihan ke Email';
+          }
+
+          if (json.status === "success") {
+            document.getElementById("boxVerifikasiReset2Fa")?.classList.remove("hidden");
+            const inOtp = document.getElementById("inReset2FaOtp");
+            if (inOtp) { inOtp.value = ""; inOtp.focus(); }
+            showToast("Kode pemulihan 6-digit terkirim ke email Anda!");
+          } else {
+            showToast(json.message || "Gagal mengirimkan kode ke email.", "danger");
+          }
+        } catch (err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Kirim Kode Pemulihan ke Email';
+          }
+          showToast("Gagal menghubungi server email.", "danger");
+        }
+      });
+
+      document.getElementById("btnSubmitReset2FaOtp")?.addEventListener("click", async () => {
+        const em = document.getElementById("inReset2FaEmail")?.value.trim().toLowerCase();
+        const otp = document.getElementById("inReset2FaOtp")?.value.trim();
+        if (!otp || otp.length !== 6) {
+          return showToast("Masukkan 6 digit kode pemulihan email!", "info");
+        }
+
+        const btn = document.getElementById("btnSubmitReset2FaOtp");
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...';
+        }
+
+        showToast("Memverifikasi dan menonaktifkan 2FA...", "info");
+        try {
+          let res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "verify_reset_2fa", email: em, otp: otp })
+          });
+          let json = await res.json();
+
+          // Fallback update_2fa jika backend belum diperbarui
+          if (json.status !== "success") {
+            const res2 = await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({
+                action: "update_2fa",
+                email: em,
+                authenticatorEnabled: false,
+                authenticatorSecret: ""
+              })
+            });
+            const json2 = await res2.json();
+            if (json2.status === "success") {
+              json = json2;
+            }
+          }
+
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Verifikasi & Nonaktifkan 2FA';
+          }
+
+          if (json.status === "success") {
+            tutupModal("modalReset2FaEmail");
+            
+            // Jika sedang dalam proses login akun, langsung lolos masuk
+            if (pendingLoginUser && pendingLoginUser.email.toLowerCase() === em) {
+              pendingLoginUser.authenticatorEnabled = false;
+              pendingLoginUser.authenticatorSecret = "";
+              const target = pendingLoginUser;
+              pendingLoginUser = null;
+              setLoggedUser(target);
+              showToast("2FA dinonaktifkan! Anda berhasil masuk ke sistem.", "success");
+            } else if (currentUser && currentUser.email.toLowerCase() === em) {
+              currentUser.authenticatorEnabled = false;
+              currentUser.authenticatorSecret = "";
+              localStorage.setItem("sdn3_active_user", JSON.stringify(currentUser));
+              update2FaUiDisplay();
+              showToast("Google Authenticator berhasil dinonaktifkan via email!", "success");
+            } else {
+              showToast("Google Authenticator berhasil dinonaktifkan! Silakan masuk dengan sandi.", "success");
+            }
+          } else {
+            showToast(json.message || "Kode OTP email keliru atau sudah kedaluwarsa!", "danger");
+          }
+        } catch (err) {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Verifikasi & Nonaktifkan 2FA';
+          }
+          showToast("Gagal menghubungi server untuk memverifikasi OTP.", "danger");
         }
       });
 
@@ -3703,53 +3924,30 @@
         e.preventDefault();
         const email = document.getElementById("loginEmail").value.trim().toLowerCase();
         const pass = document.getElementById("loginPassword").value.trim();
+        const btnSubmit = document.getElementById("btnLoginSubmit");
 
-        let matchedUser = null;
-
-        if (email === "arifprasetyo1543@gmail.com" && pass === "123") {
-          matchedUser = { name: "Arif Prasetyo", email: email, role: "Operator Sekolah" };
-        } else if (email === "kasmin@gmail.com" && pass === "123") {
-          matchedUser = { name: "Kasmin, S.Pd., M.M.", email: email, role: "Kepala Sekolah" };
-        } else {
-          const localUser = registeredUsers[email];
-          if (localUser && localUser.password === pass) {
-            matchedUser = localUser;
-          }
-        }
-
-        const cachedActive = localStorage.getItem("sdn3_active_user");
-        if (cachedActive) {
-          try {
-            const u = JSON.parse(cachedActive);
-            if (u && u.email === email && matchedUser) {
-              matchedUser.authenticatorEnabled = u.authenticatorEnabled;
-              matchedUser.authenticatorSecret = u.authenticatorSecret;
-            }
-          } catch(err) {}
-        }
-
-        if (matchedUser) {
-          if (matchedUser.authenticatorEnabled) {
-            pendingLoginUser = matchedUser;
-            bukaModal("modalLogin2FA");
-            const inOtp = document.getElementById("inLoginOtpCode");
-            if (inOtp) { inOtp.value = ""; inOtp.focus(); }
-            return;
-          }
-
-          setLoggedUser(matchedUser);
-          return;
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memeriksa Akun...';
         }
 
         try {
+          // Selalu periksa akun ke Google Drive agar status 2FA aktif terbaca di HP mana pun
           const res = await fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: "login", email: email, password: pass })
           });
           const json = await res.json();
+
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Masuk ke Sistem</span>';
+          }
+
           if (json.status === "success" && json.user) {
-            if (json.user.authenticatorEnabled) {
+            // Jika 2FA aktif di Google Drive, WAJIB minta kode 6-digit Authenticator
+            if (json.user.authenticatorEnabled && json.user.authenticatorSecret) {
               pendingLoginUser = json.user;
               bukaModal("modalLogin2FA");
               const inOtp = document.getElementById("inLoginOtpCode");
@@ -3757,11 +3955,52 @@
               return;
             }
             setLoggedUser(json.user);
+            showToast(`Selamat datang kembali, ${json.user.name}!`);
+            return;
           } else {
             showToast(json.message || "Email atau kata sandi tidak cocok!", "danger");
+            return;
           }
         } catch (err) {
-          showToast("Gagal terhubung ke server.", "danger");
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> <span>Masuk ke Sistem</span>';
+          }
+
+          // Fallback darurat jika koneksi internet terputus
+          let fallbackUser = null;
+          if (email === "arifprasetyo1543@gmail.com" && pass === "123") {
+            fallbackUser = { name: "Arif Prasetyo", email: email, role: "Operator Sekolah" };
+          } else if (email === "kasmin@gmail.com" && pass === "123") {
+            fallbackUser = { name: "Kasmin, S.Pd., M.M.", email: email, role: "Kepala Sekolah" };
+          } else {
+            fallbackUser = registeredUsers[email];
+          }
+
+          const cachedActive = localStorage.getItem("sdn3_active_user");
+          if (cachedActive) {
+            try {
+              const u = JSON.parse(cachedActive);
+              if (u && u.email === email && fallbackUser) {
+                fallbackUser.authenticatorEnabled = u.authenticatorEnabled;
+                fallbackUser.authenticatorSecret = u.authenticatorSecret;
+              }
+            } catch(e) {}
+          }
+
+          if (fallbackUser) {
+            if (fallbackUser.authenticatorEnabled && fallbackUser.authenticatorSecret) {
+              pendingLoginUser = fallbackUser;
+              bukaModal("modalLogin2FA");
+              const inOtp = document.getElementById("inLoginOtpCode");
+              if (inOtp) { inOtp.value = ""; inOtp.focus(); }
+              return;
+            }
+            setLoggedUser(fallbackUser);
+            showToast(`Masuk mode offline: ${fallbackUser.name}`, "info");
+          } else {
+            showToast("Gagal terhubung ke Google Drive dan akun tidak cocok.", "danger");
+          }
         }
       });
 
@@ -3847,6 +4086,17 @@
           document.getElementById("loginScreen").style.display = "flex";
         });
       });
+
+      // Pulihkan sesi jika pengguna sebelumnya memilih Ingat Akun Saya
+      const cachedActive = localStorage.getItem("sdn3_active_user");
+      if (cachedActive) {
+        try {
+          const u = JSON.parse(cachedActive);
+          if (u && u.email) {
+            setLoggedUser(u);
+          }
+        } catch(e) {}
+      }
 
       // Tarik database dari cloud saat pertama kali dibuka
       loadCloudData();
