@@ -1333,7 +1333,7 @@
                   <div class="nomor-surat-grid">
                     <div class="nomor-col">
                       <label>Kode</label>
-                      <input type="text" id="inNoKode" class="form-input" value="400.3.5">
+                      <input type="text" id="inNoKode" class="form-input" value="800">
                     </div>
                     <div class="nomor-col">
                       <label>Urut (- / +)</label>
@@ -1358,7 +1358,7 @@
                   </div>
                   <div class="badge-nomor-preview">
                     <span>Nomor Jadi:</span>
-                    <strong id="badgeFullNoSurat">400.3.5 / 105 / SDN.068 / X / 2026</strong>
+                    <strong id="badgeFullNoSurat">800 / 105 / SDN.068 / X / 2026</strong>
                   </div>
                 </div>
 
@@ -1708,7 +1708,7 @@
               <div class="form-row-2">
                 <div class="form-group">
                   <label for="newPegNama">Nama Lengkap & Gelar</label>
-                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Arif Prasetyo, S.Pd.">
+                  <input type="text" id="newPegNama" class="form-input" placeholder="Contoh: Budi Santoso, S.Pd.">
                 </div>
                 <div class="form-group">
                   <label for="newPegNip">Nomor Induk Pegawai (NIP)</label>
@@ -2286,7 +2286,7 @@
 
     // Data Master Bawaan
     const DEFAULT_PEGAWAI = [
-      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "Penata Tingkat 1-III/d", jabatan: "Kepala Sekolah" },
+      { nama: "Kasmin, S.Pd., M.M.", nip: "19730624 200801 1 016", gol: "PENATA AHLI MUDA-III/D", jabatan: "Kepala Sekolah" },
       { nama: "Arif Prasetyo", nip: "-", gol: "-", jabatan: "Operator Sekolah" }
     ];
 
@@ -2632,7 +2632,7 @@
     }
 
     window.bukaDokumenArsip = async function(id) {
-      const a = arsipSuratList.find(x => x.id === id) || arsipSuratList[id];
+      const a = arsipSuratList.find(x => x.id === id || x.fileId === id) || arsipSuratList[id];
       if (!a) return;
 
       const title = document.getElementById("modalPdfTitle");
@@ -2645,6 +2645,7 @@
 
       const localData = await LocalDocStore.get(a.id);
 
+      // Skenario 1: Berkas ada di memori lokal perangkat ini
       if (localData) {
         if (localData.startsWith("data:image/")) {
           if (frame) frame.style.display = "none";
@@ -2676,23 +2677,47 @@
             }
           };
         }
-      } else if (a.fileUrl && a.fileUrl.startsWith("http")) {
-        let previewUrl = a.fileUrl;
-        if (previewUrl.includes("drive.google.com/file/d/")) {
-          const m = previewUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
-          if (m) previewUrl = `https://drive.google.com/file/d/${m[1]}/preview`;
+      } 
+      // Skenario 2: Dibuka di HP lain melalui cloud Google Drive
+      else if (a.fileId || (a.fileUrl && a.fileUrl.startsWith("http"))) {
+        let fId = a.fileId;
+        if (!fId && a.fileUrl) {
+          const m = a.fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+          if (m) fId = m[1];
         }
 
-        if (imgView) imgView.style.display = "none";
-        if (frame) {
-          frame.style.display = "block";
-          frame.srcdoc = "";
-          frame.src = previewUrl;
+        const previewUrl = a.previewUrl || (fId ? `https://drive.google.com/file/d/${fId}/preview` : a.fileUrl);
+        const directImgUrl = a.directUrl || (fId ? `https://drive.google.com/thumbnail?sz=w1600&id=${fId}` : "");
+        const openUrl = a.fileUrl || (fId ? `https://drive.google.com/file/d/${fId}/view?usp=sharing` : previewUrl);
+        const downloadUrl = a.downloadUrl || (fId ? `https://drive.google.com/uc?export=download&id=${fId}` : openUrl);
+
+        const isImage = (a.mimeType && a.mimeType.startsWith("image/")) || (a.judul && /\.(jpg|jpeg|png|webp)$/i.test(a.judul));
+
+        if (isImage && directImgUrl) {
+          if (frame) frame.style.display = "none";
+          if (imgView) {
+            imgView.style.display = "block";
+            imgView.src = directImgUrl;
+          }
+        } else {
+          if (imgView) imgView.style.display = "none";
+          if (frame) {
+            frame.style.display = "block";
+            frame.srcdoc = "";
+            frame.src = previewUrl;
+          }
         }
 
-        if (dlBtn) dlBtn.href = a.fileUrl;
-        if (btnTab) btnTab.onclick = () => window.open(a.fileUrl, "_blank");
-      } else {
+        if (dlBtn) {
+          dlBtn.href = downloadUrl;
+          dlBtn.setAttribute("target", "_blank");
+        }
+        if (btnTab) {
+          btnTab.onclick = () => window.open(openUrl, "_blank");
+        }
+      } 
+      // Skenario 3: Dokumen surat hasil cetak sistem (HTML)
+      else {
         if (imgView) imgView.style.display = "none";
         if (frame) {
           frame.style.display = "block";
@@ -3102,18 +3127,24 @@
             localStorage.setItem("sdn3_siswa", JSON.stringify(siswaList));
           }
 
+          // Satukan data arsip dari Google Drive (Server adalah sumber kebenaran utama)
           if (Array.isArray(data.arsip)) {
             const mergedMap = new Map();
+            // 1. Masukkan semua arsip resmi dari Google Drive
             data.arsip.forEach(a => {
-              if (a && a.id) {
+              if (a && (a.id || a.fileId)) {
+                const k = a.fileId ? String(a.fileId) : String(a.id);
                 a.status = "Google Drive";
-                mergedMap.set(String(a.id), a);
+                mergedMap.set(k, a);
               }
             });
+            // 2. Pertahankan arsip lokal yang belum selesai sinkronisasi
             arsipSuratList.forEach(a => {
-              if (a && a.id && !mergedMap.has(String(a.id))) {
-                a.status = "Google Drive";
-                mergedMap.set(String(a.id), a);
+              if (a && (a.id || a.fileId)) {
+                const k = a.fileId ? String(a.fileId) : String(a.id);
+                if (!mergedMap.has(k)) {
+                  mergedMap.set(k, a);
+                }
               }
             });
             arsipSuratList = Array.from(mergedMap.values());
@@ -3186,9 +3217,7 @@
       renderTabelPegawai();
       populateDropdownPegawai();
       renderTabelSiswa();
-      renderTabelArsip();
-
-      // SINKRON DRIVE
+      // SINKRON DRIVE (PULL TERLEBIH DAHULU, BARU SYNC KE ATAS AGAR DATA TIDAK TERTELAN)
       const btnRefreshDrive = document.getElementById("btnRefreshDrive");
       btnRefreshDrive?.addEventListener("click", async () => {
         const icon = btnRefreshDrive.querySelector("i");
@@ -3197,18 +3226,20 @@
         const statusEl = document.getElementById("cloudStatusText");
         if (statusEl) statusEl.innerText = "Menyinkronkan ke Drive...";
 
-        showToast("Menyinkronkan data dengan Google Drive...", "info");
+        showToast("Menarik dan menyinkronkan data dari Google Drive...", "info");
         try {
+          // 1. Tarik seluruh dokumen yang baru diunggah oleh HP lain
+          await loadCloudData();
+          // 2. Kirim pembaruan lokal jika ada
           await syncPegawaiToDrive();
           await syncSiswaToDrive();
           await syncKopToDrive();
           await syncArsipToDrive();
-          await loadCloudData();
           if (statusEl) statusEl.innerText = "Google Drive Tersambung";
-          showToast("Sinkronisasi Google Drive Berhasil!", "success");
+          showToast("Semua data & arsip tersinkronkan 100%!", "success");
         } catch (err) {
           if (statusEl) statusEl.innerText = "Google Drive Tersambung";
-          showToast("Koneksi cloud terhambat. Data aman tersimpan.", "info");
+          showToast("Koneksi cloud terhambat. Data lokal aman tersimpan.", "info");
         } finally {
           if (icon) icon.classList.remove("fa-spin");
           btnRefreshDrive.disabled = false;
@@ -3278,7 +3309,17 @@
         if (!judul) return showToast("Judul dokumen wajib diisi!", "info");
         if (!file) return showToast("Pilih berkas PDF atau foto scan terlebih dahulu!", "info");
 
-        showToast("Menyimpan berkas dokumen...", "info");
+        if (file.size > 15 * 1024 * 1024) {
+          return showToast("Ukuran berkas maksimal 15 MB!", "danger");
+        }
+
+        const btnUpload = document.getElementById("btnUploadPdfDrive");
+        if (btnUpload) {
+          btnUpload.disabled = true;
+          btnUpload.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah ke Google Drive...';
+        }
+
+        showToast("Menyiapkan berkas dokumen...", "info");
         const reader = new FileReader();
         reader.onload = async () => {
           const dataUrl = reader.result;
@@ -3293,20 +3334,16 @@
             nomor: noSurat,
             judul: judul,
             kategori: kategori,
-            status: "Tersimpan Lokal",
-            fileUrl: ""
+            status: "Mengunggah...",
+            fileUrl: "",
+            mimeType: file.type || "application/pdf"
           };
 
           arsipSuratList.unshift(item);
-          localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
           renderTabelArsip();
 
-          if (document.getElementById("inUploadJudul")) document.getElementById("inUploadJudul").value = "";
-          if (inNomor) inNomor.value = "";
-          if (fileIn) fileIn.value = "";
-
           try {
-            showToast("Mengunggah salinan ke Google Drive...", "info");
+            showToast("Mengunggah dokumen ke Google Drive sekolah...", "info");
             const res = await fetch(GOOGLE_SCRIPT_URL, {
               method: "POST",
               headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -3316,20 +3353,45 @@
                 judul: judul,
                 kategori: kategori,
                 fileName: file.name,
+                mimeType: file.type || "application/pdf",
                 base64: base64
               })
             });
             const json = await res.json();
-            if (json.status === "success" && json.fileUrl) {
+            if (json.status === "success") {
               item.status = "Google Drive";
               item.fileUrl = json.fileUrl;
+              item.fileId = json.fileId;
+              item.previewUrl = json.previewUrl;
+              item.directUrl = json.directUrl;
+              
+              if (Array.isArray(json.arsip)) {
+                arsipSuratList = json.arsip;
+              }
               localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
               renderTabelArsip();
-              await syncArsipToDrive();
-              showToast("Berkas berhasil disimpan ke Google Drive & siap dibuka!");
+
+              if (document.getElementById("inUploadJudul")) document.getElementById("inUploadJudul").value = "";
+              if (inNomor) inNomor.value = "";
+              if (fileIn) fileIn.value = "";
+
+              showToast("Dokumen BERHASIL tersimpan di Drive & dapat dibuka di semua HP!", "success");
+            } else {
+              item.status = "Tersimpan Lokal";
+              localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+              renderTabelArsip();
+              showToast(json.message || "Gagal mengunggah ke cloud Drive.", "danger");
             }
           } catch (e) {
-            showToast("Berkas aman tersimpan di memori perangkat & siap dibuka.", "info");
+            item.status = "Tersimpan Lokal";
+            localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+            renderTabelArsip();
+            showToast("Berkas tersimpan lokal. Silakan klik 'Sinkron Drive' saat online.", "info");
+          } finally {
+            if (btnUpload) {
+              btnUpload.disabled = false;
+              btnUpload.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Simpan ke Google Drive';
+            }
           }
         };
         reader.readAsDataURL(file);
@@ -3500,6 +3562,7 @@
           pendingLoginUser = null;
           setLoggedUser(target);
           showToast(`Selamat datang kembali, ${target.name}!`);
+          await loadCloudData(); // Muat seluruh arsip cloud seketika
         } else {
           showToast("Kode Authenticator keliru atau sudah kedaluwarsa!", "danger");
         }
@@ -3629,12 +3692,14 @@
               pendingLoginUser = null;
               setLoggedUser(target);
               showToast("2FA dinonaktifkan! Anda berhasil masuk ke sistem.", "success");
+              await loadCloudData();
             } else if (currentUser && currentUser.email.toLowerCase() === em) {
               currentUser.authenticatorEnabled = false;
               currentUser.authenticatorSecret = "";
               localStorage.setItem("sdn3_active_user", JSON.stringify(currentUser));
               update2FaUiDisplay();
               showToast("Google Authenticator berhasil dinonaktifkan via email!", "success");
+              await loadCloudData();
             } else {
               showToast("Google Authenticator berhasil dinonaktifkan! Silakan masuk dengan sandi.", "success");
             }
@@ -3946,6 +4011,25 @@
           }
 
           if (json.status === "success" && json.user) {
+            // Segera salin database arsip dan master jika dikembalikan oleh server
+            if (Array.isArray(json.arsip)) {
+              arsipSuratList = json.arsip;
+              arsipSuratList.forEach(a => { if (a) a.status = "Google Drive"; });
+              localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+              renderTabelArsip();
+            }
+            if (Array.isArray(json.pegawai)) {
+              pegawaiList = json.pegawai;
+              localStorage.setItem("sdn3_pegawai", JSON.stringify(pegawaiList));
+              renderTabelPegawai();
+              populateDropdownPegawai();
+            }
+            if (Array.isArray(json.siswa)) {
+              siswaList = json.siswa;
+              localStorage.setItem("sdn3_siswa", JSON.stringify(siswaList));
+              renderTabelSiswa();
+            }
+
             // Jika 2FA aktif di Google Drive, WAJIB minta kode 6-digit Authenticator
             if (json.user.authenticatorEnabled && json.user.authenticatorSecret) {
               pendingLoginUser = json.user;
@@ -3956,6 +4040,7 @@
             }
             setLoggedUser(json.user);
             showToast(`Selamat datang kembali, ${json.user.name}!`);
+            loadCloudData(); // Tarik sinkronisasi penuh
             return;
           } else {
             showToast(json.message || "Email atau kata sandi tidak cocok!", "danger");
