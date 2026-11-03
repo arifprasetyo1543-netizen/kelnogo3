@@ -3109,11 +3109,13 @@
     };
 
     // MEMUAT DATA CLOUD GOOGLE DRIVE
-    async function loadCloudData() {
+    async function loadCloudData(isSilent = false) {
       try {
         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=load_data&_t=${Date.now()}`);
         const data = await res.json();
         if (data.status === "success") {
+          let hasNewArsip = false;
+
           if (Array.isArray(data.pegawai) && data.pegawai.length > 0) {
             const mergedMap = new Map();
             data.pegawai.forEach(p => { if (p && p.nama) mergedMap.set(p.nama.trim().toLowerCase(), p); });
@@ -3125,10 +3127,12 @@
           if (Array.isArray(data.siswa) && data.siswa.length > 0) {
             siswaList = data.siswa;
             localStorage.setItem("sdn3_siswa", JSON.stringify(siswaList));
+            renderTabelSiswa();
           }
 
           // Satukan data arsip dari Google Drive (Server adalah sumber kebenaran utama)
           if (Array.isArray(data.arsip)) {
+            const oldLen = (arsipSuratList || []).length;
             const mergedMap = new Map();
             // 1. Masukkan semua arsip resmi dari Google Drive
             data.arsip.forEach(a => {
@@ -3149,6 +3153,11 @@
             });
             arsipSuratList = Array.from(mergedMap.values());
             localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+            renderTabelArsip();
+
+            if (arsipSuratList.length > oldLen && isSilent) {
+              showToast("Arsip baru otomatis disinkronkan dari Google Drive!", "info");
+            }
           }
 
           if (data.kop) {
@@ -3173,8 +3182,6 @@
 
           renderTabelPegawai();
           populateDropdownPegawai();
-          renderTabelSiswa();
-          renderTabelArsip();
 
           const cTxt = document.getElementById("cloudStatusText");
           if (cTxt) cTxt.innerText = "Google Drive Tersambung";
@@ -4185,6 +4192,25 @@
 
       // Tarik database dari cloud saat pertama kali dibuka
       loadCloudData();
+
+      // RADAR OTOMATIS: Tarik perubahan dari cloud secara otomatis setiap 7 detik
+      setInterval(() => {
+        if (currentUser) {
+          loadCloudData(true);
+        }
+      }, 7000);
+
+      // RADAR FOKUS LAYAR: Saat HP dinyalakan atau tab dibuka, langsung sedot data terbaru seketika
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && currentUser) {
+          loadCloudData(true);
+        }
+      });
+      window.addEventListener("focus", () => {
+        if (currentUser) {
+          loadCloudData(true);
+        }
+      });
     });
   </script>
 </body>
