@@ -2265,6 +2265,16 @@
           req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
           req.onerror = () => resolve(null);
         });
+      },
+      async delete(id) {
+        const db = await this.getDb();
+        if (!db) return false;
+        return new Promise((resolve) => {
+          const tx = db.transaction(this.storeName, "readwrite");
+          tx.objectStore(this.storeName).delete(id);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => resolve(false);
+        });
       }
     };
 
@@ -2611,7 +2621,6 @@
         return;
       }
       list.forEach((a, idx) => {
-        const realIdx = arsipSuratList.findIndex(x => x.id === a.id);
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
@@ -2624,7 +2633,7 @@
             <button type="button" class="btn btn-primary btn-sm" onclick="bukaDokumenArsip('${a.id}')" title="Buka Dokumen Asli">
               <i class="fa-solid fa-folder-open"></i> Buka Dokumen
             </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusArsipSurat(${realIdx !== -1 ? realIdx : idx})" style="color:var(--danger); margin-left:4px;" title="Hapus Arsip"><i class="fa-solid fa-trash"></i></button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="hapusArsipSurat('${a.id}')" style="color:var(--danger); margin-left:4px;" title="Hapus Berkas dari Web & Drive"><i class="fa-solid fa-trash"></i></button>
           </td>
         `;
         tb.appendChild(tr);
@@ -2783,13 +2792,56 @@
       }
     };
 
-    window.hapusArsipSurat = function(idx) {
-      openModalConfirm("Hapus riwayat arsip ini?", async () => {
+    window.hapusArsipSurat = function(identifier) {
+      let idx = -1;
+      if (typeof identifier === "number") {
+        idx = identifier;
+      } else {
+        idx = arsipSuratList.findIndex(x => x && (x.id === identifier || x.fileId === identifier));
+      }
+      if (idx === -1 || !arsipSuratList[idx]) return;
+
+      const itemToDelete = { ...arsipSuratList[idx] };
+      openModalConfirm(`Hapus arsip "${itemToDelete.judul || itemToDelete.nomor}" dari Web dan Google Drive? Berkas fisik PDF di Google Drive akan ikut dihapus permanen.`, async () => {
+        // 1. Hapus seketika dari memori & tabel web
         arsipSuratList.splice(idx, 1);
         localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
         renderTabelArsip();
-        await syncArsipToDrive();
-        showToast("Arsip berhasil dihapus.");
+
+        // 2. Hapus berkas fisik lokal IndexedDB jika ada
+        if (itemToDelete.id) {
+          await LocalDocStore.delete(itemToDelete.id);
+        }
+
+        showToast("Menghapus berkas fisik dari Google Drive...", "info");
+
+        // 3. Kirim perintah hapus ke Google Apps Script backend
+        try {
+          let fId = itemToDelete.fileId || "";
+          if (!fId && itemToDelete.fileUrl) {
+            const m = itemToDelete.fileUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (m) fId = m[1];
+          }
+
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "delete_arsip",
+              id: itemToDelete.id,
+              fileId: fId
+            })
+          });
+          const json = await res.json();
+          if (json.status === "success" && Array.isArray(json.arsip)) {
+            arsipSuratList = json.arsip;
+            localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
+            renderTabelArsip();
+          }
+          showToast("Berkas berhasil dihapus dari web & Google Drive!", "success");
+        } catch (err) {
+          showToast("Arsip berhasil dihapus secara lokal.", "info");
+        }
       });
     };
 
@@ -3133,25 +3185,26 @@
           // Satukan data arsip dari Google Drive (Server adalah sumber kebenaran utama)
           if (Array.isArray(data.arsip)) {
             const oldLen = (arsipSuratList || []).length;
-            const mergedMap = new Map();
-            // 1. Masukkan semua arsip resmi dari Google Drive
+            const serverMap = new Map();
             data.arsip.forEach(a => {
               if (a && (a.id || a.fileId)) {
                 const k = a.fileId ? String(a.fileId) : String(a.id);
                 a.status = "Google Drive";
-                mergedMap.set(k, a);
+                serverMap.set(k, a);
               }
             });
-            // 2. Pertahankan arsip lokal yang belum selesai sinkronisasi
+
+            // Hanya pertahankan arsip lokal yang statusnya masih aktif dalam proses pengunggahan
             arsipSuratList.forEach(a => {
-              if (a && (a.id || a.fileId)) {
+              if (a && a.status === "Mengunggah...") {
                 const k = a.fileId ? String(a.fileId) : String(a.id);
-                if (!mergedMap.has(k)) {
-                  mergedMap.set(k, a);
+                if (!serverMap.has(k)) {
+                  serverMap.set(k, a);
                 }
               }
             });
-            arsipSuratList = Array.from(mergedMap.values());
+
+            arsipSuratList = Array.from(serverMap.values());
             localStorage.setItem("sdn3_arsip_surat", JSON.stringify(arsipSuratList));
             renderTabelArsip();
 
